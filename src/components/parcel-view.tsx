@@ -1,6 +1,6 @@
 "use client";
-import { useRef, useState } from "react";
-import { HistoryView } from "./territory-app";
+import { useRef, useState, type KeyboardEvent } from "react";
+import { HistoryView, type HistoryReturnState } from "./territory-app";
 import type { Parcel, ParcelImage } from "./contracts";
 export function ParcelView({
   parcel,
@@ -9,6 +9,9 @@ export function ParcelView({
   onBack,
   initialTab = "record",
   onTabChange,
+  historyReturnState,
+  onHistoryRemember,
+  onHistoryRestored,
 }: {
   parcel: Parcel;
   onCreate: () => void;
@@ -16,6 +19,9 @@ export function ParcelView({
   onBack: () => void;
   initialTab?: "record" | "consultations";
   onTabChange?: (tab: "record" | "consultations") => void;
+  historyReturnState?: HistoryReturnState | null;
+  onHistoryRemember?: (state: HistoryReturnState) => void;
+  onHistoryRestored?: () => void;
 }) {
   const [tab, setTab] = useState<"record" | "consultations">(initialTab);
   return (
@@ -171,7 +177,13 @@ export function ParcelView({
           role="region"
           aria-labelledby="tab-consultations"
         >
-          <HistoryView parcel={parcel} onDetail={onDetail} />
+          <HistoryView
+            parcel={parcel}
+            onDetail={onDetail}
+            returnState={historyReturnState}
+            onRemember={onHistoryRemember}
+            onRestored={onHistoryRestored}
+          />
         </div>
       )}
     </>
@@ -197,6 +209,35 @@ function Surface({
       <span className="meta">{source}</span>
     </div>
   );
+}
+function trapViewerFocus(event: KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== "Tab") return;
+  const dialog = event.currentTarget;
+  const controls = Array.from(
+    dialog.querySelectorAll<HTMLElement>(
+      'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((node) => node.tabIndex >= 0 && node.getClientRects().length > 0);
+  const first = controls[0],
+    last = controls.at(-1);
+  if (!first || !last) {
+    event.preventDefault();
+    dialog.focus();
+    return;
+  }
+  if (
+    event.shiftKey &&
+    (document.activeElement === first || document.activeElement === dialog)
+  ) {
+    event.preventDefault();
+    last.focus();
+  } else if (
+    !event.shiftKey &&
+    (document.activeElement === last || document.activeElement === dialog)
+  ) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 function ImageViewer({ images }: { images: ParcelImage[] }) {
   const [index, setIndex] = useState(0),
@@ -289,6 +330,7 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
           else document.getElementById("main")?.focus();
         }}
         aria-label="Visualizador de imágenes"
+        onKeyDown={trapViewerFocus}
       >
         <header className="panel-head">
           <h2>{title}</h2>

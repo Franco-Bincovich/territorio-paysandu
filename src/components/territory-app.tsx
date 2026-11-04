@@ -20,6 +20,15 @@ import {
 import { useRequestScope } from "./use-request-scope";
 import { isAbort } from "./request-scope";
 import { historyDate } from "./display-date";
+export type HistoryReturnState = {
+  query: string;
+  page: number;
+  windowX: number;
+  windowY: number;
+  tableX: number;
+  tableY: number;
+  consultationId: string;
+};
 const message = (e: unknown) =>
   e instanceof Error ? e.message : "No se pudo completar la operación.";
 export function TerritoryApp() {
@@ -39,6 +48,18 @@ export function TerritoryApp() {
   const [parcelTab, setParcelTab] = useState<"record" | "consultations">(
     "record",
   );
+  const globalHistoryReturn = useRef<HistoryReturnState | null>(null);
+  const parcelHistoryReturn = useRef<HistoryReturnState | null>(null);
+  const [restoreHistory, setRestoreHistory] = useState<
+    "global" | "parcel" | null
+  >(null);
+  const rememberGlobalHistory = useCallback((state: HistoryReturnState) => {
+    globalHistoryReturn.current = state;
+  }, []);
+  const rememberParcelHistory = useCallback((state: HistoryReturnState) => {
+    parcelHistoryReturn.current = state;
+  }, []);
+  const finishHistoryRestore = useCallback(() => setRestoreHistory(null), []);
   const lastActivity = useRef(Date.now());
   const navigationRequests = useRequestScope();
   const authRequests = useRequestScope();
@@ -47,6 +68,9 @@ export function TerritoryApp() {
     (text: string) => {
       navigationRequests.cancel();
       authRequests.cancel();
+      globalHistoryReturn.current = null;
+      parcelHistoryReturn.current = null;
+      setRestoreHistory(null);
       setSession(null);
       setParcel(null);
       setDetail(null);
@@ -61,7 +85,11 @@ export function TerritoryApp() {
     },
     [navigationRequests, authRequests],
   );
-  function navigate(next: typeof screen) {
+  function navigate(
+    next: typeof screen,
+    restore: "global" | "parcel" | null = null,
+  ) {
+    setRestoreHistory(restore);
     navigationRequests.cancel();
     setBusy(false);
     setError("");
@@ -132,6 +160,7 @@ export function TerritoryApp() {
   async function openParcel(
     ref: ParcelRef,
     tab: "record" | "consultations" = "record",
+    restore = false,
   ) {
     const operation = navigationRequests.begin();
     setBusy(true);
@@ -142,6 +171,8 @@ export function TerritoryApp() {
         { signal: operation.signal },
       );
       if (!operation.isCurrent()) return;
+      setRestoreHistory(restore ? "parcel" : null);
+      if (!restore) parcelHistoryReturn.current = null;
       setParcel(result);
       setParcelTab(tab);
       setScreen("parcel");
@@ -316,13 +347,27 @@ export function TerritoryApp() {
               key={`${parcel.locality}/${parcel.parcel}`}
               parcel={parcel}
               initialTab={parcelTab}
+              historyReturnState={
+                restoreHistory === "parcel" ? parcelHistoryReturn.current : null
+              }
+              onHistoryRemember={rememberParcelHistory}
+              onHistoryRestored={finishHistoryRestore}
               onTabChange={setParcelTab}
               onCreate={() => navigate("create")}
               onDetail={openDetail}
               onBack={() => navigate("search")}
             />
           )}{" "}
-          {screen === "history" && <HistoryView onDetail={openDetail} />}{" "}
+          {screen === "history" && (
+            <HistoryView
+              onDetail={openDetail}
+              returnState={
+                restoreHistory === "global" ? globalHistoryReturn.current : null
+              }
+              onRemember={rememberGlobalHistory}
+              onRestored={finishHistoryRestore}
+            />
+          )}{" "}
           {screen === "create" && parcel && (
             <section className="panel">
               <button className="back" onClick={() => navigate("parcel")}>
@@ -348,8 +393,8 @@ export function TerritoryApp() {
                 className="back"
                 onClick={() => {
                   if (detailOrigin === "parcel" && parcel)
-                    void openParcel(parcel, "consultations");
-                  else navigate("history");
+                    void openParcel(parcel, "consultations", true);
+                  else navigate("history", "global");
                 }}
               >
                 {detailOrigin === "parcel"
@@ -638,20 +683,31 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
 export function HistoryView({
   onDetail,
   parcel,
+  returnState,
+  onRemember,
+  onRestored,
 }: {
   onDetail: (id: string) => Promise<void>;
   parcel?: ParcelRef;
+  returnState?: HistoryReturnState | null;
+  onRemember?: (state: HistoryReturnState) => void;
+  onRestored?: () => void;
 }) {
   const [data, setData] = useState<ConsultationPage | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [query, setQuery] = useState(() =>
-      !parcel && typeof window !== "undefined"
-        ? (new URLSearchParams(window.location.search).get("historyFilters") ??
-          "")
-        : "",
+    [query, setQuery] = useState(
+      () =>
+        returnState?.query ??
+        (!parcel && typeof window !== "undefined"
+          ? (new URLSearchParams(window.location.search).get(
+              "historyFilters",
+            ) ?? "")
+          : ""),
     );
+  const tableRef = useRef<HTMLDivElement | null>(null);
   const [page, setPage] = useState(() => {
+    if (returnState) return returnState.page;
     if (parcel || typeof window === "undefined") return 1;
     const n = Number(
       new URLSearchParams(window.location.search).get("historyPage"),
@@ -693,6 +749,45 @@ export function HistoryView({
       controller.abort();
     };
   }, [page, query, parcel?.locality, parcel?.parcel]);
+  useEffect(() => {
+    if (!returnState || !data || busy) return;
+    const frame = requestAnimationFrame(() => {
+      if (returnState.query === query && returnState.page === page) {
+        const table = tableRef.current;
+        const button = Array.from(
+          table?.querySelectorAll<HTMLButtonElement>(
+            "button[data-consultation-id]",
+          ) ?? [],
+        ).find(
+          (node) => node.dataset.consultationId === returnState.consultationId,
+        );
+        button?.focus({ preventScroll: true });
+        if (table) {
+          table.scrollLeft = returnState.tableX;
+          table.scrollTop = returnState.tableY;
+        }
+        window.scrollTo({
+          left: returnState.windowX,
+          top: returnState.windowY,
+          behavior: "instant",
+        });
+      }
+      onRestored?.();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [returnState, data, busy, query, page, onRestored]);
+  function detailFromHistory(id: string) {
+    onRemember?.({
+      query,
+      page,
+      windowX: window.scrollX,
+      windowY: window.scrollY,
+      tableX: tableRef.current?.scrollLeft ?? 0,
+      tableY: tableRef.current?.scrollTop ?? 0,
+      consultationId: id,
+    });
+    void onDetail(id);
+  }
   return (
     <section className="panel">
       <div className="intro">
@@ -772,6 +867,7 @@ export function HistoryView({
           <>
             <div
               className="tablewrap"
+              ref={tableRef}
               role="region"
               aria-label="Listado de consultas"
               tabIndex={0}
@@ -798,7 +894,8 @@ export function HistoryView({
                       <td>
                         <button
                           className="link"
-                          onClick={() => void onDetail(c.id)}
+                          data-consultation-id={c.id}
+                          onClick={() => detailFromHistory(c.id)}
                         >
                           Ver consulta
                           <span className="sr-only"> de {c.person.name}</span>

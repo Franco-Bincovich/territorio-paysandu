@@ -30,6 +30,18 @@ const records: readonly (ParcelRecord & {
     CI: "00000001",
     RUT: "000000000001",
   },
+  // Deliberate synthetic homonym: same exact name, distinct document and parcel.
+  {
+    key: { locality: "LOCALIDAD SINTÉTICA", parcel: "900003" },
+    address: "Calle de prueba 300 — DATOS SINTÉTICOS",
+    originalLandArea: null,
+    originalBuildingArea: null,
+    detectedBuildingArea: null,
+    source: "synthetic",
+    name: "PERSONA SINTÉTICA UNO",
+    CI: "00000002",
+    RUT: "000000000002",
+  },
 ];
 const syntheticSource: CadastreAdapter & ImageAdapter = {
   async findParcel(key) {

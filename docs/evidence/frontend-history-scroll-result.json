@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "scope": "synthetic browser fixtures only",
+  "before": {
+    "y": 1677,
+    "x": 98
+  },
+  "after": {
+    "y": 1677,
+    "x": 98
+  },
+  "checks": [
+    "scoped filters/page restored",
+    "window and horizontal table scroll restored",
+    "focus restored to original consultation"
+  ],
+  "pageErrors": []
+}

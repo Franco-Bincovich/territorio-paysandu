@@ -86,7 +86,7 @@ test("institutional catalogue fails closed and synthetic exact person search spa
           exact: "PERSONA SINTÉTICA UNO",
         })
       ).length,
-      2,
+      3,
     );
     assert.equal(
       (await adapter.findPerson({ field: "name", exact: "PERSONA" })).length,
