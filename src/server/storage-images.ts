@@ -21,7 +21,9 @@ const reference = z
     filename: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/),
     object_path: z.string(),
     source: z.string().min(1).max(200),
-    metadata: z.record(z.string().max(100), z.string().max(1000)),
+    // Match PostgreSQL jsonb object values, then project to viewer text without changing stored metadata.
+    // Original jsonb remains untouched; no units, dates or missing values invented.
+    metadata: z.record(z.string(), z.json()),
     hosting_authorized_at: z.string().datetime({ offset: true }),
   })
   .superRefine((r, ctx) => {
@@ -81,7 +83,16 @@ export function supabaseImageAdapter(client: SupabaseClient): ImageAdapter {
           source: row.source,
         };
         if (row.kind === "historical") result.historical = image;
-        else result.survey = { ...image, metadata: row.metadata };
+        else
+          result.survey = {
+            ...image,
+            metadata: Object.fromEntries(
+              Object.entries(row.metadata).map(([label, value]) => [
+                label,
+                typeof value === "string" ? value : JSON.stringify(value),
+              ]),
+            ),
+          };
       }
       if (!result.historical || !result.survey)
         result.unavailableReason = "not_found";

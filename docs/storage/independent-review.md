@@ -41,3 +41,13 @@ Revisé extracción de `createImageDownloadHandler` y composición real de la ru
 Reejecuté los dos archivos de pruebas Storage tras este delta: **2 PASS, 0 FAIL**, incluida operación `object.sign` denegada en la simulación. Revisé `viewer-fixture-result.json`: contiene PASS con `mocked:true`, carrusel, zoom, foco y metadatos; no constituye evidencia Storage real ni de las imágenes originales. El autor informó `npm run check` completo PASS (19 archivos y build) tras reemplazar enlace de dependencias fuera del root por copia local; no repetí ese build independiente, sí la batería dirigida del delta final.
 
 Sin nuevos hallazgos bloqueantes en el diff revisado. Se mantienen condiciones de entrega real y disponibilidad de catálogo/archivos. No se realizó mutación remota ni despliegue durante la revisión.
+
+## Revisión adicional — compatibilidad de metadatos JSONB
+
+Base del delta: `49fe126`. Revisé `src/server/storage-images.ts` y los nuevos casos de `tests/server/storage-images.test.ts`. El esquema de lectura ahora acepta un objeto JSON con valores JSON, compatible con la restricción `jsonb_typeof(metadata) = 'object'`. La proyección al visor conserva strings y convierte números, booleanos, null, arrays y objetos mediante `JSON.stringify`, sin mutar referencias ni escribir metadatos a la base. No inventa unidades o fechas, y la respuesta histórica sigue sin exponer metadatos técnicos.
+
+Verificación independiente: `npm run typecheck` **PASS**; ejecución dirigida de storage-images, images y storage-rls **3 archivos PASS, 0 FAIL**. Incluye mezcla de tipos, ceros/falso/null, arrays/objetos, texto y claves largas, fuente original intacta, descarga de ambos tipos y rechazo de raíz no-objeto o valores no-JSON. No encontré un defecto bloqueante en este delta.
+
+La conversión es una presentación textual de valores JSON ya decodificados por JavaScript; no implica preservar la representación textual exacta del JSON original ni precisión decimal arbitraria. La base conserva su JSONB sin cambios.
+
+La evidencia ejecutada en esta revisión es sintética. La propuesta de verificación futura es distinta: un harness aislado del visor con sesión autorizada y bytes REALES de Supabase Storage para localidad Paysandú + padrón 17718, sin interceptar APIs ni inventar una ficha catastral. Si se ejecuta con esos requisitos, podrá acreditar recuperación y visualización efectiva de las imágenes autorizadas, junto con el proxy directo. No acreditará búsqueda ni ficha completa: el catálogo sigue sin ese padrón. Esta revisión no ejecutó ese harness real, servicios remotos ni despliegues.

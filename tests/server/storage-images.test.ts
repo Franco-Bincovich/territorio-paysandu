@@ -159,3 +159,56 @@ test("proxy revalidates every request; revoked session denies bytes and all resp
   );
   assert.ok(!(await denied.text()).includes("synthetic fixture bytes"));
 });
+
+test("jsonb metadata supports numbers, booleans, null and nested values without altering source data", async () => {
+  const metadata = {
+    area: 125.75,
+    zero: 0,
+    verified: false,
+    missing: null,
+    capture: { year: 2020, note: "original" },
+    bands: ["red", 3, null],
+    literal: "00125.750 m²",
+    ["long-label-".repeat(12)]: "x".repeat(1100),
+  };
+  const before = JSON.stringify(metadata);
+  const f = fixture([
+    { ...historical, metadata },
+    { ...survey, metadata },
+  ]);
+  const images = await f.adapter.getImages(PROTOTYPE_KEY);
+  assert.deepEqual(images.survey?.metadata, {
+    area: "125.75",
+    zero: "0",
+    verified: "false",
+    missing: "null",
+    capture: '{"year":2020,"note":"original"}',
+    bands: '["red",3,null]',
+    literal: "00125.750 m²",
+    ["long-label-".repeat(12)]: "x".repeat(1100),
+  });
+  assert.equal(JSON.stringify(metadata), before);
+  assert.equal("metadata" in imageResponse(images, new Date())[0], false);
+  assert.equal(
+    (await downloadPrototypeImage(f.client, "historical")).type,
+    "image/png",
+  );
+  assert.equal(
+    (await downloadPrototypeImage(f.client, "survey")).type,
+    "image/png",
+  );
+});
+
+test("metadata root matches SQL object constraint; malformed non-JSON values fail closed", async () => {
+  for (const metadata of [
+    null,
+    [],
+    "text",
+    { bad: undefined },
+    { bad: Infinity },
+  ]) {
+    await assert.rejects(
+      fixture([{ ...survey, metadata }]).adapter.getImages(PROTOTYPE_KEY),
+    );
+  }
+});
