@@ -1,5 +1,9 @@
 /** Portable business contracts. SessionContext MUST be produced by a trusted auth adapter. */
-export type ConsultationType = "General" | "Reclamo" | "Falta de documentación";
+export type ConsultationType =
+  | "General"
+  | "Reclamo"
+  | "Falta de documentación"
+  | "Declaracion voluntaria de metros";
 export type ParcelKey = Readonly<{ locality: string; parcel: string }>;
 export type PersonSnapshot = Readonly<{
   name: string;
@@ -136,6 +140,7 @@ const types: readonly string[] = [
   "General",
   "Reclamo",
   "Falta de documentación",
+  "Declaracion voluntaria de metros",
 ];
 const fail = (message: string): never => {
   throw new DomainError("VALIDATION", message);

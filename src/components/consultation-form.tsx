@@ -247,6 +247,7 @@ export function ConsultationForm({
             <option>General</option>
             <option>Reclamo</option>
             <option>Falta de documentación</option>
+            <option>Declaracion voluntaria de metros</option>
           </select>
         </Field>
         <Field fieldKey="description" idPrefix={idPrefix} errors={fieldErrors}>

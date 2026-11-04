@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useId,
   useState,
   type FormEvent,
 } from "react";
@@ -36,11 +37,12 @@ export function TerritoryApp() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   const [screen, setScreen] = useState<
-    "search" | "parcel" | "history" | "create" | "detail"
+    "search" | "parcel" | "history" | "create" | "detail" | "settings"
   >("search");
   const [parcel, setParcel] = useState<Parcel | null>(null),
     [detail, setDetail] = useState<Consultation | null>(null),
     [busy, setBusy] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [detailOrigin, setDetailOrigin] = useState<"history" | "parcel">(
     "history",
@@ -89,6 +91,7 @@ export function TerritoryApp() {
     next: typeof screen,
     restore: "global" | "parcel" | null = null,
   ) {
+    setProfileOpen(false);
     setRestoreHistory(restore);
     navigationRequests.cancel();
     setBusy(false);
@@ -300,10 +303,29 @@ export function TerritoryApp() {
               {session.user.username.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <strong>{session.user.username}</strong>
+              <button
+                type="button"
+                className="btn small"
+                aria-expanded={profileOpen}
+                aria-controls="profile-options"
+                onClick={() => setProfileOpen(!profileOpen)}
+              >
+                {session.user.username}
+              </button>
               <small>Colaborador</small>
             </div>
           </div>
+          {profileOpen && (
+            <div id="profile-options">
+              <button
+                type="button"
+                className="btn small"
+                onClick={() => navigate("settings")}
+              >
+                Configuración
+              </button>
+            </div>
+          )}
           <button
             className="btn small logout"
             disabled={loggingOut}
@@ -318,11 +340,13 @@ export function TerritoryApp() {
           <span className="crumb">
             Territorio <span>/</span>{" "}
             <b>
-              {screen === "search"
-                ? "Búsqueda"
-                : screen === "history"
-                  ? "Consultas"
-                  : "Ficha territorial"}
+              {screen === "settings"
+                ? "Configuración"
+                : screen === "search"
+                  ? "Búsqueda"
+                  : screen === "history"
+                    ? "Consultas"
+                    : "Ficha territorial"}
             </b>
           </span>
           {session.synthetic && (
@@ -342,6 +366,17 @@ export function TerritoryApp() {
           )}
           {error && <ErrorBox text={error} />}{" "}
           {busy && <p role="status">Cargando…</p>}
+          {screen === "settings" && (
+            <section className="panel auth-card">
+              <h1>Configuración</h1>
+              <h2>Cambiar contraseña</h2>
+              <AuthForm
+                changePassword
+                onSuccess={loadSession}
+                disabled={loggingOut}
+              />
+            </section>
+          )}
           {screen === "search" && <SearchView onOpen={openParcel} />}{" "}
           {screen === "parcel" && parcel && (
             <ParcelView
@@ -430,9 +465,13 @@ export function TerritoryApp() {
 function Brand() {
   return (
     <div className="brand">
-      <div className="brand-mark" aria-hidden="true">
-        T
-      </div>
+      <img
+        className="paysandu-logo"
+        src="/paysandu-original.png"
+        alt="Paysandú Tierra Heroica"
+        width={341}
+        height={308}
+      />
       <div>
         <div className="brand-name">
           Territorio
@@ -449,6 +488,63 @@ export function ErrorBox({ text }: { text: string }) {
     <p className="error" role="alert">
       {text}
     </p>
+  );
+}
+function PasswordField({
+  label,
+  name,
+  minLength,
+  autoComplete,
+  disabled,
+}: {
+  label: string;
+  name: string;
+  minLength?: number;
+  autoComplete: string;
+  disabled: boolean;
+}) {
+  const id = useId();
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <div className="password-control">
+        <input
+          id={id}
+          name={name}
+          type={visible ? "text" : "password"}
+          minLength={minLength}
+          required
+          autoComplete={autoComplete}
+          disabled={disabled}
+          spellCheck={false}
+          autoCapitalize="none"
+        />
+        <button
+          type="button"
+          className="btn small"
+          aria-label={`${visible ? "Ocultar" : "Mostrar"} ${label.toLowerCase()}`}
+          aria-controls={id}
+          aria-pressed={visible}
+          disabled={disabled}
+          onClick={() => setVisible(!visible)}
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+            {visible && <path d="m3 3 18 18" />}
+          </svg>
+        </button>
+      </div>
+    </div>
   );
 }
 function AuthForm({
@@ -508,27 +604,21 @@ function AuthForm({
           />
         </label>
       )}
-      <label className="field">
-        {changePassword ? "Nueva contraseña" : "Contraseña"}
-        <input
-          name="password"
-          type="password"
-          minLength={changePassword ? 12 : undefined}
-          required
-          autoComplete={changePassword ? "new-password" : "current-password"}
-        />
-      </label>
+      <PasswordField
+        label={changePassword ? "Nueva contraseña" : "Contraseña"}
+        name="password"
+        minLength={changePassword ? 12 : undefined}
+        autoComplete={changePassword ? "new-password" : "current-password"}
+        disabled={busy || disabled}
+      />
       {changePassword && (
-        <label className="field">
-          Repetir nueva contraseña
-          <input
-            name="confirm"
-            type="password"
-            minLength={12}
-            required
-            autoComplete="new-password"
-          />
-        </label>
+        <PasswordField
+          label="Repetir nueva contraseña"
+          name="confirm"
+          minLength={12}
+          autoComplete="new-password"
+          disabled={busy || disabled}
+        />
       )}
       {changePassword && (
         <p className="muted">
@@ -576,6 +666,27 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
   return (
     <>
       <section className="hero">
+        <div className="art" aria-hidden="true">
+          <div className="art-map">
+            <div className="plot" />
+          </div>
+          <div className="pin">
+            <svg
+              className="i"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+            >
+              <path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" />
+              <circle cx="12" cy="10" r="2.5" />
+            </svg>
+          </div>
+          <div className="art-caption">
+            <span className="dot" />
+            Una mirada sobre el territorio
+          </div>
+        </div>
         <p className="eyebrow">Información territorial</p>
         <h1>
           Encontrá la información
@@ -838,6 +949,7 @@ export function HistoryView({
             <option>General</option>
             <option>Reclamo</option>
             <option>Falta de documentación</option>
+            <option>Declaracion voluntaria de metros</option>
           </select>
         </label>
         <label className="field">

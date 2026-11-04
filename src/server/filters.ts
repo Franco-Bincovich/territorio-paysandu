@@ -2,7 +2,12 @@ import { HttpError } from "./security";
 const invalid = (message: string): never => {
   throw new HttpError(400, "VALIDATION", message);
 };
-const consultationTypes = ["General", "Reclamo", "Falta de documentación"];
+const consultationTypes = [
+  "General",
+  "Reclamo",
+  "Falta de documentación",
+  "Declaracion voluntaria de metros",
+];
 export function queryKeys(query: URLSearchParams, allowed: readonly string[]) {
   for (const key of query.keys()) {
     if (!allowed.includes(key) || query.getAll(key).length !== 1)
@@ -55,7 +60,7 @@ export function historyFilters(query: URLSearchParams) {
     const value = raw.trim();
     if (
       !value ||
-      value.length > (key === "locality" ? 100 : 30) ||
+      value.length > (key === "parcel" ? 30 : 100) ||
       /[\u0000-\u001f]/.test(value)
     )
       invalid("Filtro inválido.");

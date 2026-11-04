@@ -74,7 +74,7 @@ export function validateConsultationFields(
         ? "Ingresá un RUT de 12 dígitos."
         : "Ingresá una cédula de 7 u 8 dígitos; podés incluir puntos y guion.";
   if (!accepts({ ...probe, type: draft.type }))
-    errors.type = "Elegí uno de los tres tipos de consulta disponibles.";
+    errors.type = "Elegí un tipo de consulta disponible.";
   if (!accepts({ ...probe, description: draft.description }))
     errors.description = `Ingresá una descripción de ${DESCRIPTION_MIN_LENGTH} a ${DESCRIPTION_MAX_LENGTH.toLocaleString("es-UY")} caracteres, sin contar espacios al principio y al final.`;
   for (const [key, values, label] of [

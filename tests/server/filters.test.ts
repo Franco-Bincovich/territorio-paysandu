@@ -66,3 +66,14 @@ test("search query shape rejects duplicates and mixed person/parcel searches", (
     queryKeys(new URLSearchParams("kind=name&q=x&q=y"), ["kind", "q"]),
   );
 });
+
+test("history accepts voluntary area type longer than30characters", () => {
+  const type = "Declaracion voluntaria de metros";
+  assert.equal(
+    historyFilters(new URLSearchParams({ type })).filters.type,
+    type,
+  );
+  assert.throws(() =>
+    historyFilters(new URLSearchParams({ type: "Inventado" })),
+  );
+});

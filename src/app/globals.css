@@ -857,3 +857,18 @@ td {
   color: #8c2323;
   text-decoration: underline;
 }
+
+.password-control {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.password-control input {
+  flex: 1;
+  min-width: 0;
+}
+.password-control button {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+}

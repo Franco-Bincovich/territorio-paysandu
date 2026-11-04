@@ -1791,7 +1791,12 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["General", "Reclamo", "Falta de documentación"]
+              "enum": [
+                "General",
+                "Reclamo",
+                "Falta de documentación",
+                "Declaracion voluntaria de metros"
+              ]
             }
           },
           {
@@ -2860,7 +2865,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["General", "Reclamo", "Falta de documentación"]
+            "enum": [
+              "General",
+              "Reclamo",
+              "Falta de documentación",
+              "Declaracion voluntaria de metros"
+            ]
           },
           "description": {
             "type": "string",
@@ -2901,7 +2911,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["General", "Reclamo", "Falta de documentación"]
+            "enum": [
+              "General",
+              "Reclamo",
+              "Falta de documentación",
+              "Declaracion voluntaria de metros"
+            ]
           },
           "description": {
             "type": "string",
@@ -2942,7 +2957,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["General", "Reclamo", "Falta de documentación"]
+            "enum": [
+              "General",
+              "Reclamo",
+              "Falta de documentación",
+              "Declaracion voluntaria de metros"
+            ]
           },
           "description": {
             "type": "string",
