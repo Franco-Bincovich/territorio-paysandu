@@ -49,7 +49,7 @@ try {
       };
     return r.fulfill({ json: data });
   });
-  await page.goto("http://127.0.0.1:3008/");
+  await page.goto(process.env.QA_BASE_URL ?? "http://127.0.0.1:3000/");
   await page.getByLabel("Localidad", { exact: true }).fill("QA");
   await page.getByLabel("Número de padrón").fill("900001");
   await page
@@ -60,6 +60,8 @@ try {
   await page
     .getByRole("heading", { name: "Padrón 900001", exact: true })
     .waitFor();
+  assert.equal(await page.getByRole("button", { name: "Tasa", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: /Registrar consulta/ }).isEnabled(), true);
   assert.equal(
     await page.getByText("No disponible", { exact: true }).count(),
     3,
@@ -88,13 +90,14 @@ try {
   assert.equal(await dialog.isVisible(), false);
   assert.equal(await open.evaluate((e) => e === document.activeElement), true);
   await page.getByText("2026-11-04", { exact: true }).waitFor();
-  await page.screenshot({path:"docs/storage/viewer-synthetic.png"});
+  await page.screenshot({path:"docs/evidence/tasa-removed-viewer-synthetic.png",fullPage:true});
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify({
       status: "PASS",
       mocked: true,
       checks: [
+        "Tasa absent and consultation action enabled",
         "null surfaces handled",
         "historical metadata suppressed",
         "zoom 125%",

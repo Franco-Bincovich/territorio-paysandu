@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "mocked": true,
+  "checks": [
+    "Tasa absent and consultation action enabled",
+    "null surfaces handled",
+    "historical metadata suppressed",
+    "zoom 125%",
+    "carousel resets zoom",
+    "Escape closes and restores focus",
+    "survey metadata visible"
+  ],
+  "scope": "Local browser3037; intercepted synthetic API and images only; no cloud verification."
+}

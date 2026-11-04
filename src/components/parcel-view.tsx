@@ -38,13 +38,6 @@ export function ParcelView({
           </p>
         </div>
         <div className="actions">
-          <button
-            className="btn"
-            disabled
-            title="Disponible en una versión futura"
-          >
-            Tasa
-          </button>
           <button className="btn primary" onClick={onCreate}>
             + Registrar consulta
           </button>
