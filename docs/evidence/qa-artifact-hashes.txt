@@ -1,0 +1,5 @@
+87a581a79df2f0d8a6244e7acd058bc7462767d37e944c004a7aaf3051d4041b  supabase/schema.sql
+39eeb142e2d0ac692008d4f70c951456bfa4be00e754ea3cb92bd550e89d3842  tests/database/rls.test.ts
+fd21f9daaee9628f537fa001eb7045a8d7803e791fab66aa6a75fbc47b3dbfa4  tests/qa/image-viewer-fixture.mjs
+e3c40db49a93088b4e8d099425a48d4e907587b2caafd781d340fdd4ca9ba7e7  tests/qa/session-ui-fixture.mjs
+2e432c1c217db8b816930903d6cd7d03d280a6d98c9cf68acb2b335c4c53fdbe  tests/qa/unconfigured-browser.mjs
