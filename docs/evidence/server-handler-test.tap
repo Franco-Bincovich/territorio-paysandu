@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: unconfigured API fails closed without exposing environment values
+ok 1 - unconfigured API fails closed without exposing environment values
+  ---
+  duration_ms: 4.307033
+  type: 'test'
+  ...
+# Subtest: cross-origin login rejected before auth access
+ok 2 - cross-origin login rejected before auth access
+  ---
+  duration_ms: 0.5957
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11.154379

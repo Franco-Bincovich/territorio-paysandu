@@ -1,0 +1,101 @@
+TAP version 13
+# Subtest: Independent PostgreSQL RLS, grants and transaction checks
+    # Subtest: RPC creates atomic consultation, snapshot and contact; exact retry is idempotent
+    ok 1 - RPC creates atomic consultation, snapshot and contact; exact retry is idempotent
+      ---
+      duration_ms: 14.383068
+      type: 'test'
+      ...
+    # Subtest: direct writes and private tables denied even for creator
+    ok 2 - direct writes and private tables denied even for creator
+      ---
+      duration_ms: 2.750714
+      type: 'test'
+      ...
+    # Subtest: other collaborator reads globally but cannot edit ownership
+    ok 3 - other collaborator reads globally but cannot edit ownership
+      ---
+      duration_ms: 4.175052
+      type: 'test'
+      ...
+    # Subtest: own edit increments version and preserves original contact and snapshot
+    ok 4 - own edit increments version and preserves original contact and snapshot
+      ---
+      duration_ms: 5.919204
+      type: 'test'
+      ...
+    # Subtest: password gate blocks direct reads and RPC
+    ok 5 - password gate blocks direct reads and RPC
+      ---
+      duration_ms: 3.350688
+      type: 'test'
+      ...
+    # Subtest: 60 minute boundary cannot be revived by touch RPC
+    ok 6 - 60 minute boundary cannot be revived by touch RPC
+      ---
+      duration_ms: 3.254273
+      type: 'test'
+      ...
+    # Subtest: revoked auth session blocks old token claims
+    ok 7 - revoked auth session blocks old token claims
+      ---
+      duration_ms: 4.908342
+      type: 'test'
+      ...
+    # Subtest: hash reset preserves forced-change gate; only service finalization of fresh identity opens it
+    ok 8 - hash reset preserves forced-change gate; only service finalization of fresh identity opens it
+      ---
+      duration_ms: 8.539472
+      type: 'test'
+      ...
+    # Subtest: service finalization rejects password changes outside short completion window
+    ok 9 - service finalization rejects password changes outside short completion window
+      ---
+      duration_ms: 2.357443
+      type: 'test'
+      ...
+    # Subtest: transaction rollback when contact insertion fails
+    ok 10 - transaction rollback when contact insertion fails
+      ---
+      duration_ms: 5.563743
+      type: 'test'
+      ...
+    # Subtest: anonymous has no read or RPC grant; limiter service-only and persistent
+    ok 11 - anonymous has no read or RPC grant; limiter service-only and persistent
+      ---
+      duration_ms: 4.53266
+      type: 'test'
+      ...
+    # Subtest: disabled profiles and mismatched session owner cannot access
+    ok 12 - disabled profiles and mismatched session owner cannot access
+      ---
+      duration_ms: 3.177545
+      type: 'test'
+      ...
+    # Subtest: expired auth session denies read independently of recent activity
+    ok 13 - expired auth session denies read independently of recent activity
+      ---
+      duration_ms: 2.764085
+      type: 'test'
+      ...
+    # Subtest: direct RPC rejects malformed document, phone and unknown data
+    ok 14 - direct RPC rejects malformed document, phone and unknown data
+      ---
+      duration_ms: 2.626798
+      type: 'test'
+      ...
+    1..14
+ok 1 - Independent PostgreSQL RLS, grants and transaction checks
+  ---
+  duration_ms: 1253.683824
+  type: 'test'
+  ...
+1..1
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1260.54213
