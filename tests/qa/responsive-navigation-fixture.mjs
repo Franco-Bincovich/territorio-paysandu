@@ -94,7 +94,7 @@ try {
       ),
       true,
     );
-  await page.goto("http://127.0.0.1:3001/");
+  await page.goto(process.env.QA_BASE_URL ?? "http://127.0.0.1:3000");
   await page.getByLabel("Dato de la persona").fill("PERSONA SINTÉTICA");
   await page.getByLabel("Dato de la persona").press("Enter");
   await page.getByRole("button", { name: /Padrón 900002/ }).waitFor();

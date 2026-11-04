@@ -14,7 +14,7 @@ try {
   data={results:url.searchParams.get('q')==='VACÍO'?[]:[{locality:'QA',parcel:'900001',address:'SINTÉTICO'}]};
  }else if(url.pathname.startsWith('/api/parcels/'))data={locality:'QA',parcel:'900001',address:'SINTÉTICO',contacts:[],images:[]};
  return r.fulfill({json:data});});
- await page.goto('http://127.0.0.1:3001/');await page.getByRole('button',{name:/Historial de consultas/}).click();
+ await page.goto(process.env.QA_BASE_URL ?? 'http://127.0.0.1:3000');await page.getByRole('button',{name:/Historial de consultas/}).click();
  await page.getByLabel('Localidad',{exact:true}).fill('QA');await page.getByLabel('Padrón',{exact:true}).fill('900001');await page.locator('select[name=type]').selectOption('General');await page.getByLabel('Desde (UTC)',{exact:true}).fill('2026-11-01');await page.getByLabel('Hasta (UTC)',{exact:true}).fill('2026-11-04');await page.getByRole('button',{name:'Aplicar filtros'}).click();
  await page.getByRole('button',{name:'Siguiente',exact:true}).click();await page.getByText('Página 2 · 2 consultas',{exact:true}).waitFor();
  await page.getByRole('button',{name:/Ver consulta/}).click();await page.getByRole('button',{name:'Guardar corrección'}).waitFor();await page.getByRole('button',{name:/Volver al historial/}).click();await page.getByText('Página 2 · 2 consultas',{exact:true}).waitFor();

@@ -51,3 +51,15 @@ El usuario inicial Paysandu, correo, cambio seguro de contraseña, configuració
 ## Delta T032 — descripción
 
 Las RPC de alta/edición normalizan whitespace exterior equivalente a ECMAScript trim antes de validar y guardar descripción, snapshot e idempotencia. Mínimo20 puntos de código Unicode confirmado por T032. Se conserva máximo técnico10000 pendiente de conciliación con5000provisional histórico; no se declara aprobado. Controles inválidos se rechazan antes del trim; solo whitespace y19caracteres con padding no pasan. El CHECK local también exige20–10000. Migración no aplicada a cloud; pruebas locales no sustituyen E2E real. Ver evidence/t032-description-validation.md.
+
+## Reutilización autorizada y reversión de la primera migración
+
+Franco autorizó exclusivamente `kmimekswqpsuspkrxdet` en plan Free, con usuarios/datos sintéticos. La retención histórica anterior queda reemplazada por esta autorización específica. Preflight: proyecto ACTIVE_HEALTHY, PostgreSQL17.11, organización mideqdqcagfxpcrzovah Free; sin tablas/funciones public/private, sin esquema private, sin usuarios/sesiones/buckets/triggers personalizados en Auth y sin migraciones.
+
+Antes de aplicar: repetir preflight y comparar esos objetos. La migración inicial es transaccional (BEGIN/COMMIT); un error debe abortar todo el lote, y se verifican catálogo e historial antes de cualquier reintento. No suponer éxito a partir de una respuesta incierta.
+
+Reversión segura después de COMMIT: detener el backend local y conservar tablas/datos e historial; bloquear la promoción y preparar una migración correctiva versionada. Nunca usar DROP CASCADE, reset cloud ni eliminar usuarios/datos para ocultar fallos. Si se necesita restaurar estructura previa, primero exportar datos/configuración por canal seguro y ensayar en un destino aislado autorizado; no ejecutar una reversión destructiva sobre este proyecto. Para esta aplicación inicial la línea base está vacía, por lo que no hay registros previos que transformar. Un rollback de código no revierte SQL automáticamente.
+
+La conectividad del conector SQL no entrega una credencial administrativa al backend. Las pruebas Auth reales requieren un canal seguro para SUPABASE_SECRET_KEY y la publishable key del mismo proyecto; no obtener claves desde tablas internas ni guardar contraseñas en evidencias. El correo definitivo de Paysandu y recuperación siguen pendientes: las cuentas QA serán exclusivamente sintéticas.
+
+Resultado del intento: apply_migration fue interrumpido antes de recibir respuesta. Verificación posterior: historial vacío y ninguna tabla public/private. No se reintentó. No se crearon usuarios ni se probaron Auth/persistencia reales; la autorización específica está recibida, pero esta operación permanece pendiente.

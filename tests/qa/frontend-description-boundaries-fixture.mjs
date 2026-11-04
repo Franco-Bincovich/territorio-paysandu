@@ -43,7 +43,7 @@ await page.route("**/api/**", (r) => {
   return r.fulfill({ json: data });
 });
 try {
-  await page.goto(process.env.QA_BASE_URL ?? "http://127.0.0.1:3001");
+  await page.goto(process.env.QA_BASE_URL ?? "http://127.0.0.1:3000");
   await page.getByLabel("Localidad", { exact: true }).fill("QA");
   await page.getByLabel("Número de padrón").fill("900001");
   await page
