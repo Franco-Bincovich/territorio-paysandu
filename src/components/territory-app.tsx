@@ -8,7 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import { ConsultationForm } from "./consultation-form";
-import { ParcelView } from "./parcel-view";
+import { ParcelView, type ParcelTab } from "./parcel-view";
 import {
   request,
   RequestError,
@@ -55,9 +55,7 @@ export function TerritoryApp() {
   const [detailOrigin, setDetailOrigin] = useState<"history" | "parcel">(
     "history",
   );
-  const [parcelTab, setParcelTab] = useState<"record" | "consultations">(
-    "record",
-  );
+  const [parcelTab, setParcelTab] = useState<ParcelTab>("record");
   const globalHistoryReturn = useRef<HistoryReturnState | null>(null);
   const parcelHistoryReturn = useRef<HistoryReturnState | null>(null);
   const [restoreHistory, setRestoreHistory] = useState<

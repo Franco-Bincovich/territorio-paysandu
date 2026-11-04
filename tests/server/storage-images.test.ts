@@ -88,8 +88,14 @@ test("dashboard root objects remain bound to exact filename, bucket and parcel",
   const f = fixture([root]);
   await downloadPrototypeImage(f.client, "historical");
   assert.deepEqual(f.calls, [[root.bucket, root.filename]]);
-  for (const object_path of ["unrelated.png", "other/" + root.filename, "../" + root.filename]) {
-    await assert.rejects(fixture([{ ...root, object_path }]).adapter.getImages(PROTOTYPE_KEY));
+  for (const object_path of [
+    "unrelated.png",
+    "other/" + root.filename,
+    "../" + root.filename,
+  ]) {
+    await assert.rejects(
+      fixture([{ ...root, object_path }]).adapter.getImages(PROTOTYPE_KEY),
+    );
   }
 });
 test("same parcel in a different locality and other parcels never query or sign", async () => {
@@ -219,5 +225,30 @@ test("metadata root matches SQL object constraint; malformed non-JSON values fai
     await assert.rejects(
       fixture([{ ...survey, metadata }]).adapter.getImages(PROTOTYPE_KEY),
     );
+  }
+});
+
+test("proxy diagnostic codes distinguish failures without disclosing storage details", async () => {
+  const { createImageDownloadHandler } =
+    await import("../../src/server/image-download");
+  for (const [enabled, rows, bucket, code] of [
+    [false, [historical], "", "IMAGE_PROVIDER_DISABLED"],
+    [true, [], "", "IMAGE_REFERENCE_MISSING"],
+    [true, [historical], historical.bucket, "IMAGE_STORAGE_UNAVAILABLE"],
+  ] as const) {
+    const f = fixture(rows, bucket);
+    const handler = createImageDownloadHandler({
+      enabled: () => enabled,
+      identity: async () => ({ client: f.client }),
+    });
+    const result = await handler("historical");
+    assert.equal(result.status, 404);
+    const payload = await result.json();
+    assert.equal(payload.error.code, code);
+    assert.equal(
+      payload.error.message,
+      "Imagen no disponible. Verificá tu sesión.",
+    );
+    assert.ok(!JSON.stringify(payload).includes(historical.object_path));
   }
 });

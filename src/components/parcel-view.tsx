@@ -2,6 +2,15 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { HistoryView, type HistoryReturnState } from "./territory-app";
 import type { Parcel, ParcelImage } from "./contracts";
+export type ParcelTab =
+  "record" | "images" | "contacts" | "consultations" | "attachments";
+const parcelTabs: { key: ParcelTab; label: string }[] = [
+  { key: "record", label: "Datos catastrales" },
+  { key: "images", label: "Imágenes" },
+  { key: "contacts", label: "Contactos" },
+  { key: "consultations", label: "Consultas" },
+  { key: "attachments", label: "Adjuntos" },
+];
 export function ParcelView({
   parcel,
   onCreate,
@@ -17,13 +26,13 @@ export function ParcelView({
   onCreate: () => void;
   onDetail: (id: string) => Promise<void>;
   onBack: () => void;
-  initialTab?: "record" | "consultations";
-  onTabChange?: (tab: "record" | "consultations") => void;
+  initialTab?: ParcelTab;
+  onTabChange?: (tab: ParcelTab) => void;
   historyReturnState?: HistoryReturnState | null;
   onHistoryRemember?: (state: HistoryReturnState) => void;
   onHistoryRestored?: () => void;
 }) {
-  const [tab, setTab] = useState<"record" | "consultations">(initialTab);
+  const [tab, setTab] = useState<ParcelTab>(initialTab);
   return (
     <>
       <button className="back" onClick={onBack}>
@@ -43,157 +52,239 @@ export function ParcelView({
           </button>
         </div>
       </div>
-      <div className="tabs" aria-label="Secciones de la ficha">
-        <button
-          id="tab-record"
-          aria-controls="panel-record"
-          aria-pressed={tab === "record"}
-          className={tab === "record" ? "active" : ""}
-          onClick={() => {
-            setTab("record");
-            onTabChange?.("record");
-          }}
-        >
-          Datos del padrón
-        </button>
-        <button
-          id="tab-consultations"
-          aria-controls="panel-consultations"
-          aria-pressed={tab === "consultations"}
-          className={tab === "consultations" ? "active" : ""}
-          onClick={() => {
-            setTab("consultations");
-            onTabChange?.("consultations");
-          }}
-        >
-          Consultas
-        </button>
-      </div>
-      {tab === "record" ? (
-        <div
-          id="panel-record"
-          role="region"
-          aria-labelledby="tab-record"
-          className="record-layout"
-        >
-          <section className="panel">
-            <div className="panel-head">
-              <h2>Información catastral</h2>
-              <span className="badge">Solo lectura</span>
-            </div>
-            {parcel.provenance && <p className="notice">{parcel.provenance}</p>}
-            <dl className="data-grid">
-              <div>
-                <dt>Localidad</dt>
-                <dd>{parcel.locality}</dd>
-              </div>
-              <div>
-                <dt>Padrón</dt>
-                <dd>{parcel.parcel}</dd>
-              </div>
-              <div>
-                <dt>Domicilio</dt>
-                <dd>{parcel.address}</dd>
-              </div>
-              {Object.entries(parcel.fields ?? {}).map(([label, value]) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className="surface-grid">
-              <Surface
-                label="Superficie de terreno"
-                value={parcel.originalLandArea}
-                source={
-                  parcel.provenance
-                    ? "Prototipo · No verificado"
-                    : "Original · Catastro"
-                }
-              />
-              <Surface
-                label="Superficie construida"
-                value={parcel.originalBuiltArea}
-                source={
-                  parcel.provenance
-                    ? "Prototipo · No verificado"
-                    : "Original · Catastro"
-                }
-              />
-              <Surface
-                label="Superficie detectada"
-                value={parcel.detectedBuiltArea}
-                source={
-                  parcel.provenance
-                    ? "Prototipo · No verificado"
-                    : "Relevamiento"
-                }
-              />
-            </div>
-          </section>
-          <div className="record-images">
-            <ImageViewer images={parcel.images} />
+      <div className="parcel-detail-grid">
+        <section className="panel record-main">
+          <div
+            className="tabs"
+            role="tablist"
+            aria-label="Secciones del padrón"
+          >
+            {parcelTabs.map(({ key, label }, index) => (
+              <button
+                key={key}
+                role="tab"
+                id={`tab-${key}`}
+                aria-controls={`panel-${key}`}
+                aria-selected={tab === key}
+                tabIndex={tab === key ? 0 : -1}
+                className={tab === key ? "active" : ""}
+                onClick={() => {
+                  setTab(key);
+                  onTabChange?.(key);
+                }}
+                onKeyDown={(event) => {
+                  let next = index;
+                  if (event.key === "ArrowRight")
+                    next = (index + 1) % parcelTabs.length;
+                  else if (event.key === "ArrowLeft")
+                    next = (index + parcelTabs.length - 1) % parcelTabs.length;
+                  else if (event.key === "Home") next = 0;
+                  else if (event.key === "End") next = parcelTabs.length - 1;
+                  else return;
+                  event.preventDefault();
+                  const selected = parcelTabs[next].key;
+                  setTab(selected);
+                  onTabChange?.(selected);
+                  document.getElementById(`tab-${selected}`)?.focus();
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          <section className="panel">
-            <div className="panel-head">
-              <h2>Contactos del padrón</h2>
-              <span className="badge">{parcel.contacts.length} contactos</span>
-            </div>
-            {parcel.contacts.length === 0 ? (
-              <p className="empty">No hay contactos disponibles.</p>
-            ) : (
-              <div className="contact-list">
-                {[...parcel.contacts]
-                  .sort(
-                    (a, b) =>
-                      Number(b.relationship.toLowerCase() === "titular") -
-                      Number(a.relationship.toLowerCase() === "titular"),
-                  )
-                  .map((c) => (
-                    <details className="contact" key={c.id}>
-                      <summary>{c.name}</summary>
-                      <p>
-                        <span className="badge">{c.relationship}</span>
-                      </p>
-                      <dl>
-                        <dt>Teléfonos</dt>
-                        <dd>
-                          {c.phones.length
-                            ? c.phones.map((p, i) => <p key={i}>{p}</p>)
-                            : "Sin informar"}
-                        </dd>
-                        <dt>Correos electrónicos</dt>
-                        <dd>
-                          {c.emails.length
-                            ? c.emails.map((p, i) => <p key={i}>{p}</p>)
-                            : "Sin informar"}
-                        </dd>
-                      </dl>
-                    </details>
-                  ))}
+          <div
+            id={`panel-${tab}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${tab}`}
+            className="tabbody"
+            tabIndex={0}
+          >
+            {tab === "record" && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>Información catastral</h2>
+                  <span className="badge">Solo lectura</span>
+                </div>
+                {parcel.provenance && (
+                  <p className="notice">{parcel.provenance}</p>
+                )}
+                <dl className="data-grid">
+                  <div>
+                    <dt>Localidad</dt>
+                    <dd>{parcel.locality}</dd>
+                  </div>
+                  <div>
+                    <dt>Padrón</dt>
+                    <dd>{parcel.parcel}</dd>
+                  </div>
+                  <div>
+                    <dt>Domicilio</dt>
+                    <dd>{parcel.address}</dd>
+                  </div>
+                  {Object.entries(parcel.fields ?? {})
+                    .filter(
+                      ([label]) => !/^(Teléfono|Correo|Vínculo)/.test(label),
+                    )
+                    .map(([label, value]) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                </dl>
+                <div className="surface-grid">
+                  <Surface
+                    label="Superficie de terreno"
+                    value={parcel.originalLandArea}
+                    source={
+                      parcel.provenance
+                        ? "Prototipo · No verificado"
+                        : "Original · Catastro"
+                    }
+                  />
+                  <Surface
+                    label="Superficie construida"
+                    value={parcel.originalBuiltArea}
+                    source={
+                      parcel.provenance
+                        ? "Prototipo · No verificado"
+                        : "Original · Catastro"
+                    }
+                  />
+                  <Surface
+                    label="Superficie detectada"
+                    value={parcel.detectedBuiltArea}
+                    source={
+                      parcel.provenance
+                        ? "Prototipo · No verificado"
+                        : "Relevamiento"
+                    }
+                  />
+                </div>
+              </section>
+            )}
+            {tab === "images" && <ImageViewer images={parcel.images} />}
+            {tab === "contacts" && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>Contactos del padrón</h2>
+                  <span className="badge">
+                    {parcel.contacts.length} contactos
+                  </span>
+                </div>
+                {Object.keys(parcel.fields ?? {}).some((label) =>
+                  /^(Titular|Teléfono|Correo)/.test(label),
+                ) && (
+                  <section className="contact">
+                    <h3>Contacto del expediente</h3>
+                    <dl className="data-grid">
+                      {Object.entries(parcel.fields ?? {})
+                        .filter(([label]) =>
+                          /^(Titular|Documento|Teléfono|Correo|Vínculo)/.test(
+                            label,
+                          ),
+                        )
+                        .map(([label, value]) => (
+                          <div key={label}>
+                            <dt>{label}</dt>
+                            <dd>{value}</dd>
+                          </div>
+                        ))}
+                    </dl>
+                    {parcel.provenance && (
+                      <p className="meta">{parcel.provenance}</p>
+                    )}
+                  </section>
+                )}
+                {parcel.contacts.length === 0 ? (
+                  <p className="empty">No hay contactos disponibles.</p>
+                ) : (
+                  <div className="contact-list">
+                    {[...parcel.contacts]
+                      .sort(
+                        (a, b) =>
+                          Number(b.relationship.toLowerCase() === "titular") -
+                          Number(a.relationship.toLowerCase() === "titular"),
+                      )
+                      .map((c) => (
+                        <details className="contact" key={c.id}>
+                          <summary>{c.name}</summary>
+                          <p>
+                            <span className="badge">{c.relationship}</span>
+                          </p>
+                          <dl>
+                            <dt>Teléfonos</dt>
+                            <dd>
+                              {c.phones.length
+                                ? c.phones.map((p, i) => <p key={i}>{p}</p>)
+                                : "Sin informar"}
+                            </dd>
+                            <dt>Correos electrónicos</dt>
+                            <dd>
+                              {c.emails.length
+                                ? c.emails.map((p, i) => <p key={i}>{p}</p>)
+                                : "Sin informar"}
+                            </dd>
+                          </dl>
+                        </details>
+                      ))}
+                  </div>
+                )}
+                <p className="muted">
+                  Los contactos se agregan al registrar una nueva consulta.
+                </p>
+              </section>
+            )}
+            {tab === "consultations" && (
+              <div>
+                <HistoryView
+                  parcel={parcel}
+                  onDetail={onDetail}
+                  returnState={historyReturnState}
+                  onRemember={onHistoryRemember}
+                  onRestored={onHistoryRestored}
+                />
               </div>
             )}
-            <p className="muted">
-              Los contactos se agregan al registrar una nueva consulta.
-            </p>
-          </section>
-        </div>
-      ) : (
-        <div
-          id="panel-consultations"
-          role="region"
-          aria-labelledby="tab-consultations"
-        >
-          <HistoryView
-            parcel={parcel}
-            onDetail={onDetail}
-            returnState={historyReturnState}
-            onRemember={onHistoryRemember}
-            onRestored={onHistoryRestored}
+            {tab === "attachments" && (
+              <section className="empty">
+                <h2>Archivos adjuntos</h2>
+                <p>
+                  La carga y descarga de adjuntos todavía no está habilitada en
+                  esta versión de prueba.
+                </p>
+              </section>
+            )}
+          </div>
+        </section>
+        <aside className="panel parcel-summary">
+          <h2>Resumen del padrón</h2>
+          <h3>Padrón {parcel.parcel}</h3>
+          <p className="muted">{parcel.locality}</p>
+          <Surface
+            label="Superficie del terreno"
+            value={parcel.originalLandArea}
+            source=""
           />
-        </div>
-      )}
+          <Surface
+            label="Superficie construida"
+            value={parcel.originalBuiltArea}
+            source=""
+          />
+          <button
+            className="btn"
+            onClick={() => {
+              setTab("contacts");
+              onTabChange?.("contacts");
+            }}
+          >
+            Ver contactos
+          </button>
+          <p className="meta">
+            {parcel.provenance ?? "Información territorial de la ficha."}
+          </p>
+        </aside>
+      </div>
     </>
   );
 }
@@ -250,7 +341,8 @@ function trapViewerFocus(event: KeyboardEvent<HTMLDialogElement>) {
 function ImageViewer({ images }: { images: ParcelImage[] }) {
   const [index, setIndex] = useState(0),
     [zoom, setZoom] = useState(1),
-    [failed, setFailed] = useState("");
+    [failed, setFailed] = useState(""),
+    [retry, setRetry] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const slots = (["historical", "survey"] as const).map(
@@ -277,6 +369,7 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
       <div className="image-preview">
         {available ? (
           <img
+            key={`${image.url}-${retry}`}
             src={image.url ?? undefined}
             alt={title}
             onError={() => setFailed(image.url ?? "")}
@@ -288,6 +381,18 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
               {image.unavailableReason ??
                 "La imagen no está disponible en este momento."}
             </p>
+            {image.url && (
+              <button
+                className="btn"
+                type="button"
+                onClick={() => {
+                  setFailed("");
+                  setRetry((value) => value + 1);
+                }}
+              >
+                Reintentar imagen
+              </button>
+            )}
           </div>
         )}
       </div>

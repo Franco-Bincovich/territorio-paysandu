@@ -59,7 +59,7 @@ try {
     .click();
   await page.getByRole("button", { name: /Padrón 900001/ }).click();
   await page
-    .getByRole("heading", { name: "Padrón 900001", exact: true })
+    .getByRole("heading", { name: "Padrón 900001", level: 1, exact: true })
     .waitFor();
   assert.equal(
     await page.getByText("No disponible", { exact: true }).count(),
@@ -69,6 +69,7 @@ try {
     await page.getByText("SECRETO_HISTORICO", { exact: true }).count(),
     0,
   );
+  await page.getByRole("tab", { name: "Imágenes", exact: true }).click();
   const open = page.getByRole("button", {
     name: "Ampliar imagen",
     exact: true,

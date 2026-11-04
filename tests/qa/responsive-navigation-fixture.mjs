@@ -114,9 +114,10 @@ try {
   );
   await page.keyboard.press("Enter");
   await page
-    .getByRole("heading", { name: "Padrón 900002", exact: true })
+    .getByRole("heading", { name: "Padrón 900002", level: 1, exact: true })
     .waitFor();
   await noOverflow();
+  await page.getByRole("tab", { name: "Imágenes", exact: true }).click();
   const opener = page.getByRole("button", {
     name: "Ampliar imagen",
     exact: true,

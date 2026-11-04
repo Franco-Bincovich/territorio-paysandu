@@ -113,13 +113,13 @@ try {
   await page.getByRole("button", { name: /Padrón 900001/ }).click();
   await page.getByRole("button", { name: /Padrón 900002/ }).click();
   await page
-    .getByRole("heading", { name: "Padrón 900002", exact: true })
+    .getByRole("heading", { name: "Padrón 900002", level: 1, exact: true })
     .waitFor();
   releaseParcel();
   await page.waitForTimeout(150);
   assert.equal(
     await page
-      .getByRole("heading", { name: "Padrón 900001", exact: true })
+      .getByRole("heading", { name: "Padrón 900001", level: 1, exact: true })
       .count(),
     0,
   );
@@ -128,6 +128,7 @@ try {
     await page.getByText("must not appear", { exact: true }).count(),
     0,
   );
+  await page.getByRole("tab", { name: "Imágenes", exact: true }).click();
   const opener = page.getByRole("button", { name: "Ampliar imagen" });
   await opener.focus();
   await page.keyboard.press("Enter");
@@ -143,7 +144,7 @@ try {
   findings.push(
     "keyboard opens/zooms/closes image and restores focus; no historical metadata",
   );
-  await page.getByRole("button", { name: "Consultas", exact: true }).click();
+  await page.getByRole("tab", { name: "Consultas", exact: true }).click();
   await page.getByRole("button", { name: /Ver consulta/ }).click();
   await page
     .getByRole("button", { name: "← Volver a las consultas del padrón" })

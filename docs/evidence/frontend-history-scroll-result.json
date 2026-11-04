@@ -2,12 +2,12 @@
   "status": "PASS",
   "scope": "synthetic browser fixtures only",
   "before": {
-    "y": 1677,
-    "x": 98
+    "y": 1498,
+    "x": 73
   },
   "after": {
-    "y": 1677,
-    "x": 98
+    "y": 1498,
+    "x": 73
   },
   "checks": [
     "scoped filters/page restored",

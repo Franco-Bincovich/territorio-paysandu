@@ -77,7 +77,7 @@ try {
     .last()
     .click();
   await page.getByRole("button", { name: /Padrón 900001/ }).click();
-  await page.getByRole("button", { name: "Consultas", exact: true }).click();
+  await page.getByRole("tab", { name: "Consultas", exact: true }).click();
   await page.locator("select[name=type]").selectOption("Reclamo");
   await page.getByLabel("Desde (UTC)").fill("2026-11-01");
   await page.getByRole("button", { name: "Aplicar filtros" }).click();

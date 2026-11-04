@@ -109,12 +109,21 @@ export async function downloadPrototypeImage(
   if (kind !== "historical" && kind !== "survey")
     throw new HttpError(404, "NOT_FOUND", "Imagen no encontrada.");
   const row = (await references(client)).find((r) => r.kind === kind);
-  if (!row) throw new HttpError(404, "NOT_FOUND", "Imagen no encontrada.");
+  if (!row)
+    throw new HttpError(
+      404,
+      "IMAGE_REFERENCE_MISSING",
+      "Imagen no encontrada.",
+    );
   const { data, error } = await client.storage
     .from(row.bucket)
     .download(row.object_path);
   if (error || !data)
-    throw new HttpError(404, "NOT_FOUND", "Imagen no disponible.");
+    throw new HttpError(
+      404,
+      "IMAGE_STORAGE_UNAVAILABLE",
+      "Imagen no disponible.",
+    );
   if (
     !["image/jpeg", "image/png", "image/webp"].includes(data.type) ||
     data.size > MAX_IMAGE_BYTES
