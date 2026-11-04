@@ -20,7 +20,7 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
     await db.exec(
       await readFile(
         new URL(
-          "../../docs/storage/prepare-private-images.sql",
+          "../../supabase/migrations/20261104144022_private_prototype_images.sql",
           import.meta.url,
         ),
         "utf8",

@@ -145,3 +145,7 @@ El ZIP de Library permitió contrastar 7/7 documentos con sus hashes y versiones
 ## Corrección T032 posterior al contraste
 
 Mínimo20 vigente implementado tras trim en cliente, servidor y SQL local; contar codepoints evita diferencias UTF16/PostgreSQL. Se conserva10000 como límite técnico previo, sin aprobarlo frente5000provisional histórico. Ver evidencia t032-description-validation.md y QA independiente. T032 permanece parcial; no se modifica Supabase ni se aprueban gates.
+
+## Continuidad autorizada y verificación reproducible
+
+Franco ratificó mínimo20 y máximo provisional10000; esa decisión ya no bloquea G0–G2. Se conserva el historial anterior y T032 parcial por E2E real pendiente. Ver `docs/evidence/continuity-verification.json`: 87 casos locales PASS, 9 scripts de navegador PASS; cinco intentos iniciales fallaron por puerto de QA equivocado y se corrigieron sin cambiar aserciones. G2: 23/34 tareas con evidencia local (67,6%), 11/34 parciales (32,4%); no es porcentaje de aceptación ni entrega. No se aplicaron migraciones, crearon usuarios ni desplegó cloud.

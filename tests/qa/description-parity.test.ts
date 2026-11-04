@@ -76,7 +76,10 @@ test("independent public SQL RPC rejects bypassed invalid lengths; valid create/
  grant usage on schema auth to anon,authenticated,service_role;grant execute on function auth.uid(),auth.jwt() to anon,authenticated,service_role;`);
     const dir = new URL("../../supabase/migrations/", import.meta.url);
     for (const file of (await readdir(dir))
-      .filter((n) => n.endsWith(".sql"))
+      .filter(
+        (n) =>
+          n.endsWith(".sql") && !n.endsWith("_private_prototype_images.sql"),
+      )
       .sort())
       await db.exec(await readFile(new URL(file, dir), "utf8"));
     const user = randomUUID(),
@@ -100,8 +103,8 @@ test("independent public SQL RPC rejects bypassed invalid lengths; valid create/
     await db.exec("set role authenticated");
     await db.query("select public.touch_session()");
     const payload = (description: string) => ({
-      locality: "QA",
-      parcel: "99999",
+      locality: "LOCALIDAD SINTÉTICA",
+      parcel: "900001",
       type: "General",
       person,
       description,

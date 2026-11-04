@@ -1,6 +1,6 @@
 # Imágenes privadas del prototipo — preparación, no integración completada
 
-Base remota comprobada: `develop/g1-g2-foundation`, SHA `62d8e240cf63d2871311d0d99efeab0e92843170`. Checkout aislado, sin cambios a rama principal, Supabase, planes ni despliegues.
+Base inicialmente comprobada: `62d8e240`. Integración posterior con `develop/g1-g2-foundation` SHA `165d86fa8e6fc8777d5de8480d03a1a7c39fc5c3`, sin conflictos. Checkout aislado; no se fusionó PR ni se modificó la rama principal. Ver estado remoto actual abajo.
 
 ## Implementación
 
@@ -12,7 +12,7 @@ La política de descarga exige `storage.allow_only_operation('object.get_authent
 
 ## SQL y asociaciones
 
-`prepare-private-images.sql` es **borrador fuera del directorio de migraciones**, no aplicado. Crear la migración con CLI solo cuando DOT coordine secuencia. Usa la función de autorización existente `private.can_access()`, no un nuevo modelo de roles. Tabla única `parcel_images`: localidad, padrón, tipo, bucket, filename, object_path, source, metadata, sha256, hosting_authorized_at y authorization_reference. Máximo estructural dos filas, sin imágenes binarias en PostgreSQL. Rutas:
+El borrador `prepare-private-images.sql` se conserva como referencia histórica. El CLI generó `supabase/migrations/20261104144022_private_prototype_images.sql`; su cuerpo fue revisado y aplicado mediante MCP con versión remota `20261104144316`. No volver a aplicar el borrador ni duplicar migración. Se documenta la diferencia entre timestamp local y remoto, como ocurre con las dos migraciones base. Usa la función de autorización existente `private.can_access()`, no un nuevo modelo de roles. Tabla única `parcel_images`: localidad, padrón, tipo, bucket, filename, object_path, source, metadata, sha256, hosting_authorized_at y authorization_reference. Máximo estructural dos filas, sin imágenes binarias en PostgreSQL. Rutas:
 
 - Histórica: `imagenes-satelitales/paysandu/17718/historical/<filename-original-verificado>`.
 - Relevamiento: `imagenes-catastro/paysandu/17718/survey/<filename-original-verificado>`.
@@ -44,7 +44,7 @@ Antes del commit SQL, cualquier fallo revierte toda la transacción. Tras aplica
 
 Actualizar tareas actuales de imágenes: fuente inmediata Supabase Storage; servicio institucional futuro como adaptador alternativo, no única dependencia. No modificar v2. Mantener parcial hasta evidencia remota. No se actualizó Notion desde este subtrabajo para evitar concurrencia: enlazar PR, este documento y resultados a tareas existentes.
 
-Bloqueos: secuencia remota coordinada y aplicación del borrador; originales y verificación de hashes/atribución por DOT; catálogo aprobado que permita llegar a ficha 17718 (base actual solo devuelve tres registros sintéticos; no inventamos domicilio, superficies o personas); pruebas directas Storage con usuarios reales de prueba, logout/expiración, ausencia de objetos y denegaciones; QA visual de ambos originales; preview Vercel habilitado por DOT. La prueba de API directa debe incluir descarga permitida, signing/listing y mutaciones denegadas, y anónimo/no autorizado rechazado. No es entrega final de integración.
+Bloqueos restantes tras aplicar la migración: originales y verificación de hashes/atribución por DOT; catálogo aprobado que permita llegar a ficha 17718 (base actual solo devuelve tres registros sintéticos; no inventamos domicilio, superficies o personas); pruebas directas Storage con usuarios reales de prueba, logout/expiración, ausencia de objetos y denegaciones; QA visual de ambos originales; preview Vercel habilitado por DOT. La prueba de API directa debe incluir descarga permitida, signing/listing y mutaciones denegadas, y anónimo/no autorizado rechazado. No es entrega final de integración.
 
 Cambiar proveedor: implementar `ImageAdapter.getImages` institucional en servidor, conservar DTO de dos slots y proxy autenticado, configurar composition en `imageProvider`. Ninguna dependencia Supabase entra en componentes visuales. No hay sincronización ni migración masiva.
 
@@ -59,3 +59,11 @@ El bloqueo del catálogo es real: handler exige findParcel antes de pedir imáge
 1. Tras carga coordinada, usar una sesión de colaborador de prueba para GET /api/parcel-image/historical y /api/parcel-image/survey. Estos endpoints ya existen y no dependen de findParcel: identidad + referencias autorizadas compuestas + Storage/RLS. Comparar SHA256 de cada respuesta con el original; repetir tras logout/expiración y con sesión no autorizada para comprobar rechazo.
 2. Preparar un harness de QA aislado que monte únicamente el visor existente con esos dos endpoints y los metadatos reales autorizados de relevamiento. Rotularlo «Prueba de imágenes Paysandú/17718 — no ficha catastral»; no incluir domicilio, personas, superficies, consultas ni contactos. Usar sesión real y bytes reales, sin interceptar API/Storage. Servirlo solo en loopback durante QA; no añadirlo a rutas públicas ni presentarlo como ficha funcional.
 3. La prueba anterior acredita únicamente imágenes/visor. La navegación búsqueda → ficha 17718 y flujos de consultas siguen bloqueados hasta contar con catálogo/aprobación de datos correspondiente. No inventar registro ni importar los 421 casos. El harness propuesto no se implementó en esta revisión; no hay originales en el checkout ni permiso de secuencia remota.
+
+## Estado remoto actualizado
+
+Migración aplicada 2026-11-04; evidencia `remote-verification.json`. Plan Free confirmado, buckets privados `imagenes-catastro` e `imagenes-satelitales`, ambos vacíos; tabla parcel_images con RLS activa y cero referencias. Seis políticas Storage y una de lectura de metadata verificadas. No hay nuevos avisos de seguridad; continúan el aviso Auth de protección de contraseñas filtradas y cinco avisos informativos de tablas privadas sin políticas (preexistentes). No se cambió Auth.
+
+Regresión integrada: TypeScript, 21 archivos de tests y build PASS (`integration-check.log`). Revisión independiente aplicó las tres migraciones juntas en PGlite con función can_access real y comprobó lectura autorizada, rechazo de firma, contraseña pendiente y anon. Es simulación local, no prueba JWT real. El test de descripción usa ahora clave sintética admitida por la nueva FK; solo excluye la migración Storage, verificada por su suite dedicada.
+
+Sigue pendiente la entrega de los originales exactos localizados por DOT: el HTML local `docs/reference/Territorio_Paysandu_Prototipo_v02_Analitica.html` no contiene 17718 ni imágenes embebidas. Se localizaron capturas intermedias de ese padrón en el trabajo earth421; quedaron descartadas como sustitutos porque no identifican las dos imágenes del prototipo aprobado. No se copiaron ni cargaron. El permiso de alojamiento de ambas ya está concedido; falta acceso a los archivos correctos, comprobación de hashes y atribución histórica exacta.

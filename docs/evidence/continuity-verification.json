@@ -1,0 +1,351 @@
+{
+  "date": "2026-11-04T10:54:54.684285+00:00",
+  "baseCommit": "62d8e240cf63d2871311d0d99efeab0e92843170",
+  "scope": "Independent local verification; synthetic data only; no cloud changes, no gate closure.",
+  "node": "v22.22.1",
+  "typecheck": "PASS",
+  "build": "PASS",
+  "tests": {
+    "individualCases": [
+      {
+        "file": "tests/cache/cadastre.test.ts",
+        "exit": 0,
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/database/backend-security.test.ts",
+        "exit": 0,
+        "tests": 5,
+        "pass": 5,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/database/rls.test.ts",
+        "exit": 0,
+        "tests": 17,
+        "pass": 17,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/domain/consultations.test.ts",
+        "exit": 0,
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/domain/description.test.ts",
+        "exit": 0,
+        "tests": 5,
+        "pass": 5,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/images/selection.test.ts",
+        "exit": 0,
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/qa/catalogue.test.ts",
+        "exit": 0,
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/qa/description-parity.test.ts",
+        "exit": 0,
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/qa/frontend-request-scope.test.ts",
+        "exit": 0,
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/qa/frontend-validation.test.ts",
+        "exit": 0,
+        "tests": 5,
+        "pass": 5,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/server/consultation-validation.test.ts",
+        "exit": 0,
+        "tests": 6,
+        "pass": 6,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/server/filters.test.ts",
+        "exit": 0,
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/server/handler.test.ts",
+        "exit": 0,
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/server/images.test.ts",
+        "exit": 0,
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/server/observability.test.ts",
+        "exit": 0,
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/server/openapi.test.ts",
+        "exit": 0,
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/server/security.test.ts",
+        "exit": 0,
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "skipped": 0
+      }
+    ],
+    "total": 87,
+    "passed": 87,
+    "failed": 0,
+    "browserInitial": [
+      {
+        "file": "tests/qa/form-contacts-fixture.mjs",
+        "exit": 1,
+        "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3001/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"\u001b[22m\n\n    at /home/franco/Documents/Codex/2026-11-04/task-2/territorio-paysandu-verification/tests/qa/form-contacts-fixture.mjs:55:14 {\n  log: [\n    '  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"'\n  ],\n  name: 'Error'\n}\n\nNode.js v22.22.1\n"
+      },
+      {
+        "file": "tests/qa/frontend-description-boundaries-fixture.mjs",
+        "exit": 1,
+        "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3001/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"\u001b[22m\n\n    at /home/franco/Documents/Codex/2026-11-04/task-2/territorio-paysandu-verification/tests/qa/frontend-description-boundaries-fixture.mjs:46:14 {\n  log: [\n    '  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"'\n  ],\n  name: 'Error'\n}\n\nNode.js v22.22.1\n"
+      },
+      {
+        "file": "tests/qa/frontend-history-scroll-fixture.mjs",
+        "exit": 1,
+        "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3001/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"\u001b[22m\n\n    at /home/franco/Documents/Codex/2026-11-04/task-2/territorio-paysandu-verification/tests/qa/frontend-history-scroll-fixture.mjs:70:14 {\n  log: [\n    '  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"'\n  ],\n  name: 'Error'\n}\n\nNode.js v22.22.1\n"
+      },
+      {
+        "file": "tests/qa/frontend-races-fixture.mjs",
+        "exit": 0,
+        "output": "{\"scope\":\"synthetic intercepted UI only; no real authentication/persistence\",\"checks\":[\"late parcel response cannot replace latest selection\",\"keyboard opens/zooms/closes image and restores focus; no historical metadata\",\"detail returns to originating parcel consultations\",\"UTC date remains November 4 in Montevideo browser\",\"logout removes data and history filters; late detail cannot restore them\"],\"pageErrors\":[],\"status\":\"PASS\"}\n"
+      },
+      {
+        "file": "tests/qa/history-navigation-fixture.mjs",
+        "exit": 1,
+        "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3001/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"\u001b[22m\n\n    at /home/franco/Documents/Codex/2026-11-04/task-2/territorio-paysandu-verification/tests/qa/history-navigation-fixture.mjs:17:13 {\n  log: [\n    '  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"'\n  ],\n  name: 'Error'\n}\n\nNode.js v22.22.1\n"
+      },
+      {
+        "file": "tests/qa/image-viewer-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"mocked\":true,\"checks\":[\"null surfaces handled\",\"historical metadata suppressed\",\"zoom 125%\",\"carousel resets zoom\",\"Escape closes and restores focus\",\"survey metadata visible\"]}\n"
+      },
+      {
+        "file": "tests/qa/responsive-navigation-fixture.mjs",
+        "exit": 1,
+        "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3001/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"\u001b[22m\n\n    at /home/franco/Documents/Codex/2026-11-04/task-2/territorio-paysandu-verification/tests/qa/responsive-navigation-fixture.mjs:97:14 {\n  log: [\n    '  - navigating to \"http://127.0.0.1:3001/\", waiting until \"load\"'\n  ],\n  name: 'Error'\n}\n\nNode.js v22.22.1\n"
+      },
+      {
+        "file": "tests/qa/session-ui-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"mocked\":true,\"checks\":[\"password-change UI hides business functions\",\"401 on business API clears authenticated UI\"]}\n"
+      },
+      {
+        "file": "tests/qa/unconfigured-browser.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"checks\":[\"real API 503/no-store\",\"UI explains missing configuration\",\"login cannot unlock business UI\",\"no uncaught page exceptions\",\"mobile login no horizontal overflow\"],\"mocked\":false}\n"
+      }
+    ],
+    "browserFinal": [
+      {
+        "file": "tests/qa/form-contacts-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"mocked\":true,\"checks\":[\"titular first despite source order\",\"keyboard expandable multiple contacts/media and missing fields\",\"invalid submit blocks network with linked focused summary\",\"second email error removal clears stale link\",\"multiple media preserved in payload\",\"server failure preserves draft and focuses summary\"],\"pageErrors\":[]}\n"
+      },
+      {
+        "file": "tests/qa/frontend-description-boundaries-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"scope\":\"synthetic intercepted frontend validation only\",\"checks\":[{\"name\":\"whitespace\",\"valid\":false,\"postDelta\":0},{\"name\":\"19\",\"valid\":false,\"postDelta\":0},{\"name\":\"trim19\",\"valid\":false,\"postDelta\":0},{\"name\":\"20\",\"valid\":true,\"postDelta\":1},{\"name\":\"21\",\"valid\":true,\"postDelta\":1},{\"name\":\"10000\",\"valid\":true,\"postDelta\":1},{\"name\":\"10001\",\"valid\":false,\"postDelta\":0},{\"name\":\"emoji19\",\"valid\":false,\"postDelta\":0},{\"name\":\"trimEmoji20\",\"valid\":true,\"postDelta\":1},{\"name\":\"emoji10000\",\"valid\":true,\"postDelta\":1},{\"name\":\"emoji10001\",\"valid\":false,\"postDelta\":0}],\"totalPosts\":5,\"pageErrors\":[]}\n"
+      },
+      {
+        "file": "tests/qa/frontend-history-scroll-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"scope\":\"synthetic browser fixtures only\",\"before\":{\"y\":1677,\"x\":98},\"after\":{\"y\":1677,\"x\":98},\"checks\":[\"scoped filters/page restored\",\"window and horizontal table scroll restored\",\"focus restored to original consultation\"],\"pageErrors\":[]}\n"
+      },
+      {
+        "file": "tests/qa/frontend-races-fixture.mjs",
+        "exit": 0,
+        "output": "{\"scope\":\"synthetic intercepted UI only; no real authentication/persistence\",\"checks\":[\"late parcel response cannot replace latest selection\",\"keyboard opens/zooms/closes image and restores focus; no historical metadata\",\"detail returns to originating parcel consultations\",\"UTC date remains November 4 in Montevideo browser\",\"logout removes data and history filters; late detail cannot restore them\"],\"pageErrors\":[],\"status\":\"PASS\"}\n"
+      },
+      {
+        "file": "tests/qa/history-navigation-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"mocked\":true,\"checks\":[\"combined filters and page survive detail return\",\"person empty and error UI\",\"parcel history detail returns to parcel context\"],\"requests\":6}\n"
+      },
+      {
+        "file": "tests/qa/image-viewer-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"mocked\":true,\"checks\":[\"null surfaces handled\",\"historical metadata suppressed\",\"zoom 125%\",\"carousel resets zoom\",\"Escape closes and restores focus\",\"survey metadata visible\"]}\n"
+      },
+      {
+        "file": "tests/qa/responsive-navigation-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"mocked\":true,\"viewport\":\"390x844\",\"checks\":[\"responsive search results/record/history no overflow\",\"two person results keyboard traversal and opening\",\"mobile zoom125%\",\"modal focus contained both tab directions and Escape returns focus\",\"history scroll restoration\"],\"before\":1289,\"after\":1289,\"pageErrors\":[]}\n"
+      },
+      {
+        "file": "tests/qa/session-ui-fixture.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"mocked\":true,\"checks\":[\"password-change UI hides business functions\",\"401 on business API clears authenticated UI\"]}\n"
+      },
+      {
+        "file": "tests/qa/unconfigured-browser.mjs",
+        "exit": 0,
+        "output": "{\"status\":\"PASS\",\"checks\":[\"real API 503/no-store\",\"UI explains missing configuration\",\"login cannot unlock business UI\",\"no uncaught page exceptions\",\"mobile login no horizontal overflow\"],\"mocked\":false}\n"
+      }
+    ]
+  },
+  "metrics": {
+    "method": "Unweighted count of existing 34 G2 functional backlog tasks, not distinct user journeys. evidence_local requires existing implementation and local evidence; partial never assigned fractional completion. No claim of fully implemented or accepted scope.",
+    "g2Total": 34,
+    "g2LocalEvidence": 23,
+    "g2LocalEvidencePercent": 67.6,
+    "g2Partial": 11,
+    "g2PartialPercent": 32.4,
+    "realEndToEndVerified": 0,
+    "backlogCounts": {
+      "blocked": 20,
+      "partial": 50,
+      "evidence_local": 28,
+      "no-evidence": 1
+    }
+  },
+  "remainingG2": [
+    {
+      "id": "PAY-T023",
+      "title": "PAY-T023 · Crear adaptador de lectura catastral",
+      "gap": "Adaptador sintético; no consulta institucional ni timeout externo."
+    },
+    {
+      "id": "PAY-T024",
+      "title": "PAY-T024 · Implementar búsqueda localidad + padrón",
+      "gap": "Pruebas independientes de localidad+padrón, ceros y localidad equivocada; sin backend institucional ni E2E autenticado."
+    },
+    {
+      "id": "PAY-T026",
+      "title": "PAY-T026 · Ficha catastral V1 sin resumen lateral",
+      "gap": "Ficha sintética y nulls probados; sin contraste padrón oficial 17718 autorizado."
+    },
+    {
+      "id": "PAY-T027",
+      "title": "PAY-T027 · Integrar imágenes desde servicio interno institucional",
+      "gap": "Dos slots y ausencia probada; servicio institucional no integrado."
+    },
+    {
+      "id": "PAY-T032",
+      "title": "PAY-T032 · Formulario completo obligatorio",
+      "gap": "Mínimo20 y máximo provisional10000 confirmados por Franco en continuidad; implementados tras trim con codepoints en cliente/HTTP/SQLlocal y probados. Pendiente E2E con Auth/persistencia real; permanece parcial."
+    },
+    {
+      "id": "PAY-T034",
+      "title": "PAY-T034 · Historial por padrón con lectura de todos colaboradores",
+      "gap": "Filtros combinados/página2 y retorno UI probados; pendiente API autenticada con persistencia alojada."
+    },
+    {
+      "id": "PAY-T040",
+      "title": "PAY-T040 · Listado unificado de consultas globales",
+      "gap": "Historial único y detalle visual; permisos persistentes reales pendientes."
+    },
+    {
+      "id": "PAY-T074",
+      "title": "PAY-T074 · Validar claves compuestas e identidad de padrón",
+      "gap": "Composición localidad/padrón y preservación textual ceros comprobadas en catálogo; matriz institucional aún pendiente."
+    },
+    {
+      "id": "PAY-T077",
+      "title": "PAY-T077 · Verificar caducidad de URL de imágenes",
+      "gap": "Expiración y shape URL probados; renovación enlaces/denegación servicio no implementadas."
+    },
+    {
+      "id": "PAY-T105",
+      "title": "PAY-T105 · Implementar búsqueda exacta por nombre, cédula o RUT",
+      "gap": "Nombre homónimo exacto retorna3padrones en2localidades; CI/RUT distinguen2padrones de persona1 frente a1de persona2 sin fusionar. QA independiente catálogo PASS; fuente institucional pendiente."
+    },
+    {
+      "id": "PAY-T114",
+      "title": "PAY-T114 · Unificar menú de consultas e historial",
+      "gap": "Historial único y fecha sin hora en UI; permisos SQL locales, E2E real pendiente."
+    }
+  ],
+  "notExecuted": [
+    "Real Supabase Auth/login/refresh/revocation/first password change",
+    "Cloud migrations and direct authenticated RLS attacks",
+    "Catastro and image institutional services",
+    "Hosted end-to-end persistence",
+    "G4 load/recovery/UAT and G5 release acceptance"
+  ],
+  "decisions": [
+    "Authorization to reuse project received; interrupted migration requires clarification before retry, not a new generic project approval.",
+    "User-controlled email and secure initial credential/recovery procedure before delivery.",
+    "Permitted hosting route with no unapproved cost; delegated separate review.",
+    "Institutional connectivity/contracts and real data authorization remain pending."
+  ],
+  "independentMaterialWork": "No remaining autonomous functional implementation identified in the targeted current disposition. Corrected five QA script default ports so existing local verification runs reproducibly. No new functional completion claimed.",
+  "independentReview": {
+    "agent": "qa_continuity",
+    "result": "No blocking findings in five QA URL changes; assertions unchanged; metrics validated; review of saved results, not independent rerun."
+  },
+  "supabaseAttempt": {
+    "project": "kmimekswqpsuspkrxdet",
+    "organization": "mideqdqcagfxpcrzovah",
+    "plan": "free",
+    "status": "ACTIVE_HEALTHY",
+    "postgres": "17.11.0.011",
+    "createdAt": "2026-11-04T02:02:21.94618Z",
+    "authorization": "User explicitly authorized this project, schema/Auth/RLS/synthetic users and real tests; no costs or institutional data.",
+    "preflight": "No public/private tables/functions, no private schema, 0 users/sessions/buckets/custom Auth triggers, no migrations. Auth columns compatible; postgres FK/trigger privileges confirmed.",
+    "migration": "20261104035645_initial_collaborator_schema.sql",
+    "sha256": "a24cccea5b4292af82196bc19813166f9c727aa519277ea7bf1f775b6162f1b1",
+    "attempt": "apply_migration interrupted by user before result; no automatic retry",
+    "postCheck": "list_migrations empty; public/private tables empty.",
+    "result": "NOT APPLIED as observed after interruption",
+    "next": "Resume affected migration only after interruption is clarified. Backend privileged key channel unavailable: no Supabase CLI login token in current environment and no browser session; connector only exposes publishable keys."
+  }
+}

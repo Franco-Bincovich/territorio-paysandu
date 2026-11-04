@@ -1,0 +1,25 @@
+{
+  "scope": "Local PostgreSQL WASM with Auth stubs; no real JWT evidence",
+  "test": "tests/database/parcel-integrity.test.ts",
+  "result": "PASS",
+  "typecheck": "PASS",
+  "independentQa": {
+    "agent": "qa_continuity",
+    "executed": true,
+    "result": "PASS"
+  },
+  "cloud": {
+    "project": "kmimekswqpsuspkrxdet",
+    "initialMigrationConfirmations": "two expired; no approval effective",
+    "migrationList": [],
+    "applicationTables": 0,
+    "applicationFunctions": 0,
+    "privateSchema": 0,
+    "authUsers": 0
+  },
+  "limits": [
+    "Only three explicitly synthetic parcel keys permitted",
+    "Institutional catalogue integration requires future authorized migration",
+    "No real Auth/persistence/RLS/session/password-change tests executed"
+  ]
+}

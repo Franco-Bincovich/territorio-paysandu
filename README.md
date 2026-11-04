@@ -22,7 +22,7 @@ Tipos fijos, un solo rol Colaborador, sin dashboard, adjuntos ni estados de trá
 
 ## Recursos y límites
 
-El proyecto Supabase `kmimekswqpsuspkrxdet` fue devuelto por el conector pero tiene fecha anterior a esta ejecución. Se inspeccionó en lectura: sin tablas públicas, migraciones, usuarios ni buckets. No se aplica el esquema hasta aclarar propiedad y propósito con DOT. Repositorio privado confirmado: [Franco-Bincovich/territorio-paysandu](https://github.com/Franco-Bincovich/territorio-paysandu), rama `develop/g1-g2-foundation`. Vercel no está desplegado; no hay URL operativa entregada.
+El proyecto Supabase `kmimekswqpsuspkrxdet` fue autorizado explícitamente y recibió las migraciones inicial y de integridad sintética tras confirmación del conector. Se verificaron ocho tablas con RLS, FK compuesta y permisos restrictivos. Todavía no hay usuarios ni pruebas reales de Auth/persistencia de negocio; falta un canal seguro para la clave administrativa del backend. Ver `docs/evidence/supabase-migrations-applied.json`. Repositorio privado confirmado: [Franco-Bincovich/territorio-paysandu](https://github.com/Franco-Bincovich/territorio-paysandu), rama `develop/g1-g2-foundation`. Vercel no está desplegado; no hay URL operativa entregada.
 
 El HTML de referencia proviene de Library, ID `libfile_d27f72d729d481919b0a68099b60f420`, SHA256 `87ef523e300d4d8fcf930eb31a0a4984a2806bfad00383d46750860da423f40b`. Está excluido del repositorio; solo se trasladan estilos, no datos ni funciones v2.
 
@@ -35,4 +35,4 @@ Fuentes: [alcance](https://app.notion.com/p/40e30c4074f781968bfdfc17d2fbf599), [
 - [OpenAPI](docs/api-openapi.json): contrato del transporte actual.
 - [Dependencias y controles](docs/dependency-policy.md): inventario, auditorías y límites.
 
-La migración se generó con el CLI local fijado y `SUPABASE_HOME="$PWD/.supabase"`. No iniciar, vincular ni aplicar al proyecto cloud retenido. Las pruebas SQL locales usan PostgreSQL WASM con identidad Auth simulada; los tests de navegador con interceptación validan UI, no persistencia cloud.
+La migración se generó con el CLI local fijado y `SUPABASE_HOME="$PWD/.supabase"`. No ejecutar db push/repair sin reconciliar el mapa de versiones local/remoto documentado; el conector asignó sus propias versiones. Las pruebas SQL locales usan PostgreSQL WASM con identidad Auth simulada; los tests de navegador con interceptación validan UI, no persistencia cloud.

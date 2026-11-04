@@ -1077,7 +1077,7 @@
       "requirement": "DEC-013",
       "dependencies": "PAY-T031",
       "status": "partial",
-      "assessment": "Mínimo20 tras trim corregido en dominio/cliente/HTTP/SQLlocal, codepoints coherentes; límites y noRPC inválido probados con QAindependiente. Máximo10000 técnico conservado frente5000 histórico provisional: decisión pendiente; no E2Ecloud.",
+      "assessment": "Mínimo20 y máximo provisional10000 confirmados por Franco en continuidad; implementados tras trim con codepoints en cliente/HTTP/SQLlocal y probados. Pendiente E2E con Auth/persistencia real; permanece parcial.",
       "evidence": [
         "docs/evidence/t032-description-validation.md",
         "docs/evidence/t032-independent-review.md",
@@ -1134,7 +1134,8 @@
           "docs/evidence/t058-technical-review.md",
           "src/domain/index.ts"
         ]
-      }
+      },
+      "continuityDecision": "2026-11-04: usuario ratifica mínimo20 y máximo provisional10000; no requiere nueva decisión para continuar G0–G2."
     },
     {
       "id": "PAY-T033",

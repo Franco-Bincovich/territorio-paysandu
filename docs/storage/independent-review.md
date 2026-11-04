@@ -51,3 +51,19 @@ Verificación independiente: `npm run typecheck` **PASS**; ejecución dirigida d
 La conversión es una presentación textual de valores JSON ya decodificados por JavaScript; no implica preservar la representación textual exacta del JSON original ni precisión decimal arbitraria. La base conserva su JSONB sin cambios.
 
 La evidencia ejecutada en esta revisión es sintética. La propuesta de verificación futura es distinta: un harness aislado del visor con sesión autorizada y bytes REALES de Supabase Storage para localidad Paysandú + padrón 17718, sin interceptar APIs ni inventar una ficha catastral. Si se ejecuta con esos requisitos, podrá acreditar recuperación y visualización efectiva de las imágenes autorizadas, junto con el proxy directo. No acreditará búsqueda ni ficha completa: el catálogo sigue sin ese padrón. Esta revisión no ejecutó ese harness real, servicios remotos ni despliegues.
+
+## Revisión previa a aplicación — base integrada 165d86fa
+
+Revisé la integración pendiente de commit con la base principal de desarrollo informada por el autor y la migración oficial `20261104144022_private_prototype_images.sql`. Confirmé por comparación exacta que el cuerpo desde `begin;` coincide con el borrador SQL previamente revisado. Solo cambió el encabezado. No se altera la migración inicial ni las restricciones de consultas sintéticas; `parcel_images` mantiene su asociación independiente y exclusiva a Paysandú/17718.
+
+El cambio a description-parity usa una clave sintética admitida por la nueva FK de consultas y conserva los escenarios de límites Unicode, normalización, edición, concurrencia e idempotencia. Excluye únicamente `_private_prototype_images.sql`, que requiere el esquema Storage y ahora es cargada por storage-rls desde su ubicación oficial. No se detectó reducción de las comprobaciones del propósito de esa suite.
+
+Verificación independiente ejecutada:
+
+- TypeScript **PASS**.
+- **7 archivos dirigidos PASS, 0 FAIL**: backend-security, parcel-integrity, rls, storage-rls, description-parity, storage-images y username-login.
+- Prueba adicional PGlite aplicando **las tres migraciones en secuencia**, con la implementación real de `private.can_access()` de la inicial (solo Auth y Storage de plataforma simulados): lectura autorizada PASS, `object.sign` denegado PASS, cambio obligatorio de contraseña impide referencias/descarga PASS, anon sin objetos PASS. Esto verifica interacción local entre migraciones; no emula el servicio HTTP remoto.
+
+El padre informó preflight remoto de solo lectura: proyecto Free, dos migraciones previas, ningún bucket/objeto/política Storage, tabla parcel_images ausente, can_access coincidente y helper por operación disponible. No ejecuté ni validé ese inventario remoto por mi cuenta. Bajo ese estado comprobado por el ejecutor, **no encuentro regresiones ni un bloqueo de código para aplicar esta migración transaccional**. No constituye confirmación de aplicación ni autorización para omitir preflight actualizado o modificar otro proyecto. Después de aplicar siguen siendo necesarias las comprobaciones reales de buckets privados, políticas, permisos directos y recuperación de originales autorizados. La ficha 17718 y la integración de extremo a extremo continúan con los límites ya documentados.
+
+Observación documental: README de Storage aún describe el SQL como borrador fuera de migraciones y secuencia no coordinada; actualizar esa sección al registrar la aplicación y sus evidencias, conservando la distinción entre preparado y realmente ejecutado.
