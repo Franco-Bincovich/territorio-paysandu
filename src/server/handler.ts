@@ -1,6 +1,7 @@
 import { DomainError, parseData, parseParcel } from "../domain";
 import { catalogue } from "./catalogue";
 import { imageResponse } from "./images";
+import { imageProvider } from "./storage-images";
 import { historyFilters, queryKeys } from "./filters";
 import {
   observeRequest,
@@ -358,7 +359,7 @@ async function handleRequest(
         .eq("parcel", key.parcel)
         .order("created_at");
       dbError(error);
-      const images = await adapter.getImages(key);
+      const images = await imageProvider(client, adapter).getImages(key);
       return response({
         ...key,
         address: parcel.address,

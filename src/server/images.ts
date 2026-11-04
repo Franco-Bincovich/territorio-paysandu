@@ -19,6 +19,9 @@ export function availableImage<T extends ParcelImage>(
   now: Date,
 ): T | null {
   if (!image) return null;
+  // Exact application-owned endpoints revalidate session and Storage RLS on every request.
+  if (/^\/api\/parcel-image\/(historical|survey)$/.test(image.url))
+    return image;
   try {
     return imageUrlAvailability(image, now).available ? image : null;
   } catch {
