@@ -838,3 +838,22 @@ td {
     transition: none !important;
   }
 }
+.field-error {
+  color: #8c2323;
+  font-size: 12px;
+  font-weight: 400;
+}
+.field [aria-invalid="true"] {
+  border-color: #b54242;
+}
+.repeat-field > .field {
+  flex: 1;
+  min-width: 0;
+}
+.error ul {
+  margin-bottom: 0;
+}
+.error a {
+  color: #8c2323;
+  text-decoration: underline;
+}

@@ -1,0 +1,130 @@
+
+> territorio-paysandu@0.1.0 check
+> npm run typecheck && npm test && npm run build
+
+
+> territorio-paysandu@0.1.0 typecheck
+> tsc --noEmit
+
+
+> territorio-paysandu@0.1.0 test
+> node --import tsx --test tests/**/*.test.ts
+
+TAP version 13
+# Subtest: tests/cache/cadastre.test.ts
+ok 1 - tests/cache/cadastre.test.ts
+  ---
+  duration_ms: 604.309886
+  type: 'test'
+  ...
+# Subtest: tests/database/backend-security.test.ts
+ok 2 - tests/database/backend-security.test.ts
+  ---
+  duration_ms: 715.897146
+  type: 'test'
+  ...
+# Subtest: tests/database/rls.test.ts
+ok 3 - tests/database/rls.test.ts
+  ---
+  duration_ms: 2152.371588
+  type: 'test'
+  ...
+# Subtest: tests/domain/consultations.test.ts
+ok 4 - tests/domain/consultations.test.ts
+  ---
+  duration_ms: 665.235646
+  type: 'test'
+  ...
+# Subtest: tests/images/selection.test.ts
+ok 5 - tests/images/selection.test.ts
+  ---
+  duration_ms: 629.294641
+  type: 'test'
+  ...
+# Subtest: tests/qa/catalogue.test.ts
+ok 6 - tests/qa/catalogue.test.ts
+  ---
+  duration_ms: 544.752138
+  type: 'test'
+  ...
+# Subtest: tests/qa/frontend-request-scope.test.ts
+ok 7 - tests/qa/frontend-request-scope.test.ts
+  ---
+  duration_ms: 608.309515
+  type: 'test'
+  ...
+# Subtest: tests/qa/frontend-validation.test.ts
+ok 8 - tests/qa/frontend-validation.test.ts
+  ---
+  duration_ms: 577.580695
+  type: 'test'
+  ...
+# Subtest: tests/server/filters.test.ts
+ok 9 - tests/server/filters.test.ts
+  ---
+  duration_ms: 429.764527
+  type: 'test'
+  ...
+# Subtest: tests/server/handler.test.ts
+ok 10 - tests/server/handler.test.ts
+  ---
+  duration_ms: 692.168034
+  type: 'test'
+  ...
+# Subtest: tests/server/images.test.ts
+ok 11 - tests/server/images.test.ts
+  ---
+  duration_ms: 558.324748
+  type: 'test'
+  ...
+# Subtest: tests/server/observability.test.ts
+ok 12 - tests/server/observability.test.ts
+  ---
+  duration_ms: 553.015039
+  type: 'test'
+  ...
+# Subtest: tests/server/openapi.test.ts
+ok 13 - tests/server/openapi.test.ts
+  ---
+  duration_ms: 313.492749
+  type: 'test'
+  ...
+# Subtest: tests/server/security.test.ts
+ok 14 - tests/server/security.test.ts
+  ---
+  duration_ms: 390.400219
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2172.5823
+
+> territorio-paysandu@0.1.0 build
+> next build
+
+▲ Next.js 16.4.5 (Turbopack)
+✓ Running next.config.ts took 23ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1003ms
+  Running TypeScript ...
+  Finished TypeScript in 501ms ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/3) ...
+✓ Generating static pages using 5 workers (3/3) in 364ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+└ ƒ /api/[...path]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

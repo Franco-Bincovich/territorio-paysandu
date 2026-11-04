@@ -1,6 +1,13 @@
 import { DomainError, parseData, parseParcel } from "../domain";
 import { catalogue } from "./catalogue";
 import { imageResponse } from "./images";
+import { historyFilters, queryKeys } from "./filters";
+import {
+  observeRequest,
+  routeTemplate,
+  routes,
+  type RequestLogger,
+} from "./observability";
 import {
   accountBucket,
   checkOrigin,
@@ -81,14 +88,49 @@ function payload(body: Record<string, unknown>, editing = false) {
     }),
   };
 }
-export async function handle(request: Request, segments: string[]) {
+export async function handle(
+  request: Request,
+  segments: string[],
+  logger?: RequestLogger,
+) {
+  return observeRequest(
+    routeTemplate(segments),
+    () => handleRequest(request, segments),
+    logger,
+  );
+}
+async function handleRequest(request: Request, segments: string[]) {
   try {
+    const template = routeTemplate(segments);
+    if (template === "unmatched")
+      return response(
+        { error: { code: "NOT_FOUND", message: "Ruta no encontrada." } },
+        404,
+      );
+    const methods: readonly string[] = routes[template];
+    if (!methods.includes(request.method)) {
+      const result = response(
+        {
+          error: {
+            code: "METHOD_NOT_ALLOWED",
+            message: "Método no permitido.",
+          },
+        },
+        405,
+      );
+      result.headers.set("Allow", methods.join(", "));
+      return result;
+    }
     const { origin } = configuration();
     checkOrigin(request, origin);
     const path = segments.join("/");
     const url = new URL(request.url);
     if (path === "auth/login" && request.method === "POST") {
       const body = await jsonBody(request);
+      if (
+        Object.keys(body).some((key) => !["username", "password"].includes(key))
+      )
+        throw new HttpError(400, "VALIDATION", "Campo no permitido.");
       const username = required(body.username, 100).trim();
       const password = required(body.password, 1024);
       const admin = privilegedClient();
@@ -159,6 +201,8 @@ export async function handle(request: Request, segments: string[]) {
     if (path === "auth/password" && request.method === "POST") {
       const { client, user } = await identity(true);
       const body = await jsonBody(request);
+      if (Object.keys(body).some((key) => key !== "password"))
+        throw new HttpError(400, "VALIDATION", "Campo no permitido.");
       const password = required(body.password, 1024);
       if (password.length < 12)
         throw new HttpError(
@@ -241,6 +285,10 @@ export async function handle(request: Request, segments: string[]) {
     }
     const { client } = await identity();
     if (path === "search" && request.method === "GET") {
+      queryKeys(
+        url.searchParams,
+        url.searchParams.has("kind") ? ["kind", "q"] : ["locality", "parcel"],
+      );
       const adapter = catalogue();
       let records;
       if (url.searchParams.has("kind")) {
@@ -294,7 +342,13 @@ export async function handle(request: Request, segments: string[]) {
         detectedBuiltArea: parcel.detectedBuildingArea,
         synthetic: true,
         contacts: (contacts ?? [])
-          .map((c) => ({ id: c.id, ...c.person }))
+          .map((c) => ({
+            id: c.id,
+            name: c.person.name,
+            relationship: c.person.relationship,
+            phones: c.person.phones,
+            emails: c.person.emails,
+          }))
           .sort(
             (a, b) =>
               Number(
@@ -325,42 +379,22 @@ export async function handle(request: Request, segments: string[]) {
       return response(dto(created), 201);
     }
     if (path === "consultations" && request.method === "GET") {
-      const page = Number(url.searchParams.get("page") ?? 1),
-        pageSize = Number(url.searchParams.get("pageSize") ?? 20);
-      if (
-        !Number.isSafeInteger(page) ||
-        page < 1 ||
-        !Number.isSafeInteger(pageSize) ||
-        pageSize < 1 ||
-        pageSize > 100
-      )
-        throw new HttpError(400, "VALIDATION", "Página inválida.");
+      const { page, pageSize, start, end, filters, from, to } = historyFilters(
+        url.searchParams,
+      );
       let query = client
         .from("consultations")
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
         .order("id")
-        .range((page - 1) * pageSize, page * pageSize - 1);
-      for (const key of ["locality", "parcel", "type"]) {
-        const value = url.searchParams.get(key);
-        if (value) query = query.eq(key, value);
-      }
-      for (const [key, op] of [
-        ["from", "gte"],
-        ["to", "lte"],
-      ] as const) {
-        const value = url.searchParams.get(key);
-        if (value) {
-          if (
-            !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-            !Number.isFinite(Date.parse(value))
-          )
-            throw new HttpError(400, "VALIDATION", "Fecha inválida.");
-          query = query[op](
-            "created_at",
-            value + (key === "to" ? "T23:59:59.999Z" : "T00:00:00.000Z"),
-          );
-        }
+        .range(start, end);
+      for (const [key, value] of Object.entries(filters))
+        query = query.eq(key, value);
+      if (from) query = query.gte("created_at", from + "T00:00:00.000Z");
+      if (to) {
+        const nextDay = new Date(to + "T00:00:00.000Z");
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+        query = query.lt("created_at", nextDay.toISOString());
       }
       const { data, error, count } = await query;
       dbError(error);

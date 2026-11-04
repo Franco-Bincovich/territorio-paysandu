@@ -33,7 +33,7 @@ test("Independent PostgreSQL RLS, grants and transaction checks", async (t) => {
  grant usage on schema auth to anon,authenticated,service_role; grant execute on function auth.uid(),auth.jwt() to anon,authenticated,service_role;`);
     await db.exec(
       await readFile(
-        new URL("../../supabase/schema.sql", import.meta.url),
+        new URL("../../supabase/migrations/20261104035645_initial_collaborator_schema.sql", import.meta.url),
         "utf8",
       ),
     );
@@ -192,6 +192,23 @@ test("Independent PostgreSQL RLS, grants and transaction checks", async (t) => {
       );
       await role();
     });
+    await t.test("forced-password sessions have independent expiry and revocation checks", async () => {
+      await admin("update public.profiles set must_change_password=true where user_id=$1", [A]); await role();
+      assert.equal(await rpc("touch_auth_session", []), true);
+      assert.equal((await db.query("select * from public.consultations")).rows.length, 0);
+      await role(A, SB); assert.equal(await rpc("touch_auth_session", []), false);
+      await admin("update private.session_activity set last_seen=now()-interval '60 minutes' where user_id=$1", [A]); await role();
+      assert.equal(await rpc("touch_auth_session", []), false);
+      await admin("update private.session_activity set last_seen=now() where user_id=$1", [A]);
+      await admin("update auth.sessions set not_after=now()-interval '1 second' where id=$1", [SA]); await role();
+      assert.equal(await rpc("touch_auth_session", []), false);
+      await admin("delete from auth.sessions where id=$1", [SA]); await role();
+      assert.equal(await rpc("touch_auth_session", []), false);
+      await db.exec("reset role;set role anon"); await assert.rejects(rpc("touch_auth_session", []), /permission denied/);
+      await admin("insert into auth.sessions(id,user_id) values ($1,$2)", [SA,A]);
+      await admin("update public.profiles set must_change_password=false where user_id=$1", [A]); await role();
+      assert.equal(await rpc("touch_session", []), true);
+    });
     await t.test(
       "60 minute boundary cannot be revived by touch RPC",
       async () => {
@@ -246,6 +263,7 @@ test("Independent PostgreSQL RLS, grants and transaction checks", async (t) => {
         ).rows[0];
         assert.equal(profile.must_change_password, true);
         await role();
+        assert.equal(await rpc("touch_auth_session", []), false, "old session cannot enter password endpoint after hash reset");
         assert.equal(await rpc("touch_session", []), false);
         await assert.rejects(
           rpc("finalize_password_change", [A, SA]),
@@ -272,6 +290,7 @@ test("Independent PostgreSQL RLS, grants and transaction checks", async (t) => {
           [SA],
         );
         await role();
+        assert.equal(await rpc("touch_auth_session", []), true, "fresh session can enter password flow only");
         assert.equal(
           await rpc("touch_session", []),
           false,

@@ -7,13 +7,17 @@ export function ParcelView({
   onCreate,
   onDetail,
   onBack,
+  initialTab = "record",
+  onTabChange,
 }: {
   parcel: Parcel;
   onCreate: () => void;
   onDetail: (id: string) => Promise<void>;
   onBack: () => void;
+  initialTab?: "record" | "consultations";
+  onTabChange?: (tab: "record" | "consultations") => void;
 }) {
-  const [tab, setTab] = useState<"record" | "consultations">("record");
+  const [tab, setTab] = useState<"record" | "consultations">(initialTab);
   return (
     <>
       <button className="back" onClick={onBack}>
@@ -46,7 +50,10 @@ export function ParcelView({
           aria-controls="panel-record"
           aria-pressed={tab === "record"}
           className={tab === "record" ? "active" : ""}
-          onClick={() => setTab("record")}
+          onClick={() => {
+            setTab("record");
+            onTabChange?.("record");
+          }}
         >
           Datos del padrón
         </button>
@@ -55,7 +62,10 @@ export function ParcelView({
           aria-controls="panel-consultations"
           aria-pressed={tab === "consultations"}
           className={tab === "consultations" ? "active" : ""}
-          onClick={() => setTab("consultations")}
+          onClick={() => {
+            setTab("consultations");
+            onTabChange?.("consultations");
+          }}
         >
           Consultas
         </button>
@@ -273,7 +283,11 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
       <dialog
         ref={dialog}
         className="viewer-dialog"
-        onClose={() => opener.current?.focus()}
+        onClose={() => {
+          if (opener.current && !opener.current.disabled)
+            opener.current.focus();
+          else document.getElementById("main")?.focus();
+        }}
         aria-label="Visualizador de imágenes"
       >
         <header className="panel-head">
@@ -282,7 +296,12 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
             Cerrar
           </button>
         </header>
-        <div className="viewer-stage">
+        <div
+          className="viewer-stage"
+          tabIndex={0}
+          role="region"
+          aria-label="Imagen ampliada; usá las flechas para desplazar"
+        >
           {available ? (
             <img
               src={image.url ?? undefined}

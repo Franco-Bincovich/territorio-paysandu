@@ -47,3 +47,9 @@ RLS se ejecutó en PostgreSQL WASM con roles efectivos; auth.users/auth.sessions
 Entre 03:47:54 y 03:48:57 UTC, timeout 20s + GH_PROMPT_DISABLED=1 + GIT_TERMINAL_PROMPT=0 + GH_PAGER=cat + gh api user --jq .login, con stdin /dev/null: exit0, Franco-Bincovich. Sin login/refresh/logout ni cambios de credenciales/configuración.
 
 gh repo view Franco-Bincovich/territorio-paysandu: exit1, Could not resolve to a Repository. No se sostiene bloqueo general de autenticación. Repo no creado por este ejecutor. Esta continuación se limitó a lectura GitHub y trabajo local conforme pedido de DOT.
+
+## Actualización posterior: publicación GitHub
+
+El bloqueo anterior quedó resuelto: el 2026-11-04 a las 03:53 UTC se creó y verificó PRIVATE el repositorio https://github.com/Franco-Bincovich/territorio-paysandu. Push normal de `develop/g1-g2-foundation`, SHA remoto confirmado `1c5e1304113a3c0c88833a5d160a834e622f4c5d`; coincide con HEAD en ese hito. No se alteró configuración global ni se activó CI. Los párrafos anteriores se conservan como historia de la auditoría, no estado actual.
+
+La continuación local posterior se documenta en `local-hardening.md` y la matriz completa `../traceability-v1.md`. Supabase continúa retenido y Vercel no desplegado.

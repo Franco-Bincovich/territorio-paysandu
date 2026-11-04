@@ -1,0 +1,575 @@
+TAP version 13
+# Subtest: TTL expires at exact boundary and distinct parcel/locality keys do not collide
+ok 1 - TTL expires at exact boundary and distinct parcel/locality keys do not collide
+  ---
+  duration_ms: 1.296077
+  type: 'test'
+  ...
+# Subtest: LRU remains bounded and hits update recency
+ok 2 - LRU remains bounded and hits update recency
+  ---
+  duration_ms: 0.381047
+  type: 'test'
+  ...
+# Subtest: caller or delegate mutation cannot poison retained data
+ok 3 - caller or delegate mutation cannot poison retained data
+  ---
+  duration_ms: 0.235087
+  type: 'test'
+  ...
+# Subtest: errors, missing results and institutional records are never cached
+ok 4 - errors, missing results and institutional records are never cached
+  ---
+  duration_ms: 0.59699
+  type: 'test'
+  ...
+# Subtest: oversized and mixed-source search results bypass cache
+ok 5 - oversized and mixed-source search results bypass cache
+  ---
+  duration_ms: 0.282816
+  type: 'test'
+  ...
+# Subtest: TTL zero, clear and backwards clock invalidate cache
+ok 6 - TTL zero, clear and backwards clock invalidate cache
+  ---
+  duration_ms: 0.249247
+  type: 'test'
+  ...
+# Subtest: clear during pending request cannot repopulate stale data
+ok 7 - clear during pending request cannot repopulate stale data
+  ---
+  duration_ms: 0.225324
+  type: 'test'
+  ...
+# Subtest: configuration bounds reject unbounded caches and exact person search keys remain distinct
+ok 8 - configuration bounds reject unbounded caches and exact person search keys remain distinct
+  ---
+  duration_ms: 0.328372
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12.864887
+TAP version 13
+# Subtest: independent: missing, null and look-alike origins cannot mutate
+ok 1 - independent: missing, null and look-alike origins cannot mutate
+  ---
+  duration_ms: 30.157733
+  type: 'test'
+  ...
+# Subtest: independent: chunked body without content-length stops at bounded bytes
+ok 2 - independent: chunked body without content-length stops at bounded bytes
+  ---
+  duration_ms: 1.459188
+  type: 'test'
+  ...
+# Subtest: independent: username case/compatibility variants share abuse bucket
+ok 3 - independent: username case/compatibility variants share abuse bucket
+  ---
+  duration_ms: 0.154772
+  type: 'test'
+  ...
+# Subtest: independent: combined history rejects rollover dates and duplicate/overflow filters
+ok 4 - independent: combined history rejects rollover dates and duplicate/overflow filters
+  ---
+  duration_ms: 7.735508
+  type: 'test'
+  ...
+# Subtest: independent: request logging excludes path identifiers and operation error text
+ok 5 - independent: request logging excludes path identifiers and operation error text
+  ---
+  duration_ms: 3.970395
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 48.140059
+TAP version 13
+# Subtest: Independent PostgreSQL RLS, grants and transaction checks
+    # Subtest: RPC creates atomic consultation, snapshot and contact; exact retry is idempotent
+    ok 1 - RPC creates atomic consultation, snapshot and contact; exact retry is idempotent
+      ---
+      duration_ms: 14.680441
+      type: 'test'
+      ...
+    # Subtest: direct writes and private tables denied even for creator
+    ok 2 - direct writes and private tables denied even for creator
+      ---
+      duration_ms: 2.033581
+      type: 'test'
+      ...
+    # Subtest: other collaborator reads globally but cannot edit ownership
+    ok 3 - other collaborator reads globally but cannot edit ownership
+      ---
+      duration_ms: 3.856261
+      type: 'test'
+      ...
+    # Subtest: own edit increments version and preserves original contact and snapshot
+    ok 4 - own edit increments version and preserves original contact and snapshot
+      ---
+      duration_ms: 6.153751
+      type: 'test'
+      ...
+    # Subtest: password gate blocks direct reads and RPC
+    ok 5 - password gate blocks direct reads and RPC
+      ---
+      duration_ms: 3.740338
+      type: 'test'
+      ...
+    # Subtest: forced-password sessions have independent expiry and revocation checks
+    ok 6 - forced-password sessions have independent expiry and revocation checks
+      ---
+      duration_ms: 12.584896
+      type: 'test'
+      ...
+    # Subtest: 60 minute boundary cannot be revived by touch RPC
+    ok 7 - 60 minute boundary cannot be revived by touch RPC
+      ---
+      duration_ms: 3.18724
+      type: 'test'
+      ...
+    # Subtest: revoked auth session blocks old token claims
+    ok 8 - revoked auth session blocks old token claims
+      ---
+      duration_ms: 3.106737
+      type: 'test'
+      ...
+    # Subtest: hash reset preserves forced-change gate; only service finalization of fresh identity opens it
+    ok 9 - hash reset preserves forced-change gate; only service finalization of fresh identity opens it
+      ---
+      duration_ms: 8.536862
+      type: 'test'
+      ...
+    # Subtest: service finalization rejects password changes outside short completion window
+    ok 10 - service finalization rejects password changes outside short completion window
+      ---
+      duration_ms: 2.002476
+      type: 'test'
+      ...
+    # Subtest: transaction rollback when contact insertion fails
+    ok 11 - transaction rollback when contact insertion fails
+      ---
+      duration_ms: 5.112284
+      type: 'test'
+      ...
+    # Subtest: anonymous has no read or RPC grant; limiter service-only and persistent
+    ok 12 - anonymous has no read or RPC grant; limiter service-only and persistent
+      ---
+      duration_ms: 4.071875
+      type: 'test'
+      ...
+    # Subtest: disabled profiles and mismatched session owner cannot access
+    ok 13 - disabled profiles and mismatched session owner cannot access
+      ---
+      duration_ms: 3.430553
+      type: 'test'
+      ...
+    # Subtest: expired auth session denies read independently of recent activity
+    ok 14 - expired auth session denies read independently of recent activity
+      ---
+      duration_ms: 1.961913
+      type: 'test'
+      ...
+    # Subtest: direct RPC rejects malformed document, phone and unknown data
+    ok 15 - direct RPC rejects malformed document, phone and unknown data
+      ---
+      duration_ms: 2.854429
+      type: 'test'
+      ...
+    1..15
+ok 1 - Independent PostgreSQL RLS, grants and transaction checks
+  ---
+  duration_ms: 1263.51461
+  type: 'test'
+  ...
+1..1
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1279.395855
+TAP version 13
+# Subtest: create persists one historical snapshot and new contact; repeated people remain independent
+ok 1 - create persists one historical snapshot and new contact; repeated people remain independent
+  ---
+  duration_ms: 3.233373
+  type: 'test'
+  ...
+# Subtest: concurrent same-key retries create exactly one contact and consultation
+ok 2 - concurrent same-key retries create exactly one contact and consultation
+  ---
+  duration_ms: 1.654376
+  type: 'test'
+  ...
+# Subtest: contact failure rolls back consultation and receipt and permits retry
+ok 3 - contact failure rolls back consultation and receipt and permits retry
+  ---
+  duration_ms: 0.547451
+  type: 'test'
+  ...
+# Subtest: read is global; edit is creator-only and cannot transfer ownership
+ok 4 - read is global; edit is creator-only and cannot transfer ownership
+  ---
+  duration_ms: 0.637385
+  type: 'test'
+  ...
+# Subtest: editing preserves original snapshot, contact and revision history; detects lost updates
+ok 5 - editing preserves original snapshot, contact and revision history; detects lost updates
+  ---
+  duration_ms: 1.333522
+  type: 'test'
+  ...
+# Subtest: password, inactivity and disabled gates protect every operation
+ok 6 - password, inactivity and disabled gates protect every operation
+  ---
+  duration_ms: 0.887654
+  type: 'test'
+  ...
+# Subtest: validation rejects unknown fields, empty contacts and unapproved type; permits variable contacts
+ok 7 - validation rejects unknown fields, empty contacts and unapproved type; permits variable contacts
+  ---
+  duration_ms: 0.25847
+  type: 'test'
+  ...
+# Subtest: combined history filters preserve composite parcel identity and paginate
+ok 8 - combined history filters preserve composite parcel identity and paginate
+  ---
+  duration_ms: 5.466712
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22.378109
+TAP version 13
+# Subtest: selects the latest image strictly before construction inside ten years
+ok 1 - selects the latest image strictly before construction inside ten years
+  ---
+  duration_ms: 7.460223
+  type: 'test'
+  ...
+# Subtest: fallback chooses the closest eligible date to lower window boundary
+ok 2 - fallback chooses the closest eligible date to lower window boundary
+  ---
+  duration_ms: 0.201589
+  type: 'test'
+  ...
+# Subtest: unknown construction explicitly reports fallback, never an earlier claim
+ok 3 - unknown construction explicitly reports fallback, never an earlier claim
+  ---
+  duration_ms: 0.183075
+  type: 'test'
+  ...
+# Subtest: no matching source or date produces unavailable; no out-of-window fallback
+ok 4 - no matching source or date produces unavailable; no out-of-window fallback
+  ---
+  duration_ms: 0.213745
+  type: 'test'
+  ...
+# Subtest: leap day is clamped to February 28 ten calendar years earlier
+ok 5 - leap day is clamped to February 28 ten calendar years earlier
+  ---
+  duration_ms: 0.10588
+  type: 'test'
+  ...
+# Subtest: selection does not mutate input and tie-breaking is deterministic
+ok 6 - selection does not mutate input and tie-breaking is deterministic
+  ---
+  duration_ms: 0.159207
+  type: 'test'
+  ...
+# Subtest: rejects invalid dates, impossible chronology and duplicate ids
+ok 7 - rejects invalid dates, impossible chronology and duplicate ids
+  ---
+  duration_ms: 0.474991
+  type: 'test'
+  ...
+# Subtest: expiry at now is already unavailable; future expiry remains usable
+ok 8 - expiry at now is already unavailable; future expiry remains usable
+  ---
+  duration_ms: 1.264138
+  type: 'test'
+  ...
+# Subtest: missing or unsafe URLs unavailable; malformed expiry rejected
+ok 9 - missing or unsafe URLs unavailable; malformed expiry rejected
+  ---
+  duration_ms: 0.429516
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20.072779
+TAP version 13
+# Subtest: synthetic catalogue exact person search crosses localities without substring or name normalization
+ok 1 - synthetic catalogue exact person search crosses localities without substring or name normalization
+  ---
+  duration_ms: 1.631423
+  type: 'test'
+  ...
+# Subtest: parcel lookup preserves locality and textual parcel identity
+ok 2 - parcel lookup preserves locality and textual parcel identity
+  ---
+  duration_ms: 0.32624
+  type: 'test'
+  ...
+# Subtest: institutional or missing catalogue configuration fails closed
+ok 3 - institutional or missing catalogue configuration fails closed
+  ---
+  duration_ms: 0.396002
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10.593342
+TAP version 13
+# Subtest: new navigation invalidates previous request even if response later resolves
+ok 1 - new navigation invalidates previous request even if response later resolves
+  ---
+  duration_ms: 0.930756
+  type: 'test'
+  ...
+# Subtest: logout/unmount cancellation invalidates active request, later new request works
+ok 2 - logout/unmount cancellation invalidates active request, later new request works
+  ---
+  duration_ms: 0.149404
+  type: 'test'
+  ...
+# Subtest: abort recognition does not suppress genuine failures
+ok 3 - abort recognition does not suppress genuine failures
+  ---
+  duration_ms: 0.174656
+  type: 'test'
+  ...
+# Subtest: history date uses UTC day independent of browser locale timezone
+ok 4 - history date uses UTC day independent of browser locale timezone
+  ---
+  duration_ms: 10.106536
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 19.068928
+TAP version 13
+# Subtest: all required fields reported together; no API needed
+ok 1 - all required fields reported together; no API needed
+  ---
+  duration_ms: 1.746348
+  type: 'test'
+  ...
+# Subtest: variable contacts preserve original error index and require at least one nonempty value
+ok 2 - variable contacts preserve original error index and require at least one nonempty value
+  ---
+  duration_ms: 1.396686
+  type: 'test'
+  ...
+# Subtest: domain structural documents accepted without imposing institutional checksum
+ok 3 - domain structural documents accepted without imposing institutional checksum
+  ---
+  duration_ms: 0.390375
+  type: 'test'
+  ...
+# Subtest: description accepts full domain 10000 maximum and rejects control characters
+ok 4 - description accepts full domain 10000 maximum and rejects control characters
+  ---
+  duration_ms: 0.229138
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12.349193
+TAP version 13
+# Subtest: calendar rejects rollover and inverted ranges, accepts leap day and inclusive UTC dates
+ok 1 - calendar rejects rollover and inverted ranges, accepts leap day and inclusive UTC dates
+  ---
+  duration_ms: 1.605281
+  type: 'test'
+  ...
+# Subtest: pagination rejects coercions, duplicates, overflow and unexpected filters
+ok 2 - pagination rejects coercions, duplicates, overflow and unexpected filters
+  ---
+  duration_ms: 1.511886
+  type: 'test'
+  ...
+# Subtest: search query shape rejects duplicates and mixed person/parcel searches
+ok 3 - search query shape rejects duplicates and mixed person/parcel searches
+  ---
+  duration_ms: 0.144729
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10.457902
+{"event":"http.request.completed","requestId":"10e8cfa6-e65e-4fed-97be-e2c3b682c8eb","route":"/api/session","status":503,"durationMs":2.09}
+{"event":"http.request.completed","requestId":"aa4db4b3-36b6-4691-adf3-2bd45bdd317b","route":"/api/auth/login","status":403,"durationMs":0.27}
+TAP version 13
+# Subtest: unconfigured API fails closed without exposing environment values
+ok 1 - unconfigured API fails closed without exposing environment values
+  ---
+  duration_ms: 5.308333
+  type: 'test'
+  ...
+# Subtest: cross-origin login rejected before auth access
+ok 2 - cross-origin login rejected before auth access
+  ---
+  duration_ms: 0.704593
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12.221895
+TAP version 13
+# Subtest: catalogue invokes selection then checks expiry, never returning expired or malformed URL evidence
+ok 1 - catalogue invokes selection then checks expiry, never returning expired or malformed URL evidence
+  ---
+  duration_ms: 1.561941
+  type: 'test'
+  ...
+# Subtest: API image projection strips historical metadata and rechecks survey expiry
+ok 2 - API image projection strips historical metadata and rechecks survey expiry
+  ---
+  duration_ms: 0.879006
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8.922187
+TAP version 13
+# Subtest: request events contain only generated correlation, template, status and duration
+ok 1 - request events contain only generated correlation, template, status and duration
+  ---
+  duration_ms: 4.65407
+  type: 'test'
+  ...
+# Subtest: logging records failures without exception detail and logger failure cannot break response
+ok 2 - logging records failures without exception detail and logger failure cannot break response
+  ---
+  duration_ms: 0.451285
+  type: 'test'
+  ...
+# Subtest: unknown route never logs raw route/query and standard unsupported methods return405
+ok 3 - unknown route never logs raw route/query and standard unsupported methods return405
+  ---
+  duration_ms: 1.184749
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13.100173
+TAP version 13
+# Subtest: OpenAPI documents each implemented route and method with resolvable schema references
+ok 1 - OpenAPI documents each implemented route and method with resolvable schema references
+  ---
+  duration_ms: 3.134293
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9.776998
+TAP version 13
+# Subtest: writes reject absent and cross-site origin, permit exact configured origin
+ok 1 - writes reject absent and cross-site origin, permit exact configured origin
+  ---
+  duration_ms: 28.790612
+  type: 'test'
+  ...
+# Subtest: account limiter canonicalizes casing and whitespace without exposing usernames
+ok 2 - account limiter canonicalizes casing and whitespace without exposing usernames
+  ---
+  duration_ms: 0.340857
+  type: 'test'
+  ...
+# Subtest: JSON rejects malformed, primitive, array and oversized bodies
+ok 3 - JSON rejects malformed, primitive, array and oversized bodies
+  ---
+  duration_ms: 4.062614
+  type: 'test'
+  ...
+# Subtest: institutional catalogue fails closed and synthetic exact person search spans localities
+ok 4 - institutional catalogue fails closed and synthetic exact person search spans localities
+  ---
+  duration_ms: 1.263078
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 46.14743

@@ -8,3 +8,8 @@ async function route(request: Request, context: Context) {
 export const GET = route;
 export const POST = route;
 export const PATCH = route;
+
+export const PUT = route;
+export const DELETE = route;
+export const OPTIONS = route;
+export const HEAD = route;

@@ -61,6 +61,8 @@ export async function request<T>(url: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   const data = await response.json().catch(() => null);
+  if (init?.signal?.aborted)
+    throw new DOMException("Request superseded", "AbortError");
   if (
     response.status === 401 &&
     !url.startsWith("/api/auth/") &&

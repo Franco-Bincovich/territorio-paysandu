@@ -98,12 +98,12 @@ create policy profile_self on public.profiles for select to authenticated using 
 create policy consultation_read on public.consultations for select to authenticated using ((select private.can_access()));
 create policy contact_read on public.contacts for select to authenticated using ((select private.can_access()));
 
-create function private.touch_session() returns boolean language plpgsql security definer set search_path='' as $$
+create function private.touch_auth_session() returns boolean language plpgsql security definer set search_path='' as $$
 declare sid uuid:=private.session_id(); uid uuid:=auth.uid(); seen timestamptz; started timestamptz;
 begin
   if uid is null or sid is null then return false; end if;
   select s.created_at into started from auth.sessions s join public.profiles p on p.user_id=s.user_id
-    where s.id=sid and s.user_id=uid and p.enabled and not p.must_change_password
+    where s.id=sid and s.user_id=uid and p.enabled and p.role='collaborator'
       and (s.not_after is null or s.not_after>now())
       and (p.password_changed_at is null or s.created_at>=p.password_changed_at);
   if not found then return false; end if;
@@ -115,6 +115,13 @@ begin
     if started<now()-interval '5 minutes' then return false; end if;
     insert into private.session_activity(session_id,user_id) values(sid,uid) on conflict do nothing;
   end if;
+  return true;
+end;
+$$;
+create function public.touch_auth_session() returns boolean language sql security invoker set search_path='' as $$ select private.touch_auth_session(); $$;
+create function private.touch_session() returns boolean language plpgsql security invoker set search_path='' as $$
+begin
+  if not private.touch_auth_session() then return false; end if;
   return private.can_access();
 end;
 $$;
@@ -244,9 +251,9 @@ $$;
 create function public.consume_login_attempt(p_key text) returns boolean language sql security invoker set search_path='' as $$ select private.consume_login_attempt(p_key); $$;
 
 revoke all on all functions in schema private from public,anon,authenticated;
-revoke all on function public.touch_session(),public.create_consultation(jsonb,uuid),public.edit_consultation(uuid,integer,jsonb),public.consume_login_attempt(text),public.finalize_password_change(uuid,uuid) from public,anon,authenticated;
-grant execute on function private.session_id(),private.can_access(),private.touch_session(),private.create_consultation(jsonb,uuid),private.edit_consultation(uuid,integer,jsonb) to authenticated;
-grant execute on function public.touch_session(),public.create_consultation(jsonb,uuid),public.edit_consultation(uuid,integer,jsonb) to authenticated;
+revoke all on function public.touch_auth_session(),public.touch_session(),public.create_consultation(jsonb,uuid),public.edit_consultation(uuid,integer,jsonb),public.consume_login_attempt(text),public.finalize_password_change(uuid,uuid) from public,anon,authenticated;
+grant execute on function private.session_id(),private.can_access(),private.touch_auth_session(),private.touch_session(),private.create_consultation(jsonb,uuid),private.edit_consultation(uuid,integer,jsonb) to authenticated;
+grant execute on function public.touch_auth_session(),public.touch_session(),public.create_consultation(jsonb,uuid),public.edit_consultation(uuid,integer,jsonb) to authenticated;
 grant execute on function private.consume_login_attempt(text),public.consume_login_attempt(text) to service_role;
 grant execute on function private.finalize_password_change(uuid,uuid),public.finalize_password_change(uuid,uuid) to service_role;
 commit;

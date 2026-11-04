@@ -1,6 +1,7 @@
 import type { CadastreAdapter, ImageAdapter, ParcelRecord } from "../domain";
 import { HttpError } from "./security";
 import { resolveImageCatalogue } from "./images";
+import { SyntheticCadastreCache } from "../domain/cadastre-cache";
 
 const records: readonly (ParcelRecord & {
   name: string;
@@ -30,6 +31,30 @@ const records: readonly (ParcelRecord & {
     RUT: "000000000001",
   },
 ];
+const syntheticSource: CadastreAdapter & ImageAdapter = {
+  async findParcel(key) {
+    return (
+      records.find(
+        (r) => r.key.locality === key.locality && r.key.parcel === key.parcel,
+      ) ?? null
+    );
+  },
+  async findPerson(query) {
+    return records.filter((r) => r[query.field] === query.exact);
+  },
+  async getImages() {
+    const now = new Date();
+    // Synthetic-only processing reference, not an institutional acquisition/construction date.
+    const referenceDate =
+      process.env.SYNTHETIC_IMAGE_REFERENCE_DATE ??
+      now.toISOString().slice(0, 10);
+    return resolveImageCatalogue(
+      { referenceDate, historicalCandidates: [], survey: null },
+      now,
+    );
+  },
+};
+let cached: { key: string; adapter: SyntheticCadastreCache } | undefined;
 export function catalogue(): CadastreAdapter & ImageAdapter {
   if (process.env.DATA_MODE !== "synthetic")
     throw new HttpError(
@@ -37,27 +62,26 @@ export function catalogue(): CadastreAdapter & ImageAdapter {
       "INTEGRATION_BLOCKED",
       "La integración institucional está pendiente de autorización.",
     );
+  const raw = process.env.SYNTHETIC_CACHE_TTL_MS ?? "30000";
+  if (!/^\d+$/.test(raw) || Number(raw) > 300000)
+    throw new HttpError(
+      503,
+      "CONFIGURATION",
+      "La configuración de caché no es válida.",
+    );
+  if (!cached || cached.key !== raw)
+    cached = {
+      key: raw,
+      adapter: new SyntheticCadastreCache(syntheticSource, {
+        ttlMs: Number(raw),
+        maxEntries: 100,
+        maxRecordsPerEntry: 100,
+      }),
+    };
+  const adapter = cached.adapter;
   return {
-    async findParcel(key) {
-      return (
-        records.find(
-          (r) => r.key.locality === key.locality && r.key.parcel === key.parcel,
-        ) ?? null
-      );
-    },
-    async findPerson(query) {
-      return records.filter((r) => r[query.field] === query.exact);
-    },
-    async getImages() {
-      const now = new Date();
-      // Synthetic-only processing reference, not an institutional acquisition/construction date.
-      const referenceDate =
-        process.env.SYNTHETIC_IMAGE_REFERENCE_DATE ??
-        now.toISOString().slice(0, 10);
-      return resolveImageCatalogue(
-        { referenceDate, historicalCandidates: [], survey: null },
-        now,
-      );
-    },
+    findParcel: (key) => adapter.findParcel(key),
+    findPerson: (query) => adapter.findPerson(query),
+    getImages: (key) => syntheticSource.getImages(key),
   };
 }

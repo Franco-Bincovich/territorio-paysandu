@@ -4,7 +4,7 @@ Revisor: agente domain (no implementó backend ni schema SQL). Alcance local con
 
 ## Método
 
-`tests/database/rls.test.ts` ejecuta `supabase/schema.sql` **sin modificaciones** en PostgreSQL WASM mediante PGlite. El arnés crea roles anon/authenticated/service_role y stubs mínimos de auth.users, auth.sessions, auth.uid() y auth.jwt(). Cambia el rol SQL efectivo para comprobar grants/RLS, y establece claims solo en el arnés. Los stubs no representan validación criptográfica JWT ni GoTrue.
+`tests/database/rls.test.ts` ejecuta `supabase/migrations/20261104035645_initial_collaborator_schema.sql` **sin modificaciones** en PostgreSQL WASM mediante PGlite. El arnés crea roles anon/authenticated/service_role y stubs mínimos de auth.users, auth.sessions, auth.uid() y auth.jwt(). Cambia el rol SQL efectivo para comprobar grants/RLS, y establece claims solo en el arnés. Los stubs no representan validación criptográfica JWT ni GoTrue.
 
 `tests/database/backend-security.test.ts` prueba helpers reales del backend, independientemente de los tests del autor. Revisión estática de handler, cookies, identidad y cambio de contraseña.
 
@@ -20,8 +20,8 @@ Usar ejecución directa para ver cada subtest: en este runtime `--test` puede re
 
 ## Cobertura y resultado
 
-- 14 controles SQL (15 PASS contando suite): creación atómica, snapshot, contacto único por solicitud, retry idempotente/conflicto de payload, denegación de escrituras directas y tablas privadas, lectura global, edición solo propia, versión optimista, historial original preservado, gate de cambio de contraseña, límite exacto 60 minutos no revivible, revocación de sesión, invalidación posterior a contraseña, rollback real ante fallo de contacto, grants anónimos, límite persistente service-only, perfil deshabilitado, session_id de otro usuario, vencimiento auth independiente y validación adversarial por RPC directa.
-- 3 controles backend PASS: CSRF por origen ausente/null/parecido, cuerpo streaming sin content-length abortado al superar límite, variantes normalizadas de username comparten bucket antiabuso.
+- 15 controles SQL (16 PASS contando suite): creación atómica, snapshot, contacto único por solicitud, retry idempotente/conflicto de payload, denegación de escrituras directas y tablas privadas, lectura global, edición solo propia, versión optimista, historial original preservado, gate de cambio de contraseña, límite exacto 60 minutos no revivible, revocación de sesión, invalidación posterior a contraseña, rollback real ante fallo de contacto, grants anónimos, límite persistente service-only, perfil deshabilitado, session_id de otro usuario, vencimiento auth independiente y validación adversarial por RPC directa.
+- 5 controles backend PASS: CSRF por origen ausente/null/parecido, cuerpo streaming sin content-length abortado al superar límite, variantes normalizadas de username comparten bucket antiabuso, filtros rechazan fechas imposibles/duplicados/overflow, trazas no incluyen datos de URL ni mensajes de excepción y generan su propio ID.
 - TypeScript estricto sin errores en la ejecución de revisión.
 
 ## Defectos detectados y corregidos por autores
@@ -33,6 +33,8 @@ Usar ejecución directa para ver cada subtest: en este runtime `--test` puede re
 
 5. Revisión Claude detectó que un cambio de hash administrativo/rehash podía liberar el primer cambio sin elección del usuario. El autor SQL ahora vuelve a exigir el cambio e invalida actividad ante cualquier cambio de hash. Solo una RPC service-role puede finalizar tras cambio reciente y sesión nueva del mismo usuario; el backend verifica getUser y getClaims del token recién emitido después de updateUser y reautenticación. QA SQL: hash reset NO libera acceso, anon/authenticated NO pueden finalizar, sesión anterior/ajena y cambio de hace diez minutos se rechazan, sesión nueva sola sigue bloqueada y solo finalización privilegiada válida habilita. **15 PASS contando suite**, TypeScript PASS. La revisión del backend es estática: el flujo GoTrue real continúa pendiente.
 
+6. QA posterior detectó que identity(true) omitía la validación de auth.sessions/inactividad mientras se exigía cambio de contraseña. Corregido mediante touch_auth_session autenticado y llamado siempre antes del gate; separa sesión vigente de permiso de negocio. Regresión: gate pendiente permite flujo de contraseña con sesión válida pero no lee consultas; sid ajeno, revocación, not_after y 60 minutos se rechazan; hash reset invalida también acceso al endpoint de contraseña de sesión previa. **16 PASS contando suite**, pruebas SQL sobre la migración versionada intacta. Backend verificado estáticamente; GoTrue real sigue pendiente.
+
 ## Pendientes y límites materiales
 
 - Falta ejecutar contra Supabase real: configuración expuesta de schemas, grants del proyecto y privilegios de trigger sobre auth.users deben confirmarse allí.
@@ -42,3 +44,10 @@ Usar ejecución directa para ver cada subtest: en este runtime `--test` puede re
 - CI/RUT tiene validación estructural; checksum institucional no confirmado.
 - RPC no puede comprobar existencia en Catastro externo sin la integración autorizada. Backend valida contra el adaptador sintético; se debe definir integridad referencial institucional antes de G3.
 - No se ejecutaron backup/restore, carga, UAT ni integración institucional. Ningún resultado local reemplaza esos gates.
+
+
+## PAY-T073 — caché catastral sintética
+
+Implementación en `src/domain/cadastre-cache.ts`; ocho pruebas del autor en `tests/cache/cadastre.test.ts` aprobadas. Revisión estática cruzada por agente backend: sin defecto encontrado, e integración exclusivamente bajo DATA_MODE=synthetic. Esta sección no convierte pruebas del autor en QA independiente.
+
+La instancia es local al proceso y adaptador. TTL predeterminado 30 segundos, configurable entre 0 y 300000 ms; 0 deshabilita. Máximo predeterminado 100 claves LRU y 100 registros por respuesta, cada parámetro acotado a 1000. No retiene errores, null, vacíos, resultados mayores al límite ni cualquier respuesta con fuente institucional. Copias defensivas impiden contaminación por mutación. Invalidación explícita, TTL exacto y reloj que retrocede vacían correctamente; solicitudes pendientes anteriores a clear no repueblan la caché. No cachea autenticación ni URLs de imágenes. Datos institucionales requieren una decisión explícita futura de privacidad y no se habilitan por esta implementación.

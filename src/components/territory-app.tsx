@@ -17,6 +17,9 @@ import {
   type Consultation,
   type ConsultationPage,
 } from "./contracts";
+import { useRequestScope } from "./use-request-scope";
+import { isAbort } from "./request-scope";
+import { historyDate } from "./display-date";
 const message = (e: unknown) =>
   e instanceof Error ? e.message : "No se pudo completar la operación.";
 export function TerritoryApp() {
@@ -30,36 +33,74 @@ export function TerritoryApp() {
     [detail, setDetail] = useState<Consultation | null>(null),
     [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [detailOrigin, setDetailOrigin] = useState<"history" | "parcel">(
+    "history",
+  );
+  const [parcelTab, setParcelTab] = useState<"record" | "consultations">(
+    "record",
+  );
   const lastActivity = useRef(Date.now());
-  const loadSession = useCallback(async () => {
-    try {
-      const s = await request<Session>("/api/session");
-      lastActivity.current = Date.now();
-      setSession(s);
-      setError("");
-    } catch (e) {
-      if (e instanceof RequestError && e.status === 401)
-        setSession({ user: null, mustChangePassword: false, synthetic: true });
-      else setError(message(e));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    void loadSession();
-  }, [loadSession]);
-  useEffect(() => {
-    const expired = () => {
+  const navigationRequests = useRequestScope();
+  const authRequests = useRequestScope();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const clearSession = useCallback(
+    (text: string) => {
+      navigationRequests.cancel();
+      authRequests.cancel();
       setSession(null);
       setParcel(null);
       setDetail(null);
       setScreen("search");
-      setNotice("La sesión expiró. Ingresá nuevamente.");
-    };
+      setError("");
+      setBusy(false);
+      setNotice(text);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("historyFilters");
+      url.searchParams.delete("historyPage");
+      window.history.replaceState(null, "", url);
+    },
+    [navigationRequests, authRequests],
+  );
+  function navigate(next: typeof screen) {
+    navigationRequests.cancel();
+    setBusy(false);
+    setError("");
+    setScreen(next);
+  }
+  const loadSession = useCallback(async () => {
+    const operation = authRequests.begin();
+    try {
+      const s = await request<Session>("/api/session", {
+        signal: operation.signal,
+      });
+      if (!operation.isCurrent()) return;
+      lastActivity.current = Date.now();
+      navigationRequests.cancel();
+      setParcel(null);
+      setDetail(null);
+      setScreen("search");
+      setBusy(false);
+      setSession(s);
+      setNotice("");
+      setError("");
+    } catch (e) {
+      if (!operation.isCurrent() || isAbort(e)) return;
+      if (e instanceof RequestError && e.status === 401)
+        setSession({ user: null, mustChangePassword: false, synthetic: true });
+      else setError(message(e));
+    } finally {
+      if (operation.isCurrent()) setLoading(false);
+    }
+  }, [authRequests, navigationRequests]);
+  useEffect(() => {
+    void loadSession();
+  }, [loadSession]);
+  useEffect(() => {
+    const expired = () => clearSession("La sesión expiró. Ingresá nuevamente.");
     window.addEventListener("territory-session-expired", expired);
     return () =>
       window.removeEventListener("territory-session-expired", expired);
-  }, []);
+  }, [clearSession]);
   useEffect(() => {
     if (!session?.user) return;
     const activity = () => {
@@ -71,65 +112,83 @@ export function TerritoryApp() {
     );
     const timer = setInterval(() => {
       if (Date.now() - lastActivity.current >= 3600000) {
-        setSession(null);
-        setParcel(null);
-        setDetail(null);
-        setNotice("La sesión se cerró por inactividad.");
-        void request("/api/auth/logout", { method: "POST" }).catch(() => {});
+        clearSession("Sesión bloqueada por inactividad.");
+        setLoggingOut(true);
+        void request("/api/auth/logout", { method: "POST" })
+          .then(() => setNotice("La sesión se cerró por inactividad."))
+          .catch(() =>
+            setError(
+              "No se pudo confirmar el cierre remoto. Volvé a intentar cerrar sesión.",
+            ),
+          )
+          .finally(() => setLoggingOut(false));
       }
     }, 30000);
     return () => {
       clearInterval(timer);
       events.forEach((e) => window.removeEventListener(e, activity));
     };
-  }, [session?.user]);
-  async function openParcel(ref: ParcelRef) {
+  }, [session?.user, clearSession]);
+  async function openParcel(
+    ref: ParcelRef,
+    tab: "record" | "consultations" = "record",
+  ) {
+    const operation = navigationRequests.begin();
     setBusy(true);
     setError("");
     try {
-      setParcel(
-        await request<Parcel>(
-          `/api/parcels/${encodeURIComponent(ref.locality)}/${encodeURIComponent(ref.parcel)}`,
-        ),
+      const result = await request<Parcel>(
+        `/api/parcels/${encodeURIComponent(ref.locality)}/${encodeURIComponent(ref.parcel)}`,
+        { signal: operation.signal },
       );
+      if (!operation.isCurrent()) return;
+      setParcel(result);
+      setParcelTab(tab);
       setScreen("parcel");
     } catch (e) {
-      setError(message(e));
+      if (operation.isCurrent() && !isAbort(e)) setError(message(e));
     } finally {
-      setBusy(false);
+      if (operation.isCurrent()) setBusy(false);
     }
   }
   async function openDetail(id: string) {
+    const operation = navigationRequests.begin();
     setBusy(true);
     setError("");
     try {
-      setDetail(
-        await request<Consultation>(
-          `/api/consultations/${encodeURIComponent(id)}`,
-        ),
+      const result = await request<Consultation>(
+        `/api/consultations/${encodeURIComponent(id)}`,
+        { signal: operation.signal },
       );
+      if (!operation.isCurrent()) return;
+      setDetail(result);
+      setDetailOrigin(screen === "parcel" ? "parcel" : "history");
       setScreen("detail");
     } catch (e) {
-      setError(message(e));
+      if (operation.isCurrent() && !isAbort(e)) setError(message(e));
     } finally {
-      setBusy(false);
+      if (operation.isCurrent()) setBusy(false);
     }
   }
   async function logout() {
-    setBusy(true);
+    clearSession("Cerrando sesión…");
+    setLoggingOut(true);
     try {
       await request("/api/auth/logout", { method: "POST" });
-      setSession(null);
-      setParcel(null);
-      setDetail(null);
-      setScreen("search");
-      setError("");
-    } catch (e) {
-      setError(message(e));
+      setNotice("Sesión cerrada.");
+    } catch {
+      setNotice("");
+      setError(
+        "No se pudo confirmar el cierre remoto. Volvé a intentar cerrar sesión.",
+      );
     } finally {
-      setBusy(false);
+      setLoggingOut(false);
     }
   }
+  useEffect(() => {
+    if (session?.user && !session.mustChangePassword)
+      document.getElementById("main")?.focus();
+  }, [screen, session?.user?.id, session?.mustChangePassword]);
   if (loading)
     return (
       <main className="auth-wrap">
@@ -148,7 +207,12 @@ export function TerritoryApp() {
           <p className="muted">Ingresá con tu identidad autorizada.</p>
           {notice && <p role="status">{notice}</p>}
           {error && <ErrorBox text={error} />}
-          <AuthForm onSuccess={loadSession} />
+          <AuthForm onSuccess={loadSession} disabled={loggingOut} />
+          {error.includes("cierre remoto") && (
+            <button className="btn" onClick={logout} disabled={loggingOut}>
+              Reintentar cierre de sesión
+            </button>
+          )}
         </section>
       </main>
     );
@@ -163,7 +227,7 @@ export function TerritoryApp() {
             una contraseña personal.
           </p>
           <AuthForm changePassword onSuccess={loadSession} />
-          <button className="btn" onClick={logout} disabled={busy}>
+          <button className="btn" onClick={logout} disabled={loggingOut}>
             Cerrar sesión
           </button>
         </section>
@@ -185,8 +249,7 @@ export function TerritoryApp() {
           <button
             className={screen === "search" ? "active" : ""}
             onClick={() => {
-              setScreen("search");
-              setError("");
+              navigate("search");
             }}
           >
             ⌕ <span>Buscar padrón</span>
@@ -194,8 +257,7 @@ export function TerritoryApp() {
           <button
             className={screen === "history" ? "active" : ""}
             onClick={() => {
-              setScreen("history");
-              setError("");
+              navigate("history");
             }}
           >
             ☷ <span>Historial de consultas</span>
@@ -211,7 +273,11 @@ export function TerritoryApp() {
               <small>Colaborador</small>
             </div>
           </div>
-          <button className="btn small logout" disabled={busy} onClick={logout}>
+          <button
+            className="btn small logout"
+            disabled={loggingOut}
+            onClick={logout}
+          >
             Cerrar sesión
           </button>
         </div>
@@ -247,16 +313,19 @@ export function TerritoryApp() {
           {screen === "search" && <SearchView onOpen={openParcel} />}{" "}
           {screen === "parcel" && parcel && (
             <ParcelView
+              key={`${parcel.locality}/${parcel.parcel}`}
               parcel={parcel}
-              onCreate={() => setScreen("create")}
+              initialTab={parcelTab}
+              onTabChange={setParcelTab}
+              onCreate={() => navigate("create")}
               onDetail={openDetail}
-              onBack={() => setScreen("search")}
+              onBack={() => navigate("search")}
             />
           )}{" "}
           {screen === "history" && <HistoryView onDetail={openDetail} />}{" "}
           {screen === "create" && parcel && (
             <section className="panel">
-              <button className="back" onClick={() => setScreen("parcel")}>
+              <button className="back" onClick={() => navigate("parcel")}>
                 ← Volver a la ficha
               </button>
               <h1>Registrar consulta</h1>
@@ -265,28 +334,37 @@ export function TerritoryApp() {
               </p>
               <ConsultationForm
                 parcel={parcel}
-                onSaved={async (c) => {
-                  await openParcel(parcel);
+                onSaved={(c) => {
                   setDetail(c);
-                  setScreen("detail");
+                  setDetailOrigin("parcel");
+                  navigate("detail");
                 }}
               />
             </section>
           )}{" "}
           {screen === "detail" && detail && (
             <section className="panel">
-              <button className="back" onClick={() => setScreen("history")}>
-                ← Volver al historial
+              <button
+                className="back"
+                onClick={() => {
+                  if (detailOrigin === "parcel" && parcel)
+                    void openParcel(parcel, "consultations");
+                  else navigate("history");
+                }}
+              >
+                {detailOrigin === "parcel"
+                  ? "← Volver a las consultas del padrón"
+                  : "← Volver al historial"}
               </button>
               <p className="eyebrow">
                 Consulta · {detail.locality} / {detail.parcel}
               </p>
               <h1>{detail.type}</h1>
               <p className="muted">
-                Registrada el{" "}
-                {new Date(detail.createdAt).toLocaleDateString("es-UY")}
+                Registrada el (UTC) {historyDate(detail.createdAt)}
               </p>
               <ConsultationForm
+                key={detail.id}
                 parcel={{
                   locality: detail.locality,
                   parcel: detail.parcel,
@@ -330,14 +408,20 @@ export function ErrorBox({ text }: { text: string }) {
 function AuthForm({
   changePassword = false,
   onSuccess,
+  disabled = false,
 }: {
   changePassword?: boolean;
   onSuccess: () => Promise<void>;
+  disabled?: boolean;
 }) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const requests = useRequestScope();
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (busy || disabled) return;
+    const operation = requests.begin();
+    const formElement = e.currentTarget;
     const f = new FormData(e.currentTarget);
     setError("");
     if (changePassword && f.get("password") !== f.get("confirm")) {
@@ -348,18 +432,20 @@ function AuthForm({
     try {
       await request(changePassword ? "/api/auth/password" : "/api/auth/login", {
         method: "POST",
+        signal: operation.signal,
         body: JSON.stringify(
           changePassword
             ? { password: f.get("password") }
             : { username: f.get("username"), password: f.get("password") },
         ),
       });
-      e.currentTarget?.reset();
+      if (!operation.isCurrent()) return;
+      formElement.reset();
       await onSuccess();
     } catch (e) {
-      setError(message(e));
+      if (operation.isCurrent() && !isAbort(e)) setError(message(e));
     } finally {
-      setBusy(false);
+      if (operation.isCurrent()) setBusy(false);
     }
   }
   return (
@@ -404,7 +490,7 @@ function AuthForm({
         </p>
       )}
       {error && <ErrorBox text={error} />}
-      <button className="btn primary" disabled={busy}>
+      <button className="btn primary" disabled={busy || disabled}>
         {busy
           ? "Verificando…"
           : changePassword
@@ -418,8 +504,10 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
   const [results, setResults] = useState<ParcelRef[] | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const requests = useRequestScope();
   async function search(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const operation = requests.begin();
     setBusy(true);
     setError("");
     setResults(null);
@@ -428,14 +516,15 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
       query.set(k, String(v).trim()),
     );
     try {
-      setResults(
-        (await request<{ results: ParcelRef[] }>(`/api/search?${query}`))
-          .results,
+      const result = await request<{ results: ParcelRef[] }>(
+        `/api/search?${query}`,
+        { signal: operation.signal },
       );
+      if (operation.isCurrent()) setResults(result.results);
     } catch (e) {
-      setError(message(e));
+      if (operation.isCurrent() && !isAbort(e)) setError(message(e));
     } finally {
-      setBusy(false);
+      if (operation.isCurrent()) setBusy(false);
     }
   }
   return (
@@ -577,6 +666,7 @@ export function HistoryView({
       window.history.replaceState(null, "", url);
     }
     let active = true;
+    const controller = new AbortController();
     setBusy(true);
     setError("");
     setData(null);
@@ -586,18 +676,21 @@ export function HistoryView({
       params.set("locality", parcel.locality);
       params.set("parcel", parcel.parcel);
     }
-    request<ConsultationPage>(`/api/consultations?${params}`)
+    request<ConsultationPage>(`/api/consultations?${params}`, {
+      signal: controller.signal,
+    })
       .then((d) => {
         if (active) setData(d);
       })
       .catch((e) => {
-        if (active) setError(message(e));
+        if (active && !isAbort(e)) setError(message(e));
       })
       .finally(() => {
         if (active) setBusy(false);
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [page, query, parcel?.locality, parcel?.parcel]);
   return (
@@ -652,7 +745,7 @@ export function HistoryView({
           </select>
         </label>
         <label className="field">
-          Desde
+          Desde (UTC)
           <input
             name="from"
             type="date"
@@ -660,7 +753,7 @@ export function HistoryView({
           />
         </label>
         <label className="field">
-          Hasta
+          Hasta (UTC)
           <input
             name="to"
             type="date"
@@ -677,11 +770,16 @@ export function HistoryView({
       ) : (
         data && (
           <>
-            <div className="tablewrap">
+            <div
+              className="tablewrap"
+              role="region"
+              aria-label="Listado de consultas"
+              tabIndex={0}
+            >
               <table>
                 <thead>
                   <tr>
-                    <th>Fecha</th>
+                    <th>Fecha (UTC)</th>
                     <th>Localidad / Padrón</th>
                     <th>Tipo</th>
                     <th>Persona</th>
@@ -691,9 +789,7 @@ export function HistoryView({
                 <tbody>
                   {data.items.map((c) => (
                     <tr key={c.id}>
-                      <td>
-                        {new Date(c.createdAt).toLocaleDateString("es-UY")}
-                      </td>
+                      <td>{historyDate(c.createdAt)}</td>
                       <td>
                         {c.locality} / {c.parcel}
                       </td>

@@ -7,6 +7,7 @@ Revisor: agente `qa_independent`, distinto de los autores frontend/backend. Fech
 Comando: `node tests/qa/unconfigured-browser.mjs` contra `http://127.0.0.1:3000`, Playwright Chromium headless. Ejecutado con permiso de red loopback fuera del sandbox, porque el sandbox deniega sockets. Sin interceptaciones ni mocks.
 
 Resultado PASS:
+
 - API de sesión real devuelve 503 CONFIGURATION y Cache-Control no-store.
 - Login muestra el mensaje de entorno no configurado.
 - Enviar identidad sintética no desbloquea la navegación de negocio.
@@ -45,3 +46,15 @@ Conclusión: mejora local comprobada y falla cerrada comprobada. G1/G2 no aproba
 `node --import tsx tests/images/selection.test.ts`: 9/9 PASS. Revisión de módulo: valida fechas canónicas, ventana de diez años, cronología, IDs únicos, desempate estable, fuente Google Earth y fecha anterior estricta; fallback dentro de ventana explícito, sin afirmar anterioridad desconocida. Caducidad igual al instante actual ya no es válida; URL exige HTTPS sin credenciales. Esta función no prueba disponibilidad del servicio ni autorización de host.
 
 `node tests/qa/image-viewer-fixture.mjs`: PASS con imágenes SVG y respuestas exclusivamente sintéticas interceptadas. Verificados zoom al 125%, cambio de imagen y reset al 100%, Escape y retorno de foco, ocultación de metadatos históricos aunque el payload los contenga, metadatos del relevamiento visibles y tres superficies null sin error. Cero excepciones de página. No hay imágenes institucionales ni petición externa real en esa prueba.
+
+## Segunda ronda independiente: trazabilidad y formularios
+
+Auditadas 99 fichas V1.0 únicas con cuerpos y criterios actuales de Notion; matriz `docs/traceability-v1.{json,md}` conserva baseline, cambios y bloqueos. Se revisaron siete resúmenes históricos; ninguno contiene el original íntegro, por lo que no se validan hashes/versiones originales.
+
+`tests/qa/catalogue.test.ts`: tres pruebas PASS de exactitud nombre/documento, localidades, identidad compuesta/ceros y modo fail closed. No acredita homónimos con identificadores distintos ni catálogo institucional.
+
+`node tests/qa/history-navigation-fixture.mjs`: PASS filtros combinados/página al volver de detalle, vacío/error de búsqueda personal y retorno al historial del padrón. No se comprobó restauración exacta del scroll.
+
+`node tests/qa/form-contacts-fixture.mjs`: PASS en Chromium loopback3001, cero pageErrors. Titular ordenado primero, cards por teclado, múltiples medios y ausencias; envío inválido bloquea red, seis errores requeridos con resumen enfocado/enlaces y aria-invalid, quitar correo2 elimina enlace obsoleto, payload conserva dos teléfonos/correos, error remoto conserva formulario y enfoca resumen. Primer intento corrigió una expectativa del test (seis campos vacíos, no siete: catálogos tienen valores iniciales válidos); aplicación sin modificaciones de QA. Son respuestas interceptadas sintéticas, no persistencia/Auth real.
+
+Revisión cruzada de OpenAPI, logs, caché, RequestScope, arquitectura/amenazas, inventario y scanner: límites documentados. Se corrigieron por sus autores descripción HMAC→SHA256 y scanner que ahora falla ante archivo ilegible y distingue binarios. Scanner heurístico no acredita ausencia exhaustiva de secretos; inventario no es SBOM certificado. Logs locales no prueban alertas remotas. Cancelación UI no garantiza rollback servidor. No se aprueban G1/G2 completos ni liberación.

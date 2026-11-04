@@ -66,6 +66,18 @@ export async function identity(allowPasswordChange = false) {
     .single();
   if (profileError || !profile?.enabled || profile.role !== "collaborator")
     throw new HttpError(403, "FORBIDDEN", "No tenés acceso a esta aplicación.");
+  // Even pending-password sessions must be current, non-revoked and within idle expiry.
+  // This RPC records activity only; it never grants access to business tables.
+  const { data: authenticatedSession, error: sessionError } =
+    await client.rpc("touch_auth_session");
+  if (sessionError || authenticatedSession !== true) {
+    await client.auth.signOut();
+    throw new HttpError(
+      401,
+      "SESSION_EXPIRED",
+      "La sesión expiró. Iniciá sesión nuevamente.",
+    );
+  }
   if (profile.must_change_password && !allowPasswordChange)
     throw new HttpError(
       403,

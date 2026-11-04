@@ -55,3 +55,16 @@ test("independent: username case/compatibility variants share abuse bucket", () 
   assert.equal(accountBucket(" Paysandu "), accountBucket("paysandu"));
   assert.equal(accountBucket("Ｐａｙｓａｎｄｕ"), accountBucket("paysandu"));
 });
+
+test('independent: combined history rejects rollover dates and duplicate/overflow filters',async()=>{
+ const {historyFilters}=await import('../../src/server/filters');
+ for(const query of ['from=2026-02-30','from=2026-04-31','from=2026-05-01&to=2026-04-01','page=1&page=2','page=2147483647&pageSize=100','parcel=1%00','type=Administrador'])assert.throws(()=>historyFilters(new URLSearchParams(query)));
+ assert.equal(historyFilters(new URLSearchParams('from=2024-02-29&to=2024-03-01&type=General&parcel=12')).filters.parcel,'12');
+});
+test('independent: request logging excludes path identifiers and operation error text',async()=>{
+ const {observeRequest,routeTemplate}=await import('../../src/server/observability');
+ const events:unknown[]=[];const marker='QA-PRIVATE-SENTINEL';
+ await assert.rejects(observeRequest(routeTemplate(['parcels',marker,marker]),async()=>{throw Error(marker);},event=>events.push(event)));
+ const serialized=JSON.stringify(events);assert.equal(serialized.includes(marker),false);assert.equal((events[0] as {status:number}).status,500);
+ const response=await observeRequest('unmatched',async()=>new Response(null,{status:404,headers:{'X-Request-ID':marker}}),event=>events.push(event));assert.notEqual(response.headers.get('X-Request-ID'),marker);
+});

@@ -1,0 +1,12 @@
+{
+  "scope": "synthetic intercepted UI only; no real authentication/persistence",
+  "checks": [
+    "late parcel response cannot replace latest selection",
+    "keyboard opens/zooms/closes image and restores focus; no historical metadata",
+    "detail returns to originating parcel consultations",
+    "UTC date remains November 4 in Montevideo browser",
+    "logout removes data and history filters; late detail cannot restore them"
+  ],
+  "pageErrors": [],
+  "status": "PASS"
+}

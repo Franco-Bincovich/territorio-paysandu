@@ -1,6 +1,20 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import { useRequestScope } from "./use-request-scope";
+import { isAbort } from "./request-scope";
 import { request, type Consultation, type ParcelRef } from "./contracts";
+import {
+  fieldLabel,
+  validateConsultationFields,
+  type FieldErrors,
+} from "./consultation-validation";
 export function ConsultationForm({
   parcel,
   initial,
@@ -12,30 +26,73 @@ export function ConsultationForm({
   readOnly?: boolean;
   onSaved: (c: Consultation) => void | Promise<void>;
 }) {
-  const [phones, setPhones] = useState(initial?.person.phones ?? [""]),
-    [emails, setEmails] = useState(initial?.person.emails ?? [""]);
+  const [phones, setPhones] = useState(
+      initial?.person.phones.length ? initial.person.phones : [""],
+    ),
+    [emails, setEmails] = useState(
+      initial?.person.emails.length ? initial.person.emails : [""],
+    );
   const [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [busy, setBusy] = useState(false);
-  const requestId = useRef<string | null>(null);
+    [busy, setBusy] = useState(false),
+    [fieldErrors, setFieldErrors] = useState<FieldErrors>({}),
+    [validationAttempt, setValidationAttempt] = useState(0);
+  const requestId = useRef<string | null>(null),
+    summary = useRef<HTMLElement | null>(null);
+  const idPrefix = useId();
+  const requests = useRequestScope();
+  useEffect(() => {
+    if (validationAttempt > 0) summary.current?.focus();
+  }, [validationAttempt]);
+  function clearContactErrors(kind: "phone" | "email") {
+    setFieldErrors((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([key]) => !key.startsWith(`${kind}-`)),
+      ),
+    );
+  }
+  const attrs = (key: string) => ({
+    id: `${idPrefix}-${key}`,
+    "aria-invalid": Boolean(fieldErrors[key]),
+    "aria-describedby": fieldErrors[key]
+      ? `${idPrefix}-${key}-error`
+      : undefined,
+  });
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (readOnly) return;
+    if (readOnly || busy) return;
     const form = new FormData(e.currentTarget);
     setError("");
     setNotice("");
+    const draft = {
+      name: String(form.get("name") ?? ""),
+      relationship: String(form.get("relationship") ?? ""),
+      documentType: String(form.get("documentType") ?? ""),
+      document: String(form.get("document") ?? ""),
+      type: String(form.get("type") ?? ""),
+      description: String(form.get("description") ?? ""),
+      phones,
+      emails,
+    };
+    const errors = validateConsultationFields(draft);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setValidationAttempt((n) => n + 1);
+      return;
+    }
+    const operation = requests.begin();
     setBusy(true);
     requestId.current ??= crypto.randomUUID();
     const input = {
       locality: parcel.locality,
       parcel: parcel.parcel,
-      type: form.get("type"),
-      description: form.get("description"),
+      type: draft.type,
+      description: draft.description,
       person: {
-        name: form.get("name"),
-        documentType: form.get("documentType"),
-        document: form.get("document"),
-        relationship: form.get("relationship"),
+        name: draft.name,
+        documentType: draft.documentType,
+        document: draft.document,
+        relationship: draft.relationship,
         phones: phones.map((s) => s.trim()).filter(Boolean),
         emails: emails.map((s) => s.trim()).filter(Boolean),
       },
@@ -48,100 +105,160 @@ export function ConsultationForm({
         initial
           ? `/api/consultations/${encodeURIComponent(initial.id)}`
           : "/api/consultations",
-        { method: initial ? "PATCH" : "POST", body: JSON.stringify(input) },
+        {
+          method: initial ? "PATCH" : "POST",
+          body: JSON.stringify(input),
+          signal: operation.signal,
+        },
       );
+      if (!operation.isCurrent()) return;
       setNotice("Consulta guardada correctamente.");
       requestId.current = null;
       await onSaved(saved);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo guardar.");
+      if (operation.isCurrent() && !isAbort(e)) {
+        setError(e instanceof Error ? e.message : "No se pudo guardar.");
+        setValidationAttempt((n) => n + 1);
+      }
     } finally {
-      setBusy(false);
+      if (operation.isCurrent()) setBusy(false);
     }
   }
   return (
-    <form className="form-stack consultation-form" onSubmit={submit}>
+    <form className="form-stack consultation-form" onSubmit={submit} noValidate>
+      {(Object.keys(fieldErrors).length > 0 || error) && (
+        <section
+          className="error"
+          ref={summary}
+          tabIndex={-1}
+          aria-labelledby={`${idPrefix}-summary-title`}
+        >
+          <h2 id={`${idPrefix}-summary-title`}>Revisá la consulta</h2>
+          {error && <p role="alert">{error}</p>}
+          {Object.keys(fieldErrors).length > 0 && (
+            <>
+              <p>Corregí los siguientes campos antes de guardar:</p>
+              <ul>
+                {Object.entries(fieldErrors).map(([key, text]) => (
+                  <li key={key}>
+                    <a
+                      href={`#${idPrefix}-${key}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById(`${idPrefix}-${key}`)?.focus();
+                      }}
+                    >
+                      {fieldLabel(key)}: {text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
       <fieldset disabled={readOnly || busy}>
         <legend>Persona que realiza la consulta</legend>
         <div className="pair">
-          <label className="field">
-            Nombre completo
+          <Field fieldKey="name" idPrefix={idPrefix} errors={fieldErrors}>
             <input
+              {...attrs("name")}
               name="name"
               defaultValue={initial?.person.name}
               required
               maxLength={200}
             />
-          </label>
-          <label className="field">
-            Vínculo con el padrón
+          </Field>
+          <Field
+            fieldKey="relationship"
+            idPrefix={idPrefix}
+            errors={fieldErrors}
+          >
             <input
+              {...attrs("relationship")}
               name="relationship"
               defaultValue={initial?.person.relationship}
               required
               maxLength={100}
               placeholder="Titular, familiar, representante…"
             />
-          </label>
+          </Field>
         </div>
         <div className="pair">
-          <label className="field">
-            Tipo de documento
+          <Field
+            fieldKey="documentType"
+            idPrefix={idPrefix}
+            errors={fieldErrors}
+          >
             <select
+              {...attrs("documentType")}
               name="documentType"
               defaultValue={initial?.person.documentType ?? "CI"}
             >
               <option value="CI">Cédula de identidad</option>
               <option value="RUT">RUT</option>
             </select>
-          </label>
-          <label className="field">
-            Documento
+          </Field>
+          <Field fieldKey="document" idPrefix={idPrefix} errors={fieldErrors}>
             <input
+              {...attrs("document")}
               name="document"
               defaultValue={initial?.person.document}
               required
               maxLength={30}
               inputMode="numeric"
             />
-          </label>
+          </Field>
         </div>
         <ContactFields
-          label="Teléfono"
+          kind="phone"
           type="tel"
           values={phones}
-          setValues={setPhones}
+          setValues={(values) => {
+            setPhones(values);
+            clearContactErrors("phone");
+          }}
           readOnly={readOnly}
+          errors={fieldErrors}
+          idPrefix={idPrefix}
         />
         <ContactFields
-          label="Correo electrónico"
+          kind="email"
           type="email"
           values={emails}
-          setValues={setEmails}
+          setValues={(values) => {
+            setEmails(values);
+            clearContactErrors("email");
+          }}
           readOnly={readOnly}
+          errors={fieldErrors}
+          idPrefix={idPrefix}
         />
       </fieldset>
       <fieldset disabled={readOnly || busy}>
         <legend>Datos de la consulta</legend>
-        <label className="field">
-          Tipo
-          <select name="type" defaultValue={initial?.type ?? "General"}>
+        <Field fieldKey="type" idPrefix={idPrefix} errors={fieldErrors}>
+          <select
+            {...attrs("type")}
+            name="type"
+            defaultValue={initial?.type ?? "General"}
+          >
             <option>General</option>
             <option>Reclamo</option>
             <option>Falta de documentación</option>
           </select>
-        </label>
-        <label className="field">
-          Descripción
+        </Field>
+        <Field fieldKey="description" idPrefix={idPrefix} errors={fieldErrors}>
           <textarea
+            {...attrs("description")}
             name="description"
             defaultValue={initial?.description}
             required
             minLength={1}
-            maxLength={5000}
+            maxLength={10000}
             rows={6}
           />
-        </label>
+        </Field>
       </fieldset>
       {!initial && (
         <p className="notice">
@@ -152,11 +269,6 @@ export function ConsultationForm({
       {readOnly && (
         <p className="notice">
           Solo el colaborador que creó esta consulta puede editarla.
-        </p>
-      )}
-      {error && (
-        <p className="error" role="alert">
-          {error}
         </p>
       )}
       {notice && <p role="status">{notice}</p>}
@@ -172,56 +284,91 @@ export function ConsultationForm({
     </form>
   );
 }
+function Field({
+  fieldKey,
+  idPrefix,
+  errors,
+  children,
+}: {
+  fieldKey: string;
+  idPrefix: string;
+  errors: FieldErrors;
+  children: ReactNode;
+}) {
+  return (
+    <div className="field">
+      <label htmlFor={`${idPrefix}-${fieldKey}`}>{fieldLabel(fieldKey)}</label>
+      {children}
+      {errors[fieldKey] && (
+        <span className="field-error" id={`${idPrefix}-${fieldKey}-error`}>
+          {errors[fieldKey]}
+        </span>
+      )}
+    </div>
+  );
+}
 function ContactFields({
-  label,
+  kind,
   type,
   values,
   setValues,
   readOnly,
+  errors,
+  idPrefix,
 }: {
-  label: string;
+  kind: "phone" | "email";
   type: string;
   values: string[];
   setValues: (v: string[]) => void;
   readOnly: boolean;
+  errors: FieldErrors;
+  idPrefix: string;
 }) {
+  const label = kind === "phone" ? "teléfono" : "correo electrónico";
   return (
     <div className="form-stack">
-      {values.map((value, index) => (
-        <div className="repeat-field" key={index}>
-          <label className="field">
-            {label} {index + 1}
-            <input
-              type={type}
-              value={value}
-              required={index === 0}
-              maxLength={type === "email" ? 254 : 40}
-              onChange={(e) =>
-                setValues(
-                  values.map((v, i) => (i === index ? e.target.value : v)),
-                )
-              }
-            />
-          </label>
-          {!readOnly && index > 0 && (
-            <button
-              className="btn small"
-              type="button"
-              aria-label={`Quitar ${label.toLowerCase()} ${index + 1} del formulario`}
-              onClick={() => setValues(values.filter((_, i) => i !== index))}
-            >
-              Quitar
-            </button>
-          )}
-        </div>
-      ))}
+      <p className="muted">Ingresá al menos un {label}.</p>
+      {values.map((value, index) => {
+        const key = `${kind}-${index}`;
+        return (
+          <div className="repeat-field" key={index}>
+            <Field fieldKey={key} idPrefix={idPrefix} errors={errors}>
+              <input
+                id={`${idPrefix}-${key}`}
+                type={type}
+                value={value}
+                aria-invalid={Boolean(errors[key])}
+                aria-describedby={
+                  errors[key] ? `${idPrefix}-${key}-error` : undefined
+                }
+                maxLength={kind === "email" ? 254 : 40}
+                onChange={(e) =>
+                  setValues(
+                    values.map((v, i) => (i === index ? e.target.value : v)),
+                  )
+                }
+              />
+            </Field>
+            {!readOnly && index > 0 && (
+              <button
+                className="btn small"
+                type="button"
+                aria-label={`Quitar ${label} ${index + 1} del formulario`}
+                onClick={() => setValues(values.filter((_, i) => i !== index))}
+              >
+                Quitar
+              </button>
+            )}
+          </div>
+        );
+      })}
       {!readOnly && (
         <button
           type="button"
           className="link"
           onClick={() => setValues([...values, ""])}
         >
-          + Agregar {label.toLowerCase()}
+          + Agregar {label}
         </button>
       )}
     </div>
