@@ -91,7 +91,14 @@ export function applicationCatalogue(
   return {
     getImages: (key) => fallback.getImages(key),
     async findParcel(key) {
-      if (key.locality === "Paysandú" && key.parcel === "17718")
+      if (
+        key.locality
+          .trim()
+          .normalize("NFD")
+          .replace(/\p{M}/gu, "")
+          .toLowerCase() === "paysandu" &&
+        key.parcel === "17718"
+      )
         return (await read())?.record ?? null;
       return fallback.findParcel(key);
     },

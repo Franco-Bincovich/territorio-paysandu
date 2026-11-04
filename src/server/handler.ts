@@ -347,11 +347,15 @@ async function handleRequest(
       segments.length === 3 &&
       request.method === "GET"
     ) {
-      const key = parseParcel({ locality: segments[1], parcel: segments[2] });
+      const requestedKey = parseParcel({
+        locality: segments[1],
+        parcel: segments[2],
+      });
       const adapter = catalogue(client);
-      const parcel = await adapter.findParcel(key);
+      const parcel = await adapter.findParcel(requestedKey);
       if (!parcel)
         throw new HttpError(404, "NOT_FOUND", "Padrón no encontrado.");
+      const key = parcel.key;
       const { data: contacts, error } = await client
         .from("contacts")
         .select("id,person,created_at")
@@ -397,10 +401,11 @@ async function handleRequest(
           "VALIDATION",
           "Identificador de solicitud inválido.",
         );
-      if (!(await catalogue(client).findParcel(data)))
+      const parcel = await catalogue(client).findParcel(data);
+      if (!parcel)
         throw new HttpError(404, "NOT_FOUND", "Padrón no encontrado.");
       const { data: created, error } = await client.rpc("create_consultation", {
-        p_payload: data,
+        p_payload: { ...data, ...parcel.key },
         p_idempotency_key: key,
       });
       dbError(error);
