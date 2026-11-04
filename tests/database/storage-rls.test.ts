@@ -10,7 +10,8 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
  create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('test.uid',true),'')::uuid $$;
  create function private.can_access() returns boolean language sql as $$ select coalesce(current_setting('test.authorized',true),'false')='true' $$;
  grant usage on schema auth,private,storage to anon,authenticated,service_role;
- create function storage.allow_only_operation(op text) returns boolean language sql as $$ select coalesce(current_setting('test.operation',true),'object.get_authenticated')=op $$;
+ create function storage.allow_only_operation(op text) returns boolean language sql as $$ select current_setting('test.operation',true)=op $$;
+ create function storage.allow_any_operation(ops text[]) returns boolean language sql as $$ select current_setting('test.operation',true)=any(ops) $$;
  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
  create table storage.objects(id int primary key,bucket_id text,name text);
  alter table storage.objects enable row level security;
@@ -34,6 +35,15 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
       await readFile(
         new URL(
           "../../supabase/migrations/20261104185042_support_uploaded_prototype_paths.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    await db.exec(
+      await readFile(
+        new URL(
+          "../../supabase/migrations/20261104190606_allow_private_image_download_info.sql",
           import.meta.url,
         ),
         "utf8",
@@ -95,31 +105,42 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
         (await db.query("select * from public.parcel_images")).rows.length,
         2,
       );
-      assert.equal(
-        (
-          await db.query(
-            "select * from storage.objects where bucket_id='imagenes-satelitales'",
-          )
-        ).rows.length,
-        1,
-      );
-      assert.deepEqual(
-        (
-          await db.query<{ name: string }>(
-            "select name from storage.objects where bucket_id in ('imagenes-satelitales','imagenes-catastro') order by id",
-          )
-        ).rows.map((r) => r.name),
-        ["synthetic.png", "paysandu/17718/survey/synthetic-survey.png"],
-      );
-      await db.exec("select set_config('test.operation','object.sign',false)");
-      assert.equal(
-        (
-          await db.query(
-            "select * from storage.objects where bucket_id='imagenes-satelitales'",
-          )
-        ).rows.length,
-        0,
-      );
+      for (const operation of [
+        "object.get_authenticated",
+        "object.get_authenticated_info",
+      ]) {
+        await db.query("select set_config('test.operation',$1,false)", [
+          operation,
+        ]);
+        assert.deepEqual(
+          (
+            await db.query<{ name: string }>(
+              "select name from storage.objects where bucket_id in ('imagenes-satelitales','imagenes-catastro') order by id",
+            )
+          ).rows.map((r) => r.name),
+          ["synthetic.png", "paysandu/17718/survey/synthetic-survey.png"],
+          operation,
+        );
+      }
+      for (const operation of [
+        "object.sign",
+        "object.list",
+        "",
+        "object.get_public",
+      ]) {
+        await db.query("select set_config('test.operation',$1,false)", [
+          operation,
+        ]);
+        assert.equal(
+          (
+            await db.query(
+              "select * from storage.objects where bucket_id in ('imagenes-satelitales','imagenes-catastro')",
+            )
+          ).rows.length,
+          0,
+          operation,
+        );
+      }
       await db.exec(
         "select set_config('test.operation','object.get_authenticated',false)",
       );
@@ -150,14 +171,23 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
         (await db.query("select * from public.parcel_images")).rows.length,
         0,
       );
-      assert.equal(
-        (
-          await db.query(
-            "select * from storage.objects where bucket_id='imagenes-satelitales'",
-          )
-        ).rows.length,
-        0,
-      );
+      for (const operation of [
+        "object.get_authenticated",
+        "object.get_authenticated_info",
+      ]) {
+        await db.query("select set_config('test.operation',$1,false)", [
+          operation,
+        ]);
+        assert.equal(
+          (
+            await db.query(
+              "select * from storage.objects where bucket_id in ('imagenes-satelitales','imagenes-catastro')",
+            )
+          ).rows.length,
+          0,
+          operation,
+        );
+      }
     }
     await db.exec(
       "reset role; select set_config('test.uid','',false);set role anon;",

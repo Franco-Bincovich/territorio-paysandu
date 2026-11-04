@@ -83,6 +83,7 @@ test("independent public SQL RPC rejects bypassed invalid lengths; valid create/
           ![
             "20261104144022_private_prototype_images.sql",
             "20261104185042_support_uploaded_prototype_paths.sql",
+            "20261104190606_allow_private_image_download_info.sql",
           ].includes(n),
       )
       .sort())
