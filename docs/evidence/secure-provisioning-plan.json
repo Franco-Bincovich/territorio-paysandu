@@ -93,5 +93,33 @@
     "identityPreflight": "No matching Auth identity or Paysandu profile at verification time",
     "next": "User/operator creates Auth identity with password through secure channel, then verified UUID profile insertion and redeploy; recovery procedure still needs confirmation",
     "privacyTests": "tests/server/username-login.test.ts:4 PASS; typecheck PASS; synthetic adapter only"
+  },
+  "profileProvisioningUpdate": {
+    "identityVerified": true,
+    "emailConfirmed": true,
+    "banned": false,
+    "profileCreated": true,
+    "username": "Paysandu",
+    "role": "collaborator",
+    "enabled": true,
+    "mustChangePassword": true,
+    "passwordChangedAt": null,
+    "sessionsAtVerification": 0,
+    "credentialsRead": false,
+    "identityIdAndEmail": "omitted from repository",
+    "redeployAttempt": {
+      "result": "tool returned non-JSON response beginning This actio; complete original response unavailable after parsing failure",
+      "postCheck": "No new deployment in project/latest-three list; dpl_FN42aPyWZnd9tjH1XdB7cH3VqJJM remains latest",
+      "reason": "not established; do not infer success or retry automatically",
+      "sso": "enabled for all deployments"
+    },
+    "realLogin": "not verified; requires new deployment to incorporate map and user-operated login",
+    "userTestAfterDeployment": [
+      "Normal Vercel account authentication; keep SSO enabled",
+      "Username Paysandu and initial password entered directly by user",
+      "Choose new password of at least12characters at mandatory change screen",
+      "Report only success or sanitized error; never password/cookie/token",
+      "Validate synthetic parcel LOCALIDAD SINTÉTICA/900001 and consult flows; no institutional data"
+    ]
   }
 }
