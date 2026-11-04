@@ -81,5 +81,17 @@
     "notAuthorizedByThat": "Invented cadastral record, imported owner/surfaces/address, new consultation parcel allowlist",
     "proposal": "Keep catalogue/FK unchanged. Storage branch may expose an authenticated image-reference-only view using its existing image proxy, explicitly without cadastral data or consultation creation. Parent DOT must coordinate UI integration and QA with Storage author before edits.",
     "otherBranchModified": false
+  },
+  "emailDecisionUpdate": {
+    "visibleUsername": "Paysandu",
+    "controlledEmail": "provided directly by user; deliberately omitted from repo",
+    "mapping": "AUTH_USERNAME_EMAIL_MAP created as sensitive production variable in isolated Vercel test project",
+    "loginFields": [
+      "username",
+      "password"
+    ],
+    "identityPreflight": "No matching Auth identity or Paysandu profile at verification time",
+    "next": "User/operator creates Auth identity with password through secure channel, then verified UUID profile insertion and redeploy; recovery procedure still needs confirmation",
+    "privacyTests": "tests/server/username-login.test.ts:4 PASS; typecheck PASS; synthetic adapter only"
   }
 }
