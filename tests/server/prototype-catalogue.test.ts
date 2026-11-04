@@ -102,3 +102,16 @@ test("prototype lookup uses caller client, no other parcel, exact person lookup 
   );
   delete process.env.PROTOTYPE_RECORD_ENABLED;
 });
+
+test("synthetic personal fields have explicit labels and provenance", () => {
+  const r = prototypeRecord({
+    payload: { ...payload, personalDataMode: "synthetic" },
+    source_document: "fixture.html",
+  });
+  assert.match(
+    r.provenance!,
+    /Titular, documento, teléfonos y correo ficticios/,
+  );
+  assert.equal(r.fields!["Documento · Ficticio"], payload.document);
+  assert.equal(r.fields!["Titular \/ contacto · Ficticio"], payload.contact);
+});

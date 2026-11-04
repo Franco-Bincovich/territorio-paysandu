@@ -17,3 +17,11 @@ Schema applied remotely: 20261104145823 authorized_prototype_record; 20261104145
 Personal-data import was DENIED by automatic review, with no retry or alternative route. Post-check: zero prototype rows and zero allowlist keys for Paysandú/17718. RLS enabled; anonymous SELECT false; authenticated INSERT false. Application activation and protected deployment remain pending integration; no source values loaded and no claim of real ficha availability.
 
 Local validation: typecheck PASS; full npm test 23 files PASS, zero failed; production build PASS after replacing a dependency symlink unsupported by Turbopack with local dependencies. No changes to global configuration. Independent QA findings corrected with negative regression tests.
+
+## Revised scope: fictitious personal fields loaded
+
+User replaced the rejected personal-data scope with entirely fictional owner/contact/document/phones/email. Only the eleven other original fields were retained, without inventing missing source values. Five personal field values were replaced locally BEFORE constructing any remote query. A personalDataMode=synthetic marker and explicit field labels/provenance distinguish them. No original personal values were transmitted in this new operation.
+
+New atomic import succeeded. Readback confirms one Paysandú/17718 row, payload equality to sanitized source, source digest equality, institutionally_verified=false, personalDataMode=synthetic, and exactly one allowlist key. No consultations or historical contacts were fabricated. The earlier rejected operations remain unexecuted.
+
+Post-change tests: typecheck, adapter/HTTP regression and production build PASS. CI/RUT search remains disabled for this prototype record because no actual document type is attested. Use locality Paysandú and parcel17718 or the exact fictional name.

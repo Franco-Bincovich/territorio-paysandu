@@ -51,9 +51,15 @@ export function prototypeRecord(row: {
     detectedBuildingArea: area(p.detected),
     source: "prototype",
     fields: Object.fromEntries(
-      Object.entries(labels).map(([k, label]) => [label, p[k]]),
+      Object.entries(labels).map(([k, label]) => [
+        p.personalDataMode === "synthetic" &&
+        ["contact", "document", "phone", "phone2", "email"].includes(k)
+          ? `${label.replace(" (texto original)", "")} · Ficticio`
+          : label,
+        p[k],
+      ]),
     ),
-    provenance: `${row.source_document} · No verificado institucionalmente`,
+    provenance: `${row.source_document} · No verificado institucionalmente${p.personalDataMode === "synthetic" ? " · Titular, documento, teléfonos y correo ficticios para pruebas; no identifican a una persona real." : ""}`,
   };
 }
 /** Authenticated session client only; RLS rechecks access. No privileged key/cache. */
