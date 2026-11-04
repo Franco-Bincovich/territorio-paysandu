@@ -969,7 +969,7 @@ td {
 }
 .parcel-detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.9fr) minmax(255px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -997,18 +997,9 @@ td {
   box-shadow: none;
   border-radius: 0;
 }
-.parcel-summary {
-  position: sticky;
-  top: 86px;
-  display: grid;
-  gap: 16px;
-}
 @media (max-width: 1000px) {
   .parcel-detail-grid {
     grid-template-columns: 1fr;
-  }
-  .parcel-summary {
-    position: static;
   }
 }
 @media (max-width: 550px) {

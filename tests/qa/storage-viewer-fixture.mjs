@@ -4,7 +4,7 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
   const errors = [];
-  let failImages = true, failedRequests = 0;
+  let failImages = true, failedRequests = 0, originalFields = false;
   page.on("pageerror", (e) => errors.push(e.message));
   const serveFixture = (r) => r.fulfill({
       contentType: "image/svg+xml",
@@ -33,9 +33,10 @@ try {
         locality: "QA",
         parcel: "900001",
         address: "SINTÉTICO",
-        originalLandArea: null,
-        originalBuiltArea: null,
+        originalLandArea: 125.5,
+        originalBuiltArea: 0,
         detectedBuiltArea: null,
+        fields: originalFields ? {"Terreno (texto original)":"125,500 m² original QA", "Construida (texto original)":"0 m² original QA", "Detectada (texto original)":"Sin dato original QA"} : {},
         contacts: [],
         images: [
           {
@@ -69,17 +70,26 @@ try {
   assert.equal(await page.getByRole("button", { name: /Registrar consulta/ }).isEnabled(), true);
   assert.equal(
     await page.getByRole("tabpanel").getByText("No disponible", { exact: true }).count(),
-    3,
+    1,
   );
   assert.equal(
     await page.getByText("SECRETO_HISTORICO", { exact: true }).count(),
     0,
   );
-  const labels = ["Datos catastrales", "Imágenes", "Contactos", "Consultas", "Adjuntos"];
-  assert.equal(await page.getByRole("tab").count(), 5);
+  assert.equal(await page.locator(".surface-grid, .surface-card, .parcel-summary").count(), 0);
+  assert.equal(await page.getByRole("tab", {name:"Adjuntos",exact:true}).count(), 0);
+  assert.equal(await page.getByRole("heading", {name:"Resumen del padrón",exact:true}).count(), 0);
+  await page.getByRole("tabpanel").getByText("125,5 m²", {exact:true}).waitFor();
+  await page.getByRole("tabpanel").getByText("0 m²", {exact:true}).waitFor();
+  const labels = ["Datos catastrales", "Imágenes", "Contactos", "Consultas"];
+  assert.equal(await page.getByRole("tab").count(), 4);
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole("tab", { name: labels[0], exact: true }).click();
+    if (width !== 320) await page.screenshot({path:`docs/evidence/four-tabs-record-${width}-synthetic.png`,fullPage:true});
+    const gridWidth = await page.locator(".parcel-detail-grid").evaluate(e=>e.getBoundingClientRect().width);
+    const mainWidth = await page.locator(".record-main").evaluate(e=>e.getBoundingClientRect().width);
+    assert.ok(Math.abs(gridWidth-mainWidth)<2, "record uses full grid width");
     for (let i = 0; i < labels.length; i++) {
       const tab = page.getByRole("tab", { name: labels[i], exact: true });
       assert.equal(await tab.getAttribute("aria-selected"), "true");
@@ -88,7 +98,7 @@ try {
       assert.equal(await panel.count(), 1);
       assert.equal(await panel.getAttribute("aria-labelledby"), await tab.getAttribute("id"));
       assert.equal(await panel.getAttribute("id"), await tab.getAttribute("aria-controls"));
-      for (const [name, expected] of [["Información catastral",0],["Imágenes del padrón",1],["Contactos del padrón",2],["Consultas del padrón",3],["Archivos adjuntos",4]])
+      for (const [name, expected] of [["Información catastral",0],["Imágenes del padrón",1],["Contactos del padrón",2],["Consultas del padrón",3]])
         assert.equal(await panel.getByRole("heading", {name,exact:true}).count(), Number(i === expected));
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       if (i === 1) {
@@ -108,10 +118,10 @@ try {
     }
     assert.equal(await page.getByRole("tab", {name:labels[0],exact:true}).getAttribute("aria-selected"), "true");
     await page.keyboard.press("End");
-    assert.equal(await page.getByRole("tab", {name:labels[4],exact:true}).getAttribute("aria-selected"), "true");
+    assert.equal(await page.getByRole("tab", {name:labels[3],exact:true}).getAttribute("aria-selected"), "true");
     await page.keyboard.press("Home");
     await page.keyboard.press("ArrowLeft");
-    assert.equal(await page.getByRole("tab", {name:labels[4],exact:true}).getAttribute("aria-selected"), "true");
+    assert.equal(await page.getByRole("tab", {name:labels[3],exact:true}).getAttribute("aria-selected"), "true");
   }
   await page.setViewportSize({width:1440,height:1000});
   await page.getByRole("tab", { name: "Imágenes", exact: true }).click();
@@ -138,17 +148,30 @@ try {
   assert.equal(await open.evaluate((e) => e === document.activeElement), true);
   await page.getByText("2026-11-04", { exact: true }).waitFor();
   await page.screenshot({path:"docs/evidence/tasa-removed-viewer-synthetic.png",fullPage:true});
+  originalFields = true;
+  await page.reload();
+  await page.getByLabel("Localidad", {exact:true}).fill("QA");
+  await page.getByLabel("Número de padrón").fill("900001");
+  await page.getByRole("button", {name:"Buscar padrón",exact:true}).last().click();
+  await page.getByRole("button", {name:/Padrón 900001/}).click();
+  await page.getByRole("heading", {name:"Información catastral",exact:true}).waitFor();
+  const dataPanel = page.getByRole("tabpanel");
+  for (const value of ["125,500 m² original QA", "0 m² original QA", "Sin dato original QA"])
+    assert.equal(await dataPanel.getByText(value, {exact:true}).count(), 1);
+  for (const label of ["Superficie de terreno", "Superficie construida", "Superficie detectada"])
+    assert.equal(await dataPanel.getByText(label, {exact:true}).count(), 0);
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify({
       status: "PASS",
       mocked: true,
       checks: [
-        "five tabs, keyboard wrap/Home/End, single relevant panel and no overflow at1440/390/320",
+        "four tabs, keyboard wrap/Home/End, single relevant panel and no overflow at1440/390/320",
         "historical and survey fixture images decode with naturalWidth > 0",
         "503 image failure exposes retry and successful retry decodes",
         "Tasa absent and consultation action enabled",
-        "null surfaces handled",
+        "numeric/zero/null areas preserved in dl; original area strings preserved once without duplicate derived fields",
+        "surface cards, summary sidebar and attachments absent; full-width record",
         "historical metadata suppressed",
         "zoom 125%",
         "carousel resets zoom",

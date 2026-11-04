@@ -2,14 +2,12 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { HistoryView, type HistoryReturnState } from "./territory-app";
 import type { Parcel, ParcelImage } from "./contracts";
-export type ParcelTab =
-  "record" | "images" | "contacts" | "consultations" | "attachments";
+export type ParcelTab = "record" | "images" | "contacts" | "consultations";
 const parcelTabs: { key: ParcelTab; label: string }[] = [
   { key: "record", label: "Datos catastrales" },
   { key: "images", label: "Imágenes" },
   { key: "contacts", label: "Contactos" },
   { key: "consultations", label: "Consultas" },
-  { key: "attachments", label: "Adjuntos" },
 ];
 export function ParcelView({
   parcel,
@@ -121,6 +119,36 @@ export function ParcelView({
                     <dt>Domicilio</dt>
                     <dd>{parcel.address}</dd>
                   </div>
+                  {[
+                    {
+                      label: "Superficie de terreno",
+                      original: "Terreno (texto original)",
+                      value: parcel.originalLandArea,
+                    },
+                    {
+                      label: "Superficie construida",
+                      original: "Construida (texto original)",
+                      value: parcel.originalBuiltArea,
+                    },
+                    {
+                      label: "Superficie detectada",
+                      original: "Detectada (texto original)",
+                      value: parcel.detectedBuiltArea,
+                    },
+                  ]
+                    .filter(
+                      ({ original }) => !(original in (parcel.fields ?? {})),
+                    )
+                    .map(({ label, value }) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>
+                          {value == null
+                            ? "No disponible"
+                            : `${value.toLocaleString("es-UY")} m²`}
+                        </dd>
+                      </div>
+                    ))}
                   {Object.entries(parcel.fields ?? {})
                     .filter(
                       ([label]) => !/^(Teléfono|Correo|Vínculo)/.test(label),
@@ -132,35 +160,6 @@ export function ParcelView({
                       </div>
                     ))}
                 </dl>
-                <div className="surface-grid">
-                  <Surface
-                    label="Superficie de terreno"
-                    value={parcel.originalLandArea}
-                    source={
-                      parcel.provenance
-                        ? "Prototipo · No verificado"
-                        : "Original · Catastro"
-                    }
-                  />
-                  <Surface
-                    label="Superficie construida"
-                    value={parcel.originalBuiltArea}
-                    source={
-                      parcel.provenance
-                        ? "Prototipo · No verificado"
-                        : "Original · Catastro"
-                    }
-                  />
-                  <Surface
-                    label="Superficie detectada"
-                    value={parcel.detectedBuiltArea}
-                    source={
-                      parcel.provenance
-                        ? "Prototipo · No verificado"
-                        : "Relevamiento"
-                    }
-                  />
-                </div>
               </section>
             )}
             {tab === "images" && <ImageViewer images={parcel.images} />}
@@ -246,67 +245,10 @@ export function ParcelView({
                 />
               </div>
             )}
-            {tab === "attachments" && (
-              <section className="empty">
-                <h2>Archivos adjuntos</h2>
-                <p>
-                  La carga y descarga de adjuntos todavía no está habilitada en
-                  esta versión de prueba.
-                </p>
-              </section>
-            )}
           </div>
         </section>
-        <aside className="panel parcel-summary">
-          <h2>Resumen del padrón</h2>
-          <h3>Padrón {parcel.parcel}</h3>
-          <p className="muted">{parcel.locality}</p>
-          <Surface
-            label="Superficie del terreno"
-            value={parcel.originalLandArea}
-            source=""
-          />
-          <Surface
-            label="Superficie construida"
-            value={parcel.originalBuiltArea}
-            source=""
-          />
-          <button
-            className="btn"
-            onClick={() => {
-              setTab("contacts");
-              onTabChange?.("contacts");
-            }}
-          >
-            Ver contactos
-          </button>
-          <p className="meta">
-            {parcel.provenance ?? "Información territorial de la ficha."}
-          </p>
-        </aside>
       </div>
     </>
-  );
-}
-function Surface({
-  label,
-  value,
-  source,
-}: {
-  label: string;
-  value?: number | null;
-  source: string;
-}) {
-  return (
-    <div className="surface">
-      <small>{label}</small>
-      <strong>
-        {value == null
-          ? "No disponible"
-          : `${value.toLocaleString("es-UY")} m²`}
-      </strong>
-      <span className="meta">{source}</span>
-    </div>
   );
 }
 function trapViewerFocus(event: KeyboardEvent<HTMLDialogElement>) {
