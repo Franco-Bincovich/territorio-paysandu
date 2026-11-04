@@ -63,7 +63,7 @@
       "requirement": "PAY-PRD-001",
       "dependencies": "PAY-T001",
       "status": "partial",
-      "assessment": "Los siete originales completos están contrastados. Persisten conciliaciones: mínimo descripción20 incumplido, máximo5000 provisional vs10000 local, vínculo histórico y atribución PLAN10–14semanas no respaldada. V1 prevalece.",
+      "assessment": "Siete originales contrastados; mínimo20 corregido en T032. Persisten conciliaciones de máximo5000provisional vs10000local, vínculo histórico y atribución PLAN10–14semanas no respaldada. V1 prevalece.",
       "evidence": [
         "docs/evidence/t058-originals-review.md",
         "docs/evidence/t058-functional-review.md",
@@ -91,7 +91,7 @@
       },
       "remainingWork": {
         "classification": "mixed_local_external",
-        "detail": "Aplicar corrección mínima de descripción y conciliar máximo/vínculo/atribuciones históricas, sin reemplazar v1.",
+        "detail": "Conciliar máximo/vínculo y atribuciones históricas sin reemplazar v1; mínimo20 ya corregido.",
         "withinCurrentGates": true
       },
       "beforeOriginalsReview": {
@@ -1077,11 +1077,15 @@
       "requirement": "DEC-013",
       "dependencies": "PAY-T031",
       "status": "partial",
-      "assessment": "QA local de accesibilidad/formulario existente; nuevo contraste original y Notion confirma mínimo descripción>=20 que código1..10000 no cumple. Requiere corrección local y regresiones; máximo histórico5000 provisional necesita decisión.",
+      "assessment": "Mínimo20 tras trim corregido en dominio/cliente/HTTP/SQLlocal, codepoints coherentes; límites y noRPC inválido probados con QAindependiente. Máximo10000 técnico conservado frente5000 histórico provisional: decisión pendiente; no E2Ecloud.",
       "evidence": [
-        "docs/evidence/t058-functional-review.md",
-        "docs/evidence/t058-technical-review.md",
-        "src/domain/index.ts"
+        "docs/evidence/t032-description-validation.md",
+        "docs/evidence/t032-independent-review.md",
+        "docs/evidence/t032-check.log",
+        "tests/domain/description.test.ts",
+        "tests/server/consultation-validation.test.ts",
+        "tests/qa/description-parity.test.ts",
+        "docs/evidence/frontend-description-boundaries-result.json"
       ],
       "acceptanceText": "- Validaciones campo a campo y resumen de errores.\n- No introducir datos inventados ni cambios de estados de reclamos.\n- Adjuntar evidencia verificable (PR, test, captura o acta) y actualizar dependencias.",
       "sourceBody": "\n<callout icon=\"📌\" color=\"blue_bg\">\n<b>CAMBIO VIGENTE 03/11/2026; reemplaza los criterios incompatibles inferiores.</b> V1.0: conservar nombre, cédula/RUT, vínculo, tipo fijo, descripción, teléfono(s), correo(s). Contacto se crea desde consulta y snapshot histórico no cambia al actualizar contacto. Fuente: <mention url=\"https://app.notion.com/p/40e30c4074f781968bfdfc17d2fbf599\" />.\n</callout>\n\n## Objetivo\n\nDocumento CI/RUT, nombre, vínculo ampliado, teléfono, email, tipo, texto >=20.\n\n## Alcance y ejecución\n\n1. Confirmar insumos y contrato de la tarea.\n2. Implementar el cambio en ambiente aislado y versionado.\n3. Incorporar validaciones, errores, autorización y trazabilidad que correspondan.\n4. Ejecutar pruebas pertinentes y registrar evidencia.\n5. Someter a revisión independiente antes de pasar a «Terminado».\n\n## Criterios de aceptación\n\n- Validaciones campo a campo y resumen de errores.\n- No introducir datos inventados ni cambios de estados de reclamos.\n- Adjuntar evidencia verificable (PR, test, captura o acta) y actualizar dependencias.\n\n## Dependencias\n\nPAY-T031\n\n## Referencia documental\n\nDEC-013 · <mention url=\"https://app.notion.com/p/40c30c4074f781e884c1dfb00782be06\" />\n\n## Riesgos y comprobaciones\n\nRevisar permisos, errores y compatibilidad con las decisiones vigentes antes de iniciar. Si depende de información institucional no disponible, mantener Backlog/Bloqueado, no asumirla.\n",
@@ -1100,9 +1104,13 @@
         ]
       },
       "evidencePathCheck": {
-        "docs/evidence/t058-functional-review.md": true,
-        "docs/evidence/t058-technical-review.md": true,
-        "src/domain/index.ts": true
+        "docs/evidence/t032-description-validation.md": true,
+        "docs/evidence/t032-independent-review.md": true,
+        "docs/evidence/t032-check.log": true,
+        "tests/domain/description.test.ts": true,
+        "tests/server/consultation-validation.test.ts": true,
+        "tests/qa/description-parity.test.ts": true,
+        "docs/evidence/frontend-description-boundaries-result.json": true
       },
       "beforeOriginalsReview": {
         "status": "evidence_local",
@@ -1114,9 +1122,18 @@
         ]
       },
       "remainingWork": {
-        "classification": "local_material_work",
-        "detail": "Corregir mínimo>=20 en dominio/API/SQL/UI y pruebas; conciliar máximo antes de declararlo requisito aprobado. No corregido en tarea documental T058.",
+        "classification": "external_dependency",
+        "detail": "Ratificar máximo definitivo (5000provisional histórico frente10000 técnico existente) y validar persistencia/Auth reales cuando se autorice entorno. Mínimo20 ya corregido localmente.",
         "withinCurrentGates": true
+      },
+      "beforeT032Correction": {
+        "status": "partial",
+        "assessment": "QA local de accesibilidad/formulario existente; nuevo contraste original y Notion confirma mínimo descripción>=20 que código1..10000 no cumple. Requiere corrección local y regresiones; máximo histórico5000 provisional necesita decisión.",
+        "evidence": [
+          "docs/evidence/t058-functional-review.md",
+          "docs/evidence/t058-technical-review.md",
+          "src/domain/index.ts"
+        ]
       }
     },
     {
@@ -3849,8 +3866,7 @@
   },
   "remainingWorkCounts": {
     "mixed_local_external": 9,
-    "external_dependency": 26,
-    "local_material_work": 1,
+    "external_dependency": 27,
     "deferred_gate": 15
   }
 }

@@ -153,6 +153,25 @@ try {
   await page
     .getByLabel("Correo electrónico 2", { exact: true })
     .fill("second@example.test");
+  await page.getByLabel("Descripción", { exact: true }).fill("a".repeat(19));
+  await page
+    .getByRole("button", { name: "Registrar consulta", exact: true })
+    .click();
+  assert.equal(posts.length, 0);
+  assert.equal(
+    await page
+      .getByLabel("Descripción", { exact: true })
+      .getAttribute("aria-invalid"),
+    "true",
+  );
+  await summary.getByRole("link", { name: /Descripción/ }).click();
+  assert.equal(
+    await page
+      .getByLabel("Descripción", { exact: true })
+      .evaluate((e) => e === document.activeElement),
+    true,
+  );
+  await page.getByLabel("Descripción", { exact: true }).fill("😀".repeat(20));
   await page
     .getByRole("button", { name: "Registrar consulta", exact: true })
     .click();
@@ -161,6 +180,7 @@ try {
     .filter({ hasText: "Fallo sintético de persistencia" })
     .waitFor();
   assert.equal(posts.length, 1);
+  assert.equal(posts[0].description, "😀".repeat(20));
   assert.deepEqual(posts[0].person.phones, ["00000001", "00000002"]);
   assert.deepEqual(posts[0].person.emails, [
     "qa@example.test",

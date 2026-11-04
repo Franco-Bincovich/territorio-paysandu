@@ -74,7 +74,7 @@ test("concurrent same-key retries create exactly one contact and consultation", 
   await assert.rejects(
     service.create(actor, {
       ...input,
-      data: { ...data, description: "Different" },
+      data: { ...data, description: "Different synthetic consultation" },
     }),
     code("CONFLICT"),
   );
@@ -122,7 +122,7 @@ test("editing preserves original snapshot, contact and revision history; detects
   const changed = {
     ...data,
     person: { ...data.person, name: "Persona sintética corregida" },
-    description: "Corrección",
+    description: "Corrección sintética de consulta",
   };
   const outcomes = await Promise.allSettled([
     service.edit(actor, { id: created.id, expectedVersion: 1, data: changed }),

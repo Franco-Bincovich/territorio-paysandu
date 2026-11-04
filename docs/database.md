@@ -47,3 +47,7 @@ La limpieza de entradas caducadas del limitador y la retención de revisiones re
 Antes de aplicar: confirmar proyecto aislado, backup requerido si no está vacío, inspeccionar todos los esquemas y Auth, revisar asesores, ejecutar pruebas SQL en entorno descartable y revisar grants de nuevos objetos. El trigger de `auth.users` requiere verificar compatibilidad con la versión de Supabase y el flujo Auth real; una emulación no prueba el servicio remoto.
 
 El usuario inicial Paysandu, correo, cambio seguro de contraseña, configuración Auth (sin signups públicos), revocación real, RLS con JWT reales y restauración permanecen pendientes hasta habilitar el entorno. No utilizar usuarios o datos institucionales reales para estas pruebas.
+
+## Delta T032 — descripción
+
+Las RPC de alta/edición normalizan whitespace exterior equivalente a ECMAScript trim antes de validar y guardar descripción, snapshot e idempotencia. Mínimo20 puntos de código Unicode confirmado por T032. Se conserva máximo técnico10000 pendiente de conciliación con5000provisional histórico; no se declara aprobado. Controles inválidos se rechazan antes del trim; solo whitespace y19caracteres con padding no pasan. El CHECK local también exige20–10000. Migración no aplicada a cloud; pruebas locales no sustituyen E2E real. Ver evidence/t032-description-validation.md.

@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH } from "../domain";
 import { useRequestScope } from "./use-request-scope";
 import { isAbort } from "./request-scope";
 import { request, type Consultation, type ParcelRef } from "./contracts";
@@ -254,10 +255,21 @@ export function ConsultationForm({
             name="description"
             defaultValue={initial?.description}
             required
-            minLength={1}
-            maxLength={10000}
+            minLength={DESCRIPTION_MIN_LENGTH}
+            data-max-codepoints={DESCRIPTION_MAX_LENGTH}
+            aria-describedby={[
+              `${idPrefix}-description-hint`,
+              fieldErrors.description ? `${idPrefix}-description-error` : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
             rows={6}
           />
+          <p id={`${idPrefix}-description-hint`} className="muted">
+            Entre {DESCRIPTION_MIN_LENGTH} y{" "}
+            {DESCRIPTION_MAX_LENGTH.toLocaleString("es-UY")} caracteres, sin
+            contar espacios al principio y al final.
+          </p>
         </Field>
       </fieldset>
       {!initial && (

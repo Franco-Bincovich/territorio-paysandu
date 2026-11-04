@@ -12,7 +12,7 @@ const valid: ConsultationDraft = {
   phones: ["00000000"],
   emails: ["synthetic@example.test"],
   type: "General",
-  description: "Consulta sintética.",
+  description: "Consulta sintética de prueba.",
 };
 test("all required fields reported together; no API needed", () => {
   const errors = validateConsultationFields({
@@ -84,5 +84,30 @@ test("description accepts full domain 10000 maximum and rejects control characte
   );
   assert.ok(
     validateConsultationFields({ ...valid, name: "bad\u0000name" }).name,
+  );
+});
+
+test("description minimum is 20 trimmed Unicode codepoints", () => {
+  for (const value of [
+    "a".repeat(19),
+    " \t\n\r\u00a0" + "a".repeat(19) + "\u00a0 ",
+    "😀".repeat(19),
+  ])
+    assert.ok(
+      validateConsultationFields({ ...valid, description: value }).description,
+    );
+  for (const value of [
+    "a".repeat(20),
+    "a".repeat(21),
+    " \t\n\r\u00a0" + "😀".repeat(20) + "\u00a0 ",
+    "😀".repeat(10000),
+  ])
+    assert.deepEqual(
+      validateConsultationFields({ ...valid, description: value }),
+      {},
+    );
+  assert.ok(
+    validateConsultationFields({ ...valid, description: "😀".repeat(10001) })
+      .description,
   );
 });

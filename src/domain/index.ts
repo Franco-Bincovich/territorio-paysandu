@@ -164,6 +164,23 @@ export function parseParcel(value: unknown): ParcelKey {
   if (!/^\d+$/.test(parcel)) fail("Invalid parcel");
   return Object.freeze({ locality, parcel });
 }
+/** Minimum from PAY-T032. The existing technical maximum is retained pending
+ * owner reconciliation with the historical provisional 5000; not an approved requirement. */
+export const DESCRIPTION_MIN_LENGTH = 20;
+export const DESCRIPTION_MAX_LENGTH = 10000;
+export function parseDescription(value: unknown): string {
+  if (
+    typeof value !== "string" ||
+    /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)
+  )
+    fail("Invalid description");
+  const normalized = (value as string).trim();
+  // Unicode code points match PostgreSQL length(text); avoid UTF-16 surrogate counting.
+  const length = Array.from(normalized).length;
+  if (length < DESCRIPTION_MIN_LENGTH || length > DESCRIPTION_MAX_LENGTH)
+    fail("Invalid description");
+  return normalized;
+}
 export function parseData(value: unknown): ConsultationData {
   const data = obj(value);
   exactKeys(data, ["person", "type", "description"]);
@@ -211,7 +228,7 @@ export function parseData(value: unknown): ConsultationData {
   });
   return Object.freeze({
     type: data.type as ConsultationType,
-    description: string(data.description, "description", 10000),
+    description: parseDescription(data.description),
     person: Object.freeze({
       name: string(p.name, "name", 200),
       documentType: p.documentType as "CI" | "RUT",

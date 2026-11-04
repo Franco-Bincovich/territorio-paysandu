@@ -2864,8 +2864,9 @@
           },
           "description": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 10000
+            "minLength": 20,
+            "maxLength": 10000,
+            "description": "After trimming boundary whitespace: minimum 20 Unicode code points (PAY-T032). Maximum 10000 remains the current implementation limit pending reconciliation with historical proposed maximum5000; not an approved institutional maximum. Disallowed control characters are rejected."
           },
           "idempotencyKey": {
             "type": "string",
@@ -2904,8 +2905,9 @@
           },
           "description": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 10000
+            "minLength": 20,
+            "maxLength": 10000,
+            "description": "After trimming boundary whitespace: minimum 20 Unicode code points (PAY-T032). Maximum 10000 remains the current implementation limit pending reconciliation with historical proposed maximum5000; not an approved institutional maximum. Disallowed control characters are rejected."
           },
           "version": {
             "type": "integer",
@@ -2944,8 +2946,9 @@
           },
           "description": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 10000
+            "minLength": 20,
+            "maxLength": 10000,
+            "description": "After trimming boundary whitespace: minimum 20 Unicode code points (PAY-T032). Maximum 10000 remains the current implementation limit pending reconciliation with historical proposed maximum5000; not an approved institutional maximum. Disallowed control characters are rejected."
           },
           "id": {
             "type": "string",

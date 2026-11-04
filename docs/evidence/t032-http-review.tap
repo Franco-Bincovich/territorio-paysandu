@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: POST rejects short, whitespace and over-limit descriptions before any persistence RPC
+ok 1 - POST rejects short, whitespace and over-limit descriptions before any persistence RPC
+  ---
+  duration_ms: 8.639167
+  type: 'test'
+  ...
+# Subtest: POST accepts 20 and 10000 code points and sends trimmed value through authenticated RPC
+ok 2 - POST accepts 20 and 10000 code points and sends trimmed value through authenticated RPC
+  ---
+  duration_ms: 3.387168
+  type: 'test'
+  ...
+# Subtest: POST still denies unauthenticated requests before validation or persistence
+ok 3 - POST still denies unauthenticated requests before validation or persistence
+  ---
+  duration_ms: 0.528838
+  type: 'test'
+  ...
+# Subtest: PATCH rejects short, whitespace and over-limit descriptions before any persistence RPC
+ok 4 - PATCH rejects short, whitespace and over-limit descriptions before any persistence RPC
+  ---
+  duration_ms: 2.07738
+  type: 'test'
+  ...
+# Subtest: PATCH accepts 20 and 10000 code points and sends trimmed value through authenticated RPC
+ok 5 - PATCH accepts 20 and 10000 code points and sends trimmed value through authenticated RPC
+  ---
+  duration_ms: 1.815264
+  type: 'test'
+  ...
+# Subtest: PATCH still denies unauthenticated requests before validation or persistence
+ok 6 - PATCH still denies unauthenticated requests before validation or persistence
+  ---
+  duration_ms: 0.211734
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26.396899

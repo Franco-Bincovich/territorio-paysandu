@@ -88,18 +88,43 @@ function payload(body: Record<string, unknown>, editing = false) {
     }),
   };
 }
-export async function handle(
+export type HandlerDependencies = Readonly<{
+  configuration: typeof configuration;
+  identity: typeof identity;
+  privilegedClient: typeof privilegedClient;
+  sessionClient: typeof sessionClient;
+  catalogue: typeof catalogue;
+}>;
+/** Composition seam for isolated adapter testing; never controlled by a request or environment test flag. */
+export function createHandler(dependencies: HandlerDependencies) {
+  const adapters = Object.freeze({ ...dependencies });
+  return async (request: Request, segments: string[], logger?: RequestLogger) =>
+    observeRequest(
+      routeTemplate(segments),
+      () => handleRequest(request, segments, adapters),
+      logger,
+    );
+}
+// The route module always imports this production composition with real authentication adapters.
+export const handle = createHandler({
+  configuration,
+  identity,
+  privilegedClient,
+  sessionClient,
+  catalogue,
+});
+async function handleRequest(
   request: Request,
   segments: string[],
-  logger?: RequestLogger,
+  dependencies: HandlerDependencies,
 ) {
-  return observeRequest(
-    routeTemplate(segments),
-    () => handleRequest(request, segments),
-    logger,
-  );
-}
-async function handleRequest(request: Request, segments: string[]) {
+  const {
+    configuration,
+    identity,
+    privilegedClient,
+    sessionClient,
+    catalogue,
+  } = dependencies;
   try {
     const template = routeTemplate(segments);
     if (template === "unmatched")

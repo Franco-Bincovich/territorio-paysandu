@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "scope": "synthetic intercepted frontend validation only",
+  "checks": [
+    {
+      "name": "whitespace",
+      "valid": false,
+      "postDelta": 0
+    },
+    {
+      "name": "19",
+      "valid": false,
+      "postDelta": 0
+    },
+    {
+      "name": "trim19",
+      "valid": false,
+      "postDelta": 0
+    },
+    {
+      "name": "20",
+      "valid": true,
+      "postDelta": 1
+    },
+    {
+      "name": "21",
+      "valid": true,
+      "postDelta": 1
+    },
+    {
+      "name": "10000",
+      "valid": true,
+      "postDelta": 1
+    },
+    {
+      "name": "10001",
+      "valid": false,
+      "postDelta": 0
+    },
+    {
+      "name": "emoji19",
+      "valid": false,
+      "postDelta": 0
+    },
+    {
+      "name": "trimEmoji20",
+      "valid": true,
+      "postDelta": 1
+    },
+    {
+      "name": "emoji10000",
+      "valid": true,
+      "postDelta": 1
+    },
+    {
+      "name": "emoji10001",
+      "valid": false,
+      "postDelta": 0
+    }
+  ],
+  "totalPosts": 5,
+  "pageErrors": []
+}

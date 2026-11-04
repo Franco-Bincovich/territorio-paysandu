@@ -23,7 +23,8 @@ create table public.consultations (
   locality text not null,
   parcel text not null,
   type text not null check (type in ('General','Reclamo','Falta de documentación')),
-  description text not null check (length(description) between 1 and 10000),
+  -- T032 minimum approved; 10000 remains a technical ceiling pending functional approval.
+  description text not null check (length(description) between 20 and 10000),
   person jsonb not null,
   original_snapshot jsonb not null,
   creator_user_id uuid not null references auth.users(id),
@@ -152,6 +153,23 @@ end;
 $$;
 create function public.finalize_password_change(p_user_id uuid,p_session_id uuid) returns boolean language sql security invoker set search_path='' as $$ select private.finalize_password_change(p_user_id,p_session_id); $$;
 
+-- Match ECMAScript trim exactly, rather than locale-dependent POSIX whitespace.
+-- Reject raw controls before trimming, including VT/FF; PostgreSQL rejects U+0000 itself.
+create function private.normalize_payload(p jsonb) returns jsonb language plpgsql immutable security invoker set search_path='' as $$
+declare description text;
+begin
+  if jsonb_typeof(p)='object' and jsonb_typeof(p->'description')='string' then
+    description:=p->>'description';
+    if description ~ U&'[\0001-\0008\000B\000C\000E-\001F]' then
+      raise exception 'INVALID_DESCRIPTION_CONTROL' using errcode='22023';
+    end if;
+    description:=btrim(description,U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF');
+    return jsonb_set(p,'{description}',to_jsonb(description));
+  end if;
+  return p;
+end;
+$$;
+
 create function private.validate_payload(p jsonb) returns void language plpgsql immutable security invoker set search_path='' as $$
 declare field text; item jsonb; person jsonb:=p->'person'; doc text;
 begin
@@ -163,7 +181,8 @@ begin
   foreach field in array array['locality','parcel','type','description'] loop
     if jsonb_typeof(p->field) is distinct from 'string' or length(btrim(p->>field))=0 then raise exception 'INVALID_INPUT' using errcode='22023'; end if;
   end loop;
-  if length(p->>'locality')>100 or length(p->>'parcel')>30 or p->>'parcel' !~ '^[0-9]+$' or length(p->>'description')>10000 or p->>'type' not in ('General','Reclamo','Falta de documentación') then raise exception 'INVALID_INPUT' using errcode='22023'; end if;
+  if length(p->>'description') not between 20 and 10000 then raise exception 'INVALID_DESCRIPTION_LENGTH' using errcode='22023'; end if;
+  if length(p->>'locality')>100 or length(p->>'parcel')>30 or p->>'parcel' !~ '^[0-9]+$' or p->>'type' not in ('General','Reclamo','Falta de documentación') then raise exception 'INVALID_INPUT' using errcode='22023'; end if;
   foreach field in array array['name','documentType','document','relationship'] loop
     if jsonb_typeof(person->field) is distinct from 'string' or length(btrim(person->>field)) not between 1 and 300 then raise exception 'INVALID_INPUT' using errcode='22023'; end if;
   end loop;
@@ -190,6 +209,7 @@ create function private.create_consultation(p_payload jsonb,p_idempotency_key uu
 declare uid uuid:=auth.uid(); row public.consultations; previous private.idempotency;
 begin
   if uid is null or not private.can_access() then raise exception 'FORBIDDEN' using errcode='42501'; end if;
+  p_payload:=private.normalize_payload(p_payload);
   perform private.validate_payload(p_payload);
   if p_idempotency_key is null then raise exception 'INVALID_IDEMPOTENCY_KEY' using errcode='22023'; end if;
   -- Serializes only retries for the same user/key; collisions cause waiting, never data loss.
@@ -224,6 +244,7 @@ create function private.edit_consultation(p_id uuid,p_expected_version integer,p
 declare uid uuid:=auth.uid(); row public.consultations;
 begin
   if uid is null or not private.can_access() then raise exception 'FORBIDDEN' using errcode='42501'; end if;
+  p_payload:=private.normalize_payload(p_payload);
   perform private.validate_payload(p_payload);
   select * into row from public.consultations where id=p_id and creator_user_id=uid for update;
   if not found then raise exception 'FORBIDDEN' using errcode='42501'; end if;

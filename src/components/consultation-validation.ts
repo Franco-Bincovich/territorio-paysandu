@@ -1,4 +1,8 @@
-import { parseData } from "../domain";
+import {
+  parseData,
+  DESCRIPTION_MIN_LENGTH,
+  DESCRIPTION_MAX_LENGTH,
+} from "../domain";
 export type ConsultationDraft = {
   name: string;
   relationship: string;
@@ -14,7 +18,7 @@ export type FieldErrors = Record<string, string>;
 // values are valid synthetic probes, not defaults submitted to the API.
 const probe = {
   type: "General",
-  description: "Validación sintética",
+  description: "Validación sintética de formulario.",
   person: {
     name: "PERSONA SINTÉTICA",
     relationship: "Titular",
@@ -72,7 +76,7 @@ export function validateConsultationFields(
   if (!accepts({ ...probe, type: draft.type }))
     errors.type = "Elegí uno de los tres tipos de consulta disponibles.";
   if (!accepts({ ...probe, description: draft.description }))
-    errors.description = "Ingresá una descripción de hasta 10.000 caracteres.";
+    errors.description = `Ingresá una descripción de ${DESCRIPTION_MIN_LENGTH} a ${DESCRIPTION_MAX_LENGTH.toLocaleString("es-UY")} caracteres, sin contar espacios al principio y al final.`;
   for (const [key, values, label] of [
     ["phone", draft.phones, "teléfono"],
     ["email", draft.emails, "correo electrónico"],

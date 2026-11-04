@@ -14,7 +14,7 @@ try {
     locality: "QA",
     parcel: String(900001 + i),
     type: "General",
-    description: "SINTÉTICO",
+    description: "CONTENIDO SINTÉTICO DE PRUEBA",
     person: {
       name: `PERSONA SINTÉTICA ${i}`,
       documentType: "CI",

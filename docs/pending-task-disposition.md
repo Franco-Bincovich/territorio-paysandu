@@ -75,3 +75,7 @@ Las ocho condicionadas son T011/T014 (PR/protecciones/CI y cuota/plan aptos), T0
 ## Actualización posterior T058
 
 Library suministró el ZIP de los siete originales; hashes/versiones y contraste7/7 ya verificados. Se resuelve el bloqueo documental de T058, conservando arriba la historia. El contraste identificó trabajo local real nuevo en T032: descripción mínima>=20 no implementada. Se registra como parcial y no se modifica código en esta revisión documental. Conteo actual:28evidencia local,50parciales,20bloqueadas,1sin evidencia. Ver docs/evidence/t058-originals-review.md.
+
+## Corrección posterior del mínimo T032
+
+Mínimo20 ya corregido en cliente/servidor/SQLlocal y probado; no quedan las entradas cortas como defecto pendiente. Continúan máximo definitivo por conciliar y pruebas reales autorizadas. La decisión de máximo no se presume resuelta por conservar10000 técnico.

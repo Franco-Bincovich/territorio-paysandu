@@ -11,7 +11,7 @@ const payload = {
   locality: "SINTETICA",
   parcel: "99999",
   type: "General",
-  description: "QA sintético",
+  description: "Consulta de QA sintética",
   person: {
     name: "Persona QA",
     documentType: "CI",
@@ -89,7 +89,7 @@ test("Independent PostgreSQL RLS, grants and transaction checks", async (t) => {
         );
         await assert.rejects(
           rpc("create_consultation", [
-            JSON.stringify({ ...payload, description: "Different" }),
+            JSON.stringify({ ...payload, description: "Consulta diferente para QA" }),
             K,
           ]),
           /IDEMPOTENCY_CONFLICT/,
@@ -145,7 +145,7 @@ test("Independent PostgreSQL RLS, grants and transaction checks", async (t) => {
       async () => {
         const changed = {
           ...payload,
-          description: "Edited",
+          description: "Consulta editada para QA",
           person: { ...payload.person, name: "Changed QA" },
         };
         const row = await rpc("edit_consultation", [
@@ -441,6 +441,65 @@ test("Independent PostgreSQL RLS, grants and transaction checks", async (t) => {
         );
       },
     );
+    await t.test("T032 SQL authority trims descriptions and enforces codepoint boundaries atomically", async () => {
+      let request = 200;
+      const key = () => `30000000-0000-4000-8000-${String(request++).padStart(12, "0")}`;
+      const input = (description: string) => JSON.stringify({ ...payload, description });
+      const counts = async () => {
+        await admin("select 1");
+        const row = (await db.query(`select
+          (select count(*) from public.consultations) consultations,
+          (select count(*) from public.contacts) contacts,
+          (select count(*) from private.consultation_revisions) revisions,
+          (select count(*) from private.idempotency) idempotency`)).rows[0];
+        await role();
+        return row;
+      };
+      const padding = " \t\n\r\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff";
+      for (const character of ["a", "😀"]) {
+        for (const length of [19, 20, 21, 10000, 10001]) {
+          const description = character.repeat(length);
+          if (length === 19 || length === 10001) {
+            const before = await counts();
+            await assert.rejects(rpc("create_consultation", [input(description), key()]), /INVALID_DESCRIPTION_LENGTH/);
+            assert.deepEqual(await counts(), before, "invalid create must not change any transaction table");
+          } else {
+            const created = await rpc("create_consultation", [input(description), key()]);
+            assert.equal(created.description, description);
+            assert.equal(created.original_snapshot.description, description);
+          }
+        }
+      }
+      const canonical = "a".repeat(20);
+      const paddedKey = key();
+      const padded = await rpc("create_consultation", [input(padding + canonical + padding), paddedKey]);
+      assert.equal(padded.description, canonical);
+      assert.equal(padded.original_snapshot.description, canonical);
+      assert.equal((await rpc("create_consultation", [input(canonical), paddedKey])).id, padded.id, "outer padding is idempotently equivalent");
+      for (const description of [" ".repeat(20), padding, padding + "a".repeat(19) + padding, "\u000b" + canonical, canonical + "\u000c", canonical + "\u001f"]) {
+        const before = await counts();
+        await assert.rejects(rpc("create_consultation", [input(description), key()]), /INVALID/);
+        await assert.rejects(rpc("edit_consultation", [padded.id, 1, input(description)]), /INVALID/);
+        assert.deepEqual(await counts(), before, "invalid create/edit must not leave contacts, revisions or idempotency");
+        const row = (await db.query<{ description: string; version: number }>("select description,version from public.consultations where id=$1", [padded.id])).rows[0];
+        assert.equal(row.description, canonical); assert.equal(row.version, 1);
+      }
+      let version = 1;
+      for (const length of [19, 20, 21, 10000, 10001]) {
+        const description = "😀".repeat(length);
+        if (length === 19 || length === 10001) {
+          const before = await counts();
+          await assert.rejects(rpc("edit_consultation", [padded.id, version, input(description)]), /INVALID_DESCRIPTION_LENGTH/);
+          assert.deepEqual(await counts(), before);
+        } else {
+          const edited = await rpc("edit_consultation", [padded.id, version, input(padding + description + padding)]);
+          assert.equal(edited.description, description); assert.equal(edited.version, ++version);
+          assert.equal(edited.original_snapshot.description, canonical, "editing preserves original normalized snapshot");
+        }
+      }
+      const multiline = "a".repeat(10) + "\t\n\r" + "b".repeat(10);
+      assert.equal((await rpc("create_consultation", [input(multiline), key()])).description, multiline, "interior tab/LF/CR retained");
+    });
   } finally {
     await db.close();
   }
