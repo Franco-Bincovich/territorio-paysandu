@@ -74,7 +74,7 @@ export function ParcelView({
           id="panel-record"
           role="region"
           aria-labelledby="tab-record"
-          className="stack"
+          className="record-layout"
         >
           <section className="panel">
             <div className="panel-head">
@@ -132,7 +132,9 @@ export function ParcelView({
               />
             </div>
           </section>
-          <ImageViewer images={parcel.images} />
+          <div className="record-images">
+            <ImageViewer images={parcel.images} />
+          </div>
           <section className="panel">
             <div className="panel-head">
               <h2>Contactos del padrón</h2>

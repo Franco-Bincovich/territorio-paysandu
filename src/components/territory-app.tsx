@@ -43,7 +43,15 @@ export function TerritoryApp() {
     [detail, setDetail] = useState<Consultation | null>(null),
     [busy, setBusy] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const navigationToggle = useRef<HTMLButtonElement>(null);
   const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (navigationOpen)
+      document
+        .querySelector<HTMLButtonElement>("#workspace-navigation .mobile-menu")
+        ?.focus();
+  }, [navigationOpen]);
   const [detailOrigin, setDetailOrigin] = useState<"history" | "parcel">(
     "history",
   );
@@ -74,6 +82,8 @@ export function TerritoryApp() {
       parcelHistoryReturn.current = null;
       setRestoreHistory(null);
       setSession(null);
+      setNavigationOpen(false);
+      setProfileOpen(false);
       setParcel(null);
       setDetail(null);
       setScreen("search");
@@ -92,6 +102,7 @@ export function TerritoryApp() {
     restore: "global" | "parcel" | null = null,
   ) {
     setProfileOpen(false);
+    setNavigationOpen(false);
     setRestoreHistory(restore);
     navigationRequests.cancel();
     setBusy(false);
@@ -272,7 +283,26 @@ export function TerritoryApp() {
       <a className="skip" href="#main">
         Ir al contenido
       </a>
-      <aside className="sidebar">
+      <aside
+        id="workspace-navigation"
+        className={`sidebar${navigationOpen ? " open" : ""}`}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setNavigationOpen(false);
+            navigationToggle.current?.focus();
+          }
+        }}
+      >
+        <button
+          type="button"
+          className="btn mobile-menu"
+          onClick={() => {
+            setNavigationOpen(false);
+            navigationToggle.current?.focus();
+          }}
+        >
+          Cerrar menú
+        </button>
         <Brand />
         <div className="org">
           <strong>Territorio Paysandú</strong>
@@ -337,6 +367,16 @@ export function TerritoryApp() {
       </aside>
       <div className="main-wrap">
         <header className="topbar">
+          <button
+            ref={navigationToggle}
+            type="button"
+            className="btn mobile-menu"
+            aria-expanded={navigationOpen}
+            aria-controls="workspace-navigation"
+            onClick={() => setNavigationOpen(!navigationOpen)}
+          >
+            Menú
+          </button>
           <span className="crumb">
             Territorio <span>/</span>{" "}
             <b>
@@ -474,11 +514,9 @@ function Brand() {
       />
       <div>
         <div className="brand-name">
-          Territorio
-          <br />
-          <span>Paysandú</span>
+          Paysand<span>ú</span>
         </div>
-        <small>Gestión territorial</small>
+        <small>Gobierno departamental</small>
       </div>
     </div>
   );
@@ -687,15 +725,13 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
             Una mirada sobre el territorio
           </div>
         </div>
-        <p className="eyebrow">Información territorial</p>
-        <h1>
-          Encontrá la información
-          <br />
-          de cada padrón.
-        </h1>
-        <p>
-          Buscá por localidad y padrón o por los datos exactos de una persona.
-        </p>
+        <div className="hero-copy">
+          <p className="eyebrow">Información territorial</p>
+          <h1>El territorio, en un solo lugar.</h1>
+          <p>
+            Buscá por localidad y padrón o por los datos exactos de una persona.
+          </p>
+        </div>
       </section>
       <div className="search-pair">
         <section className="panel">
@@ -704,7 +740,7 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
               <span className="step">1</span>Por localidad y padrón
             </h2>
           </div>
-          <form className="form-stack" onSubmit={search}>
+          <form className="search-grid" onSubmit={search}>
             <label className="field">
               Localidad
               <input
@@ -736,7 +772,7 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
               <span className="step">2</span>Por persona
             </h2>
           </div>
-          <form className="form-stack" onSubmit={search}>
+          <form className="search-grid" onSubmit={search}>
             <label className="field">
               Buscar mediante
               <select name="kind">

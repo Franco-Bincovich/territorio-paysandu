@@ -86,31 +86,11 @@
   margin-right: 6px;
   background: #19a580;
 }
-.hero {
-  position: relative;
-}
-.hero .art {
-  position: absolute;
-  right: 30px;
-  top: 28px;
-  width: 200px;
-}
-.hero {
-  padding-right: 260px;
-}
 .paysandu-logo {
-  width: 72px;
+  width: 52px;
   height: auto;
   object-fit: contain;
   flex-shrink: 0;
-}
-@media (max-width: 800px) {
-  .hero .art {
-    display: none;
-  }
-  .hero {
-    padding-right: 30px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .art-map {

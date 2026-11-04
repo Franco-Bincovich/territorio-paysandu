@@ -67,10 +67,11 @@ try {
   await page.getByRole('navigation', { name: 'Principal' }).waitFor();
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 }); await noOverflow();
-    assert.equal(await page.locator('.hero .art').isVisible(), width > 800);
+    assert.equal(await page.locator('.hero .art').isVisible(), width > 550);
     if (width === 1440 || width === 390) await screenshot(`qa-settings-search-${width}`);
   }
-  checks.push('original logo decodes; map visible desktop and hidden by responsive rule; no page overflow at1440/768/390/320');
+  checks.push('original logo decodes; map visible desktop and hidden at mobile breakpoint; no page overflow at1440/768/390/320');
+  await page.getByRole('button', { name: 'Menú', exact: true }).click();
   await page.getByRole('button', { name: 'QA SINTÉTICO', exact: true }).click();
   await page.getByRole('button', { name: 'Configuración', exact: true }).click();
   await page.getByRole('heading', { name: 'Configuración', exact: true }).waitFor();

@@ -151,7 +151,16 @@ try {
     await opener.evaluate((e) => e === document.activeElement),
     true,
   );
+  const menu = page.getByRole("button", { name: "Menú", exact: true });
+  await menu.click();
+  assert.equal(await menu.getAttribute("aria-expanded"), "true");
+  assert.equal(await page.getByRole("button", { name: "Cerrar menú", exact: true }).evaluate(e => e === document.activeElement), true);
+  await page.keyboard.press("Escape");
+  assert.equal(await menu.getAttribute("aria-expanded"), "false");
+  assert.equal(await menu.evaluate(e => e === document.activeElement), true);
+  await menu.click();
   await page.getByRole("button", { name: /Historial de consultas/ }).click();
+  assert.equal(await menu.getAttribute("aria-expanded"), "false");
   await page
     .getByRole("button", { name: /Ver consulta/ })
     .last()
@@ -184,6 +193,7 @@ try {
         "mobile zoom125%",
         "modal focus contained both tab directions and Escape returns focus",
         "history scroll restoration",
+        "mobile menu focus, Escape and close after navigation",
       ],
       before,
       after,
