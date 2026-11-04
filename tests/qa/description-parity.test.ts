@@ -74,11 +74,16 @@ test("independent public SQL RPC rejects bypassed invalid lengths; valid create/
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
  grant usage on schema auth to anon,authenticated,service_role;grant execute on function auth.uid(),auth.jwt() to anon,authenticated,service_role;`);
+    // Storage migrations are exercised together by storage-rls with platform stubs.
     const dir = new URL("../../supabase/migrations/", import.meta.url);
     for (const file of (await readdir(dir))
       .filter(
         (n) =>
-          n.endsWith(".sql") && !n.endsWith("_private_prototype_images.sql"),
+          n.endsWith(".sql") &&
+          ![
+            "20261104144022_private_prototype_images.sql",
+            "20261104185042_support_uploaded_prototype_paths.sql",
+          ].includes(n),
       )
       .sort())
       await db.exec(await readFile(new URL(file, dir), "utf8"));

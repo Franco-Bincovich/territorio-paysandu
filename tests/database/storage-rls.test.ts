@@ -26,8 +26,56 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
         "utf8",
       ),
     );
-    await db.exec(`insert into public.parcel_images values ('Paysandú','17718','historical','imagenes-satelitales','synthetic.png','paysandu/17718/historical/synthetic.png','Synthetic test only','{}',repeat('0',64),now(),'SYNTHETIC TEST ONLY');
- insert into storage.objects values(1,'imagenes-satelitales','paysandu/17718/historical/synthetic.png'),(2,'imagenes-satelitales','unlisted.png'),(9,'unrelated','other.png');`);
+    // Existing nested references survive the path migration unchanged.
+    await db.exec(
+      `insert into public.parcel_images values ('Paysandú','17718','historical','imagenes-satelitales','synthetic.png','paysandu/17718/historical/synthetic.png','Synthetic test only','{}',repeat('0',64),now(),'SYNTHETIC TEST ONLY');`,
+    );
+    await db.exec(
+      await readFile(
+        new URL(
+          "../../supabase/migrations/20261104185042_support_uploaded_prototype_paths.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    assert.equal(
+      (
+        await db.query<{ object_path: string }>(
+          "select object_path from public.parcel_images",
+        )
+      ).rows[0].object_path,
+      "paysandu/17718/historical/synthetic.png",
+    );
+    for (const path of [
+      "unrelated.png",
+      "other/synthetic.png",
+      "../synthetic.png",
+    ])
+      await assert.rejects(
+        db.query(
+          "update public.parcel_images set object_path=$1 where kind='historical'",
+          [path],
+        ),
+      );
+    await assert.rejects(
+      db.exec(
+        "update public.parcel_images set bucket='imagenes-catastro' where kind='historical'",
+      ),
+    );
+    await assert.rejects(
+      db.exec(
+        "update public.parcel_images set locality='Otra' where kind='historical'",
+      ),
+    );
+    await assert.rejects(
+      db.exec(
+        "update public.parcel_images set parcel='17719' where kind='historical'",
+      ),
+    );
+    await db.exec(`update public.parcel_images set object_path=filename where kind='historical';
+ insert into public.parcel_images values ('Paysandú','17718','survey','imagenes-catastro','synthetic-survey.png','paysandu/17718/survey/synthetic-survey.png','Synthetic test only','{}',repeat('0',64),now(),'SYNTHETIC TEST ONLY');
+ insert into storage.objects values(1,'imagenes-satelitales','synthetic.png'),(2,'imagenes-satelitales','unlisted.png'),(4,'imagenes-catastro','paysandu/17718/survey/synthetic-survey.png'),(9,'unrelated','other.png');`);
     assert.equal(
       (
         await db.query<{ n: number }>(
@@ -45,7 +93,7 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
       );
       assert.equal(
         (await db.query("select * from public.parcel_images")).rows.length,
-        1,
+        2,
       );
       assert.equal(
         (
@@ -54,6 +102,14 @@ test("private image SQL: authorized readers, disabled/anonymous denial and direc
           )
         ).rows.length,
         1,
+      );
+      assert.deepEqual(
+        (
+          await db.query<{ name: string }>(
+            "select name from storage.objects where bucket_id in ('imagenes-satelitales','imagenes-catastro') order by id",
+          )
+        ).rows.map((r) => r.name),
+        ["synthetic.png", "paysandu/17718/survey/synthetic-survey.png"],
       );
       await db.exec("select set_config('test.operation','object.sign',false)");
       assert.equal(
