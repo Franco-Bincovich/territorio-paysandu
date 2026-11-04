@@ -83,6 +83,15 @@ test("references use session-protected proxy; only survey metadata projected; Po
     [survey.bucket, survey.object_path],
   ]);
 });
+test("dashboard root objects remain bound to exact filename, bucket and parcel", async () => {
+  const root = { ...historical, object_path: historical.filename };
+  const f = fixture([root]);
+  await downloadPrototypeImage(f.client, "historical");
+  assert.deepEqual(f.calls, [[root.bucket, root.filename]]);
+  for (const object_path of ["unrelated.png", "other/" + root.filename, "../" + root.filename]) {
+    await assert.rejects(fixture([{ ...root, object_path }]).adapter.getImages(PROTOTYPE_KEY));
+  }
+});
 test("same parcel in a different locality and other parcels never query or sign", async () => {
   for (const key of [
     { locality: "Otra", parcel: "17718" },

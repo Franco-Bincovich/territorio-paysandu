@@ -29,7 +29,8 @@ const reference = z
   .superRefine((r, ctx) => {
     if (
       r.bucket !== buckets[r.kind] ||
-      r.object_path !== `paysandu/17718/${r.kind}/${r.filename}`
+      (r.object_path !== `paysandu/17718/${r.kind}/${r.filename}` &&
+        r.object_path !== r.filename)
     )
       ctx.addIssue({ code: "custom", message: "Invalid image association" });
   });
