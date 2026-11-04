@@ -89,7 +89,9 @@ export type ParcelRecord = Readonly<{
   originalLandArea: number | null;
   originalBuildingArea: number | null;
   detectedBuildingArea: number | null;
-  source: "synthetic" | "institutional";
+  source: "synthetic" | "institutional" | "prototype";
+  fields?: Record<string, string>;
+  provenance?: string;
 }>;
 export type PersonSearch = Readonly<{
   field: "name" | "CI" | "RUT";

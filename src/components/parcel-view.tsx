@@ -88,6 +88,7 @@ export function ParcelView({
               <h2>Información catastral</h2>
               <span className="badge">Solo lectura</span>
             </div>
+            {parcel.provenance && <p className="notice">{parcel.provenance}</p>}
             <dl className="data-grid">
               <div>
                 <dt>Localidad</dt>
@@ -112,17 +113,29 @@ export function ParcelView({
               <Surface
                 label="Superficie de terreno"
                 value={parcel.originalLandArea}
-                source="Original · Catastro"
+                source={
+                  parcel.provenance
+                    ? "Prototipo · No verificado"
+                    : "Original · Catastro"
+                }
               />
               <Surface
                 label="Superficie construida"
                 value={parcel.originalBuiltArea}
-                source="Original · Catastro"
+                source={
+                  parcel.provenance
+                    ? "Prototipo · No verificado"
+                    : "Original · Catastro"
+                }
               />
               <Surface
                 label="Superficie detectada"
                 value={parcel.detectedBuiltArea}
-                source="Relevamiento"
+                source={
+                  parcel.provenance
+                    ? "Prototipo · No verificado"
+                    : "Relevamiento"
+                }
               />
             </div>
           </section>

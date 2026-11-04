@@ -328,15 +328,16 @@ export function TerritoryApp() {
           {session.synthetic && (
             <span className="pill demo">
               <span className="dot" />
-              Datos sintéticos · Prueba
+              Entorno de prueba
             </span>
           )}
         </header>
         <main id="main" className="content" tabIndex={-1}>
           {session.synthetic && (
             <p className="notice">
-              Entorno de prueba: datos sintéticos, sin valor documental.
-              Integraciones institucionales pendientes.
+              Entorno de prueba: datos sintéticos y referencias autorizadas del
+              prototipo, sin validación institucional. Integraciones
+              institucionales pendientes.
             </p>
           )}
           {error && <ErrorBox text={error} />}{" "}

@@ -22,6 +22,7 @@ export type ParcelImage = {
 };
 export type Parcel = ParcelRef & {
   fields?: Record<string, string>;
+  provenance?: string;
   originalLandArea?: number | null;
   originalBuiltArea?: number | null;
   detectedBuiltArea?: number | null;

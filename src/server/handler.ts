@@ -1,5 +1,5 @@
 import { DomainError, parseData, parseParcel } from "../domain";
-import { catalogue } from "./catalogue";
+import { applicationCatalogue } from "./prototype-catalogue";
 import { imageResponse } from "./images";
 import { imageProvider } from "./storage-images";
 import { historyFilters, queryKeys } from "./filters";
@@ -94,7 +94,7 @@ export type HandlerDependencies = Readonly<{
   identity: typeof identity;
   privilegedClient: typeof privilegedClient;
   sessionClient: typeof sessionClient;
-  catalogue: typeof catalogue;
+  catalogue: typeof applicationCatalogue;
 }>;
 /** Composition seam for isolated adapter testing; never controlled by a request or environment test flag. */
 export function createHandler(dependencies: HandlerDependencies) {
@@ -112,7 +112,7 @@ export const handle = createHandler({
   identity,
   privilegedClient,
   sessionClient,
-  catalogue,
+  catalogue: applicationCatalogue,
 });
 async function handleRequest(
   request: Request,
@@ -315,7 +315,7 @@ async function handleRequest(
         url.searchParams,
         url.searchParams.has("kind") ? ["kind", "q"] : ["locality", "parcel"],
       );
-      const adapter = catalogue();
+      const adapter = catalogue(client);
       let records;
       if (url.searchParams.has("kind")) {
         const kind = url.searchParams.get("kind");
@@ -348,7 +348,7 @@ async function handleRequest(
       request.method === "GET"
     ) {
       const key = parseParcel({ locality: segments[1], parcel: segments[2] });
-      const adapter = catalogue();
+      const adapter = catalogue(client);
       const parcel = await adapter.findParcel(key);
       if (!parcel)
         throw new HttpError(404, "NOT_FOUND", "Padrón no encontrado.");
@@ -366,7 +366,9 @@ async function handleRequest(
         originalLandArea: parcel.originalLandArea,
         originalBuiltArea: parcel.originalBuildingArea,
         detectedBuiltArea: parcel.detectedBuildingArea,
-        synthetic: true,
+        synthetic: parcel.source === "synthetic",
+        fields: parcel.fields,
+        provenance: parcel.provenance,
         contacts: (contacts ?? [])
           .map((c) => ({
             id: c.id,
@@ -395,7 +397,7 @@ async function handleRequest(
           "VALIDATION",
           "Identificador de solicitud inválido.",
         );
-      if (!(await catalogue().findParcel(data)))
+      if (!(await catalogue(client).findParcel(data)))
         throw new HttpError(404, "NOT_FOUND", "Padrón no encontrado.");
       const { data: created, error } = await client.rpc("create_consultation", {
         p_payload: data,
