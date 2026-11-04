@@ -15,9 +15,9 @@
   },
   "counts": {
     "blocked": 20,
-    "partial": 49,
+    "partial": 50,
     "evidence_local": 28,
-    "no-evidence": 2
+    "no-evidence": 1
   },
   "tasks": [
     {
@@ -63,9 +63,11 @@
       "requirement": "PAY-PRD-001",
       "dependencies": "PAY-T001",
       "status": "partial",
-      "assessment": "Se leyeron los siete resúmenes v0.3 enlazados y contrastaron reglas reemplazadas por v1; todos declaran original íntegro no importado. No acredita revisión de los siete originales.",
+      "assessment": "Los siete originales completos están contrastados. Persisten conciliaciones: mínimo descripción20 incumplido, máximo5000 provisional vs10000 local, vínculo histórico y atribución PLAN10–14semanas no respaldada. V1 prevalece.",
       "evidence": [
-        "docs/evidence/historical-documents-review.json"
+        "docs/evidence/t058-originals-review.md",
+        "docs/evidence/t058-functional-review.md",
+        "docs/evidence/t058-technical-review.md"
       ],
       "acceptanceText": "- Matriz requisito→decisión→tarea revisada; sin reglas de estados de reclamo.\n- No introducir datos inventados ni cambios de estados de reclamos.\n- Adjuntar evidencia verificable (PR, test, captura o acta) y actualizar dependencias.",
       "sourceBody": "\n## Objetivo\n\nRevisar PRD/TRD/UX/Flow/API/Plan/Business Case y prototipo; crear trazabilidad única.\n\n## Alcance y ejecución\n\n1. Confirmar insumos y contrato de la tarea.\n2. Implementar el cambio en ambiente aislado y versionado.\n3. Incorporar validaciones, errores, autorización y trazabilidad que correspondan.\n4. Ejecutar pruebas pertinentes y registrar evidencia.\n5. Someter a revisión independiente antes de pasar a «Terminado».\n\n## Criterios de aceptación\n\n- Matriz requisito→decisión→tarea revisada; sin reglas de estados de reclamo.\n- No introducir datos inventados ni cambios de estados de reclamos.\n- Adjuntar evidencia verificable (PR, test, captura o acta) y actualizar dependencias.\n\n## Dependencias\n\nPAY-T001\n\n## Referencia documental\n\nPAY-PRD-001 · <mention url=\"https://app.notion.com/p/40c30c4074f781e884c1dfb00782be06\" />\n\n## Riesgos y comprobaciones\n\nRevisar permisos, errores y compatibilidad con las decisiones vigentes antes de iniciar. Si depende de información institucional no disponible, mantener Backlog/Bloqueado, no asumirla.\n",
@@ -83,12 +85,21 @@
         ]
       },
       "evidencePathCheck": {
-        "docs/traceability-v1.json": true
+        "docs/evidence/t058-originals-review.md": true,
+        "docs/evidence/t058-functional-review.md": true,
+        "docs/evidence/t058-technical-review.md": true
       },
       "remainingWork": {
-        "classification": "external_dependency",
-        "detail": "Se leyeron los siete resúmenes v0.3 enlazados y contrastaron reglas reemplazadas por v1; todos declaran original íntegro no importado. No acredita revisión de los siete originales.",
+        "classification": "mixed_local_external",
+        "detail": "Aplicar corrección mínima de descripción y conciliar máximo/vínculo/atribuciones históricas, sin reemplazar v1.",
         "withinCurrentGates": true
+      },
+      "beforeOriginalsReview": {
+        "status": "partial",
+        "assessment": "Se leyeron los siete resúmenes v0.3 enlazados y contrastaron reglas reemplazadas por v1; todos declaran original íntegro no importado. No acredita revisión de los siete originales.",
+        "evidence": [
+          "docs/evidence/historical-documents-review.json"
+        ]
       }
     },
     {
@@ -1065,12 +1076,12 @@
       "version": "V1.0",
       "requirement": "DEC-013",
       "dependencies": "PAY-T031",
-      "status": "evidence_local",
-      "assessment": "Validación por campo alineada al dominio, resumen enfocado con enlaces, aria-invalid/describedby; QA browser bloquea POST inválido, limpia enlace al quitar correo y conserva draft ante error remoto. Solo fixture sintética.",
+      "status": "partial",
+      "assessment": "QA local de accesibilidad/formulario existente; nuevo contraste original y Notion confirma mínimo descripción>=20 que código1..10000 no cumple. Requiere corrección local y regresiones; máximo histórico5000 provisional necesita decisión.",
       "evidence": [
-        "src/components/consultation-validation.ts",
-        "src/components/consultation-form.tsx",
-        "tests/qa/form-contacts-fixture.mjs"
+        "docs/evidence/t058-functional-review.md",
+        "docs/evidence/t058-technical-review.md",
+        "src/domain/index.ts"
       ],
       "acceptanceText": "- Validaciones campo a campo y resumen de errores.\n- No introducir datos inventados ni cambios de estados de reclamos.\n- Adjuntar evidencia verificable (PR, test, captura o acta) y actualizar dependencias.",
       "sourceBody": "\n<callout icon=\"📌\" color=\"blue_bg\">\n<b>CAMBIO VIGENTE 03/11/2026; reemplaza los criterios incompatibles inferiores.</b> V1.0: conservar nombre, cédula/RUT, vínculo, tipo fijo, descripción, teléfono(s), correo(s). Contacto se crea desde consulta y snapshot histórico no cambia al actualizar contacto. Fuente: <mention url=\"https://app.notion.com/p/40e30c4074f781968bfdfc17d2fbf599\" />.\n</callout>\n\n## Objetivo\n\nDocumento CI/RUT, nombre, vínculo ampliado, teléfono, email, tipo, texto >=20.\n\n## Alcance y ejecución\n\n1. Confirmar insumos y contrato de la tarea.\n2. Implementar el cambio en ambiente aislado y versionado.\n3. Incorporar validaciones, errores, autorización y trazabilidad que correspondan.\n4. Ejecutar pruebas pertinentes y registrar evidencia.\n5. Someter a revisión independiente antes de pasar a «Terminado».\n\n## Criterios de aceptación\n\n- Validaciones campo a campo y resumen de errores.\n- No introducir datos inventados ni cambios de estados de reclamos.\n- Adjuntar evidencia verificable (PR, test, captura o acta) y actualizar dependencias.\n\n## Dependencias\n\nPAY-T031\n\n## Referencia documental\n\nDEC-013 · <mention url=\"https://app.notion.com/p/40c30c4074f781e884c1dfb00782be06\" />\n\n## Riesgos y comprobaciones\n\nRevisar permisos, errores y compatibilidad con las decisiones vigentes antes de iniciar. Si depende de información institucional no disponible, mantener Backlog/Bloqueado, no asumirla.\n",
@@ -1089,8 +1100,23 @@
         ]
       },
       "evidencePathCheck": {
-        "src/components/consultation-form.tsx": true,
+        "docs/evidence/t058-functional-review.md": true,
+        "docs/evidence/t058-technical-review.md": true,
         "src/domain/index.ts": true
+      },
+      "beforeOriginalsReview": {
+        "status": "evidence_local",
+        "assessment": "Validación por campo alineada al dominio, resumen enfocado con enlaces, aria-invalid/describedby; QA browser bloquea POST inválido, limpia enlace al quitar correo y conserva draft ante error remoto. Solo fixture sintética.",
+        "evidence": [
+          "src/components/consultation-validation.ts",
+          "src/components/consultation-form.tsx",
+          "tests/qa/form-contacts-fixture.mjs"
+        ]
+      },
+      "remainingWork": {
+        "classification": "local_material_work",
+        "detail": "Corregir mínimo>=20 en dominio/API/SQL/UI y pruebas; conciliar máximo antes de declararlo requisito aprobado. No corregido en tarea documental T058.",
+        "withinCurrentGates": true
       }
     },
     {
@@ -1734,9 +1760,15 @@
       "version": "V1.0",
       "requirement": "PAY-PRD-001",
       "dependencies": "PAY-T002",
-      "status": "no-evidence",
-      "assessment": "No hay contraste 7/7 archivos históricos con hash/versión.",
-      "evidence": [],
+      "status": "evidence_local",
+      "assessment": "Paquete Library recuperado: siete originales MD maestros y siete DOCX de lectura rápida contrastados con Notion/v1, hashes/versiones registrados y QA independiente. No equivale a aprobación documental, funcional ni de gate.",
+      "evidence": [
+        "docs/evidence/t058-originals-manifest.json",
+        "docs/evidence/t058-originals-review.md",
+        "docs/evidence/t058-functional-review.md",
+        "docs/evidence/t058-technical-review.md",
+        "docs/evidence/t058-integrity-qa.md"
+      ],
       "acceptanceText": "7/7 documentos contrastados con hash/versión.",
       "sourceBody": "\n## Objetivo\n\nContrastar los siete archivos con el índice Notion; identificar anexos, correcciones y vigencia.\n\n## Entregable verificable\n\n7/7 documentos contrastados con hash/versión.\n\n## Procedimiento\n\n- Confirmar insumos, permisos y casos límite.\n- Implementar en rama versionada y ambiente aislado.\n- Probar éxito, fallo, autorización y concurrencia cuando aplique.\n- Documentar decisiones y anexar evidencia al campo correspondiente.\n- Obtener revisión antes de mover el estado a Terminado.\n\n## Dependencias\n\nPAY-T002\n\n## Referencia\n\nPAY-PRD-001 · <mention url=\"https://app.notion.com/p/40c30c4074f781e884c1dfb00782be06\" />\n",
       "sourceLastEditedAt": "2026-11-04T02:53:01.482Z",
@@ -1750,11 +1782,17 @@
         "assessment": "No hay contraste 7/7 archivos históricos con hash/versión.",
         "evidence": []
       },
-      "evidencePathCheck": {},
-      "remainingWork": {
-        "classification": "external_dependency",
-        "detail": "No hay contraste 7/7 archivos históricos con hash/versión.",
-        "withinCurrentGates": true
+      "evidencePathCheck": {
+        "docs/evidence/t058-originals-manifest.json": true,
+        "docs/evidence/t058-originals-review.md": true,
+        "docs/evidence/t058-functional-review.md": true,
+        "docs/evidence/t058-technical-review.md": true,
+        "docs/evidence/t058-integrity-qa.md": true
+      },
+      "beforeOriginalsReview": {
+        "status": "no-evidence",
+        "assessment": "No hay contraste 7/7 archivos históricos con hash/versión.",
+        "evidence": []
       }
     },
     {
@@ -3795,13 +3833,24 @@
   "historicalDocumentationReview": {
     "evidence": "docs/evidence/historical-documents-review.json",
     "summariesRead": 7,
-    "originalArtifactsRead": 0,
-    "originalHashesVerified": 0,
-    "precedence": "Decisiones v1 y mandato vigente prevalecen; resúmenes v0.3 no autorizan funcionalidades v2."
+    "originalArtifactsRead": 14,
+    "originalHashesVerified": 14,
+    "precedence": "Decisiones v1 y mandato vigente prevalecen; resúmenes v0.3 no autorizan funcionalidades v2.",
+    "priorSummaryOnlyReview": {
+      "evidence": "docs/evidence/historical-documents-review.json",
+      "summariesRead": 7,
+      "originalArtifactsRead": 0,
+      "originalHashesVerified": 0,
+      "precedence": "Decisiones v1 y mandato vigente prevalecen; resúmenes v0.3 no autorizan funcionalidades v2."
+    },
+    "originalLogicalDocumentsRead": 7,
+    "archiveManifest": "docs/evidence/t058-originals-manifest.json",
+    "contrast": "docs/evidence/t058-originals-review.md"
   },
   "remainingWorkCounts": {
-    "external_dependency": 28,
-    "mixed_local_external": 8,
+    "mixed_local_external": 9,
+    "external_dependency": 26,
+    "local_material_work": 1,
     "deferred_gate": 15
   }
 }
