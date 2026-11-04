@@ -1,6 +1,16 @@
 # PostgreSQL y autorización
 
-Estado: migración local generada por CLI 3.0.0 en `supabase/migrations/20261104035645_initial_collaborator_schema.sql`. **No aplicada a Supabase**. No se modifica el proyecto `kmimekswqpsuspkrxdet` hasta resolver su origen y autorización. El primer intento falló por `/home/franco/.supabase` de solo lectura; se resolvió usando `SUPABASE_HOME="$PWD/.supabase"` para configuración exclusivamente local. Inspeccionar el destino aprobado y ejecutar QA antes de aplicar.
+Estado actual: dos migraciones aplicadas mediante el conector y confirmadas por historial/catálogo. Proyecto exclusivo `kmimekswqpsuspkrxdet`, Free. Ocho tablas con RLS y FK de tres claves sintéticas; sin usuarios/Auth real todavía. Los registros de intentos pendientes abajo se conservan como historia, no como estado vigente.
+
+Mapa de versiones (MCP asignó timestamp remoto):
+
+| Archivo local | Versión remota | Nombre |
+| --- | --- | --- |
+| 20261104035645_initial_collaborator_schema.sql | 20261104130855 | initial_collaborator_schema |
+| 20261104125456_enforce_synthetic_parcel_keys.sql | 20261104130930 | enforce_synthetic_parcel_keys |
+
+No ejecutar `db push` ni `migration repair` automáticamente: primero reconciliar este mapa y evitar reaplicar DDL. No se modificó el historial remoto para ocultar la diferencia.
+
 
 ## Modelo
 
@@ -71,3 +81,11 @@ Franco pidió volver a presentar la migración inicial. Se repitió preflight: p
 Nueva migración local `20261104125456_enforce_synthetic_parcel_keys.sql`: tabla privada con las tres claves sintéticas del adaptador y FK compuesta desde consultations. Impide eludir la validación HTTP llamando create_consultation directamente. RLS habilitado; anon/authenticated sin permisos sobre claves. No hay alta de claves desde el cliente. La FK restringe este entorno a esos tres padrones; un catálogo institucional requiere otro diseño/migración explícitos bajo G3 autorizado.
 
 `tests/database/parcel-integrity.test.ts` PASS y typecheck PASS. QA independiente ejecutó el test y confirmó localidad inexistente, padrón cruzado y cero inicial rechazados, ausencia de registros parciales y relación 1:1 de consultas/contactos/revisiones/idempotencias válidas. No prueba JWT real ni GoTrue. La migración falla transaccionalmente si encuentra consultas previas fuera del catálogo; antes de aplicarla verificar claves existentes y no borrar datos para forzar éxito. Reversión: detener backend y corregir mediante nueva migración; conservar datos y no ejecutar DROP CASCADE.
+
+## Confirmación efectiva y verificación cloud
+
+Tras el nuevo pedido de Franco ambas tarjetas fueron confirmadas y apply_migration devolvió success=true. Historial remoto: 20261104130855 y 20261104130930. Catálogo: ocho tablas RLS, tres políticas SELECT públicas, FK compuesta y tres claves sintéticas. Sin usuarios. Comprobaciones de privilegios reales: anon no puede leer consultas/ejecutar alta; authenticated no puede escribir directamente consultas/claves ni finalizar cambio de contraseña; touch_auth_session/touch_session sin claims devuelven false. Esto verifica configuración PostgreSQL; no sustituye solicitudes JWT ni login GoTrue.
+
+Advisors: cinco INFO rls_enabled_no_policy en tablas private; es denegación por defecto intencional para que solo accedan las funciones privilegiadas acotadas. No se agregaron políticas permisivas para ocultar esos avisos. La exposición efectiva de esquemas en PostgREST no se certifica mediante current_setting nulo; verificarla con API al conectar el backend.
+
+Bloqueo restante: el canal disponible no entrega SUPABASE_SECRET_KEY; CLI sin sesión y navegador no disponible. Proveerla por gestor seguro/archivo local excluido, nunca por chat. No crear usuarios insertando manualmente en auth.users ni falsificar JWT para sustituir Auth real.
