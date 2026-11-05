@@ -218,7 +218,7 @@ export function ParcelView({
                             <dd>
                               {c.phones.length
                                 ? c.phones.map((p, i) => (
-                                    <p key={i}>{p} <span className="muted">· Sin clasificar</span></p>
+                                    <p key={i}>{p} <span className="muted">· {c.phoneTypes?.[i] ?? "Sin clasificar"}</span></p>
                                   ))
                                 : "Sin informar"}
                             </dd>

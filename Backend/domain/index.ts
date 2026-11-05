@@ -5,12 +5,14 @@ export type ConsultationType =
   | "Falta de documentación"
   | "Declaracion voluntaria de metros";
 export type ParcelKey = Readonly<{ locality: string; parcel: string }>;
+export type PhoneType = "Fijo" | "Celular";
 export type PersonSnapshot = Readonly<{
   name: string;
   documentType: "CI" | "RUT" | "Otros";
   document: string;
   relationship: string;
   phones: readonly string[];
+  phoneTypes?: readonly PhoneType[];
   emails: readonly string[];
 }>;
 export type ConsultationData = Readonly<{
@@ -200,6 +202,7 @@ export function parseData(value: unknown): ConsultationData {
     "document",
     "relationship",
     "phones",
+    "phoneTypes",
     "emails",
   ]);
   if (
@@ -241,6 +244,13 @@ export function parseData(value: unknown): ConsultationData {
       fail("Invalid phone");
     return phone;
   });
+  let phoneTypes: PhoneType[] | undefined;
+  if (p.phoneTypes !== undefined) {
+    if (!Array.isArray(p.phoneTypes) || p.phoneTypes.length !== phones.length ||
+        p.phoneTypes.some((kind) => kind !== "Fijo" && kind !== "Celular"))
+      fail("Elegí Fijo o Celular para cada teléfono.");
+    phoneTypes = p.phoneTypes as PhoneType[];
+  }
   const emails = (p.emails as unknown[]).map((item) => {
     if (typeof item !== "string" || /\s/.test(item)) fail("Invalid email");
     const email = string(item, "email", 254);
@@ -256,6 +266,7 @@ export function parseData(value: unknown): ConsultationData {
       document,
       relationship: string(p.relationship, "relationship", 100),
       phones: Object.freeze(phones),
+      ...(phoneTypes ? { phoneTypes: Object.freeze([...phoneTypes]) } : {}),
       emails: Object.freeze(emails),
     }),
   });

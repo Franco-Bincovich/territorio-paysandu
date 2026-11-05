@@ -10,6 +10,7 @@ export type Person = {
   document: string;
   relationship: string;
   phones: string[];
+  phoneTypes?: ("Fijo" | "Celular")[];
   emails: string[];
 };
 export type Contact = Person & { id: string };

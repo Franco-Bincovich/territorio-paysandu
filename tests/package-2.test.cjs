@@ -6,10 +6,12 @@ const { validateConsultationFields } = require('../Frontend/src/components/consu
 const base = {
   type: 'General', description: 'Consulta sintética para pruebas sin escrituras.',
   person: { name: 'PERSONA QA', relationship: 'Titular', documentType: 'CI', document: '00000001',
-    phones: ['099123456'], emails: ['qa@example.test'] },
+    phones: ['099123456'], phoneTypes: ['Celular'], emails: ['qa@example.test'] },
 };
-const input = (person) => ({ ...base, person: { ...base.person, ...person } });
-const draft = (person) => ({ ...base, ...base.person, ...person });
+const personInput = (person) => ({ ...base.person, ...person,
+  ...(person.phones && !Object.hasOwn(person, 'phoneTypes') ? { phoneTypes: person.phones.map(() => 'Celular') } : {}) });
+const input = (person) => ({ ...base, person: personInput(person) });
+const draft = (person) => ({ ...base, ...personInput(person) });
 
 for (const document of ['0000001', '00000001', '0.000.001', '0.000.001-2']) {
   test(`CI normalizes without losing zeroes: ${document}`, () => {
@@ -28,9 +30,9 @@ test('RUT accepts exactly twelve digits and separators', () => {
   for (const document of ['12345678901', '1234567890123', '12345678901A'])
     assert.throws(() => parseData(input({ documentType: 'RUT', document })));
 });
-test('Otros keeps identifiers but form reports persistence block', () => {
+test('Otros keeps identifiers and can be submitted', () => {
   assert.equal(parseData(input({ documentType: 'Otros', document: 'PAS-ABC.123' })).person.document, 'PAS-ABC.123');
-  assert.match(validateConsultationFields(draft({ documentType: 'Otros', document: 'PAS-ABC.123' })).documentType, /persistencia/);
+  assert.equal(validateConsultationFields(draft({ documentType: 'Otros', document: 'PAS-ABC.123' })).documentType, undefined);
   assert.ok(validateConsultationFields(draft({ documentType: 'Otros', document: '' })).document);
 });
 for (const field of ['phones', 'emails']) {
@@ -56,6 +58,17 @@ test('unchanged valid legacy consultation remains accepted', () => {
   assert.deepEqual(parseData(base), base);
   assert.deepEqual(validateConsultationFields(draft({})), {});
 });
+test('legacy snapshots without phone types remain readable; form requires explicit classification', () => {
+  const legacy = input({ phoneTypes: undefined });
+  assert.equal('phoneTypes' in parseData(legacy).person, false);
+  assert.ok(validateConsultationFields(draft({ phoneTypes: undefined }))['phone-type-0']);
+});
+test('classification matches each phone and rejects missing/unknown/extra types', () => {
+  const person = { phones: ['099123456', '024123456'], phoneTypes: ['Celular', 'Fijo'] };
+  assert.deepEqual(parseData(input(person)).person.phoneTypes, ['Celular', 'Fijo']);
+  for (const phoneTypes of [[], ['Fijo'], ['Celular', 'Otro'], ['Celular', 'Fijo', 'Fijo']])
+    assert.throws(() => parseData(input({ ...person, phoneTypes })));
+});
 
 test('API validates before RPC and keeps existing payload shape', async () => {
   const { createHandler } = require('../Backend/server/handler.ts');
@@ -80,10 +93,9 @@ test('API validates before RPC and keeps existing payload shape', async () => {
   assert.equal((await send({ phones: Array(4).fill('099123456') })).status, 400);
   assert.equal((await send({ emails: ['wrong'] })).status, 400);
   assert.equal((await send({ document: '123' })).status, 400);
-  assert.equal((await send({ documentType: 'Otros', document: 'PAS-X1' })).status, 409);
-  assert.equal((await send({ documentType: 'Otros', document: 'PAS-X1' }, 'PATCH')).status, 409);
   assert.equal((await send({ phones: Array(4).fill('099123456') }, 'PATCH')).status, 400);
-  assert.equal((await send({ phoneTypes: ['Fijo'] })).status, 400);
+  assert.equal((await send({ phoneTypes: ['Otro'] })).status, 400);
+  assert.equal((await send({ phoneTypes: undefined })).status, 400);
   assert.equal(calls, 0);
   assert.equal((await send({ document: '0.000.001-2', phones: Array(3).fill('099123456'), emails: Array(3).fill('qa@example.test') })).status, 201);
   assert.equal(stored.person.document, '00000012');
@@ -91,4 +103,8 @@ test('API validates before RPC and keeps existing payload shape', async () => {
   assert.equal(calls, 1);
   assert.equal((await send({}, 'PATCH')).status, 200);
   assert.equal(calls, 2);
+  assert.equal((await send({ documentType: 'Otros', document: 'PAS-X1' })).status, 201);
+  assert.equal(stored.person.document, 'PAS-X1');
+  assert.deepEqual(stored.person.phoneTypes, ['Celular']);
+  assert.equal((await send({ documentType: 'Otros', document: 'PAS-X2' }, 'PATCH')).status, 200);
 });

@@ -44,8 +44,8 @@ const parcel = { locality: 'Paysandú', parcel: '17718', address: 'Dirección QA
         await add.click();
       }
       for (let index = 1; index <= 3; index++) {
-        assert.equal(await form.getByLabel(`Tipo de teléfono ${index}`, { exact: true }).isDisabled(), true);
-        assert.deepEqual(await form.getByLabel(`Tipo de teléfono ${index}`, { exact: true }).locator('option').allTextContents(), ['Sin clasificar', 'Fijo', 'Celular']);
+        assert.equal(await form.getByLabel(`Tipo de teléfono ${index}`, { exact: true }).isEnabled(), true);
+        assert.deepEqual(await form.getByLabel(`Tipo de teléfono ${index}`, { exact: true }).locator('option').allTextContents(), ['Seleccioná el tipo', 'Fijo', 'Celular']);
         await form.getByLabel(`Teléfono ${index}`, { exact: true }).fill(`09912345${index}`);
         await form.getByLabel(`Correo electrónico ${index}`, { exact: true }).fill(`qa${index}@example.test`);
       }
@@ -58,6 +58,16 @@ const parcel = { locality: 'Paysandú', parcel: '17718', address: 'Dirección QA
       await document.fill('123'); await save.click();
       assert.equal(await document.getAttribute('aria-invalid'), 'true');
       await document.fill('0.000.001-2');
+      for (let index = 1; index <= 3; index++) {
+        assert.equal(await form.getByLabel(`Tipo de teléfono ${index}`, { exact: true }).getAttribute('aria-invalid'), 'true');
+        await form.getByLabel(`Tipo de teléfono ${index}`, { exact: true }).selectOption(index === 2 ? 'Fijo' : 'Celular');
+      }
+      await form.getByRole('button', { name: 'Quitar teléfono 2 del formulario', exact: true }).click();
+      assert.equal(await form.getByLabel('Tipo de teléfono 2', { exact: true }).inputValue(), 'Celular');
+      assert.equal(await form.getByLabel('Teléfono 2', { exact: true }).inputValue(), '099123453');
+      await form.getByRole('button', { name: '+ Agregar teléfono', exact: true }).click();
+      await form.getByLabel('Teléfono 3', { exact: true }).fill('024123456');
+      await form.getByLabel('Tipo de teléfono 3', { exact: true }).selectOption('Fijo');
       await form.getByLabel('Correo electrónico 2', { exact: true }).fill('qa@@example.test');
       await save.click();
       assert.equal(await form.getByLabel('Correo electrónico 2', { exact: true }).getAttribute('aria-invalid'), 'true');
@@ -65,10 +75,9 @@ const parcel = { locality: 'Paysandú', parcel: '17718', address: 'Dirección QA
       await documentType.selectOption('RUT'); await document.fill('12345678901'); await save.click();
       assert.equal(await document.getAttribute('aria-invalid'), 'true');
       await document.fill('001234567890');
-      await documentType.selectOption('Otros'); await document.fill('PAS-ABC.123'); await save.click();
+      await documentType.selectOption('Otros'); await document.fill('PAS-ABC.123');
       assert.equal(await document.getAttribute('inputmode'), 'text');
       assert.equal(writes.length, 0);
-      assert.equal(await documentType.getAttribute('aria-invalid'), 'true');
       const overflows = await form.evaluate((node) => Array.from(node.querySelectorAll('input,select,textarea,button')).filter((el) => {
         const rect = el.getBoundingClientRect(); return rect.left < 0 || rect.right > innerWidth + 1;
       }).map((el) => el.outerHTML));
@@ -76,13 +85,15 @@ const parcel = { locality: 'Paysandú', parcel: '17718', address: 'Dirección QA
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       fs.mkdirSync('tests/artifacts', { recursive: true });
       await page.screenshot({ path: `tests/artifacts/form-${width}.png`, fullPage: true });
-      await documentType.selectOption('CI'); await document.fill('0.000.001-2'); await save.click();
+      await save.click();
       await page.waitForTimeout(200);
       assert.equal(writes.length, 1);
       assert.equal(writes[0].person.phones.length, 3);
       assert.equal(writes[0].person.emails.length, 3);
-      assert.equal('phoneTypes' in writes[0].person, false);
-      console.log(`PASS ${width}px: add/remove/max3, errors, Otros blocked, legacy contact, save to intercepted API, no overflow`);
+      assert.deepEqual(writes[0].person.phoneTypes, ['Celular', 'Celular', 'Fijo']);
+      assert.equal(writes[0].person.documentType, 'Otros');
+      assert.equal(writes[0].person.document, 'PAS-ABC.123');
+      console.log(`PASS ${width}px: add/remove/max3, phone association and classification, errors, Otros, legacy contact, no overflow`);
       await page.close();
     }
   } finally { await browser.close(); }

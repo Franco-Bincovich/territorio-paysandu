@@ -88,8 +88,8 @@ function payload(body: Record<string, unknown>, editing = false) {
       description: body.description,
     }),
   };
-  if (data.person.documentType === "Otros")
-    throw new HttpError(409, "PERSISTENCE_UNSUPPORTED", "El documento Otros requiere una actualización de persistencia pendiente de aprobación. No se guardó la consulta.");
+  if (!data.person.phoneTypes)
+    throw new HttpError(400, "VALIDATION", "Elegí Fijo o Celular para cada teléfono.");
   return data;
 }
 export type HandlerDependencies = Readonly<{
@@ -382,6 +382,7 @@ async function handleRequest(
             name: c.person.name,
             relationship: c.person.relationship,
             phones: c.person.phones,
+            phoneTypes: c.person.phoneTypes,
             emails: c.person.emails,
           }))
           .sort(

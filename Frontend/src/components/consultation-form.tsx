@@ -43,6 +43,11 @@ export function ConsultationForm({
     summary = useRef<HTMLElement | null>(null);
   const idPrefix = useId();
   const [documentType, setDocumentType] = useState(initial?.person.documentType ?? "CI");
+  const [phoneTypes, setPhoneTypes] = useState<string[]>(
+    initial?.person.phones.length
+      ? initial.person.phones.map((_, index) => initial.person.phoneTypes?.[index] ?? "")
+      : [""],
+  );
   const requests = useRequestScope();
   useEffect(() => {
     if (validationAttempt > 0) summary.current?.focus();
@@ -75,6 +80,7 @@ export function ConsultationForm({
       type: String(form.get("type") ?? ""),
       description: String(form.get("description") ?? ""),
       phones,
+      phoneTypes,
       emails,
     };
     const errors = validateConsultationFields(draft);
@@ -97,6 +103,7 @@ export function ConsultationForm({
         document: draft.document,
         relationship: draft.relationship,
         phones: phones.map((s) => s.trim()).filter(Boolean),
+        phoneTypes: phoneTypes.filter((_, index) => phones[index]?.trim()),
         emails: emails.filter((s) => s.length > 0),
       },
       ...(initial
@@ -215,11 +222,10 @@ export function ConsultationForm({
             />
           </Field>
         </div>
-        {documentType === "Otros" && (
-          <p className="notice" role="status">Podés ingresar un identificador de hasta 30 caracteres. Guardar documentos de tipo Otros requiere aprobar una actualización de persistencia.</p>
-        )}
         <ContactFields
           kind="phone"
+          phoneTypes={phoneTypes}
+          setPhoneTypes={setPhoneTypes}
           type="tel"
           values={phones}
           setValues={(values) => {
@@ -335,11 +341,15 @@ function ContactFields({
   readOnly,
   errors,
   idPrefix,
+  phoneTypes,
+  setPhoneTypes,
 }: {
   kind: "phone" | "email";
   type: string;
   values: string[];
   setValues: (v: string[]) => void;
+  phoneTypes?: string[];
+  setPhoneTypes?: (values: string[]) => void;
   readOnly: boolean;
   errors: FieldErrors;
   idPrefix: string;
@@ -348,7 +358,6 @@ function ContactFields({
   return (
     <div className="form-stack">
       <p className="muted">Ingresá entre 1 y {MAX_CONTACT_ENTRIES} {kind === "phone" ? "teléfonos" : "correos electrónicos"}.</p>
-      {kind === "phone" && <p className="notice">La clasificación Fijo/Celular está pendiente de habilitación en persistencia. Los teléfonos existentes se conservan sin clasificar.</p>}
       {values.map((value, index) => {
         const key = `${kind}-${index}`;
         return (
@@ -371,21 +380,27 @@ function ContactFields({
               />
             </Field>
             {kind === "phone" && (
-              <div className="field">
-                <label htmlFor={`${idPrefix}-phone-type-${index}`}>Tipo de teléfono {index + 1}</label>
-                <select id={`${idPrefix}-phone-type-${index}`} disabled aria-describedby={`${idPrefix}-phone-type-pending`}>
-                  <option value="">Sin clasificar</option>
+              <Field fieldKey={`phone-type-${index}`} idPrefix={idPrefix} errors={errors}>
+                <select id={`${idPrefix}-phone-type-${index}`} required
+                  value={phoneTypes?.[index] ?? ""}
+                  aria-invalid={Boolean(errors[`phone-type-${index}`])}
+                  aria-describedby={errors[`phone-type-${index}`] ? `${idPrefix}-phone-type-${index}-error` : undefined}
+                  onChange={(event) => setPhoneTypes?.(values.map((_, i) => i === index ? event.target.value : phoneTypes?.[i] ?? ""))}>
+                  <option value="">Seleccioná el tipo</option>
                   <option value="Fijo">Fijo</option>
                   <option value="Celular">Celular</option>
                 </select>
-              </div>
+              </Field>
             )}
             {!readOnly && values.length > 1 && (
               <button
                 className="btn small"
                 type="button"
                 aria-label={`Quitar ${label} ${index + 1} del formulario`}
-                onClick={() => setValues(values.filter((_, i) => i !== index))}
+                onClick={() => {
+                  setValues(values.filter((_, i) => i !== index));
+                  if (kind === "phone") setPhoneTypes?.((phoneTypes ?? []).filter((_, i) => i !== index));
+                }}
               >
                 Quitar
               </button>
@@ -393,14 +408,16 @@ function ContactFields({
           </div>
         );
       })}
-      {kind === "phone" && <p className="muted" id={`${idPrefix}-phone-type-pending`}>Selector pendiente de aprobación; no se envía ni se guarda una clasificación.</p>}
       {!readOnly && (
         <button
           type="button"
           className="link"
           disabled={values.length >= MAX_CONTACT_ENTRIES}
           onClick={() => {
-            if (values.length < MAX_CONTACT_ENTRIES) setValues([...values, ""]);
+            if (values.length < MAX_CONTACT_ENTRIES) {
+              setValues([...values, ""]);
+              if (kind === "phone") setPhoneTypes?.([...(phoneTypes ?? []), ""]);
+            }
           }}
         >
           + Agregar {label}

@@ -10,6 +10,7 @@ export type ConsultationDraft = {
   documentType: string;
   document: string;
   phones: string[];
+  phoneTypes?: string[];
   emails: string[];
   type: string;
   description: string;
@@ -99,8 +100,10 @@ export function validateConsultationFields(
             : "Ingresá un correo electrónico válido, hasta 254 caracteres.";
     });
   }
-  if (draft.documentType === "Otros" && !errors.document)
-    errors.documentType = "Otros requiere una actualización de persistencia pendiente de aprobación. No se guardó la consulta.";
+  draft.phones.forEach((phone, index) => {
+    if (phone.trim() && !["Fijo", "Celular"].includes(draft.phoneTypes?.[index] ?? ""))
+      errors[`phone-type-${index}`] = "Elegí Fijo o Celular para este teléfono.";
+  });
   return errors;
 }
 export function fieldLabel(key: string): string {
@@ -112,6 +115,7 @@ export function fieldLabel(key: string): string {
     type: "Tipo",
     description: "Descripción",
   };
+  if (key.startsWith("phone-type-")) return `Tipo de teléfono ${Number(key.slice(11)) + 1}`;
   if (key.startsWith("phone-")) return `Teléfono ${Number(key.slice(6)) + 1}`;
   if (key.startsWith("email-"))
     return `Correo electrónico ${Number(key.slice(6)) + 1}`;
