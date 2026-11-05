@@ -7,7 +7,7 @@ export type ConsultationType =
 export type ParcelKey = Readonly<{ locality: string; parcel: string }>;
 export type PersonSnapshot = Readonly<{
   name: string;
-  documentType: "CI" | "RUT";
+  documentType: "CI" | "RUT" | "Otros";
   document: string;
   relationship: string;
   phones: readonly string[];
@@ -175,6 +175,7 @@ export function parseParcel(value: unknown): ParcelKey {
  * owner reconciliation with the historical provisional 5000; not an approved requirement. */
 export const DESCRIPTION_MIN_LENGTH = 20;
 export const DESCRIPTION_MAX_LENGTH = 10000;
+export const MAX_CONTACT_ENTRIES = 3;
 export function parseDescription(value: unknown): string {
   if (
     typeof value !== "string" ||
@@ -201,12 +202,19 @@ export function parseData(value: unknown): ConsultationData {
     "phones",
     "emails",
   ]);
-  if (p.documentType !== "CI" && p.documentType !== "RUT")
+  if (
+    p.documentType !== "CI" &&
+    p.documentType !== "RUT" &&
+    p.documentType !== "Otros"
+  )
     fail("Invalid document type");
-  const document = string(p.document, "document", 30).replace(/[.\s-]/g, "");
+  const rawDocument = string(p.document, "document", 30);
+  const document = p.documentType === "Otros"
+    ? rawDocument
+    : rawDocument.replace(/[.-]/g, "");
   // Structural validation only; authoritative checksum rules must be supplied by the institution.
   if (
-    !/^\d+$/.test(document) ||
+    p.documentType !== "Otros" &&
     (p.documentType === "CI"
       ? !/^\d{7,8}$/.test(document)
       : !/^\d{12}$/.test(document))
@@ -219,6 +227,11 @@ export function parseData(value: unknown): ConsultationData {
     p.emails.length === 0
   )
     fail("At least one phone and email required");
+  if (
+    (p.phones as unknown[]).length > MAX_CONTACT_ENTRIES ||
+    (p.emails as unknown[]).length > MAX_CONTACT_ENTRIES
+  )
+    fail("Se permiten hasta 3 teléfonos y 3 correos electrónicos por contacto.");
   const phones = (p.phones as unknown[]).map((item) => {
     const phone = string(item, "phone", 40);
     if (
@@ -229,6 +242,7 @@ export function parseData(value: unknown): ConsultationData {
     return phone;
   });
   const emails = (p.emails as unknown[]).map((item) => {
+    if (typeof item !== "string" || /\s/.test(item)) fail("Invalid email");
     const email = string(item, "email", 254);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail("Invalid email");
     return email;
@@ -238,7 +252,7 @@ export function parseData(value: unknown): ConsultationData {
     description: parseDescription(data.description),
     person: Object.freeze({
       name: string(p.name, "name", 200),
-      documentType: p.documentType as "CI" | "RUT",
+      documentType: p.documentType as "CI" | "RUT" | "Otros",
       document,
       relationship: string(p.relationship, "relationship", 100),
       phones: Object.freeze(phones),

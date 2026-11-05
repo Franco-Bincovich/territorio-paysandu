@@ -2,6 +2,7 @@ import {
   parseData,
   DESCRIPTION_MIN_LENGTH,
   DESCRIPTION_MAX_LENGTH,
+  MAX_CONTACT_ENTRIES,
 } from "@backend/domain";
 export type ConsultationDraft = {
   name: string;
@@ -58,7 +59,7 @@ export function validateConsultationFields(
       },
     })
   )
-    errors.documentType = "Elegí cédula de identidad o RUT.";
+    errors.documentType = "Elegí cédula de identidad, RUT u Otros.";
   if (
     !accepts({
       ...probe,
@@ -70,7 +71,9 @@ export function validateConsultationFields(
     })
   )
     errors.document =
-      draft.documentType === "RUT"
+      draft.documentType === "Otros"
+        ? "Ingresá el identificador del documento, hasta 30 caracteres."
+        : draft.documentType === "RUT"
         ? "Ingresá un RUT de 12 dígitos."
         : "Ingresá una cédula de 7 u 8 dígitos; podés incluir puntos y guion.";
   if (!accepts({ ...probe, type: draft.type }))
@@ -81,11 +84,13 @@ export function validateConsultationFields(
     ["phone", draft.phones, "teléfono"],
     ["email", draft.emails, "correo electrónico"],
   ] as const) {
+    if (values.length > MAX_CONTACT_ENTRIES)
+      errors[`${key}-0`] = `Se permiten hasta 3 entradas. Los datos existentes se conservan; quitá entradas solo si corresponde.`;
     if (!values.some((value) => value.trim()))
       errors[`${key}-0`] = `Ingresá al menos un ${label}.`;
     values.forEach((value, index) => {
       if (
-        value.trim() &&
+        (value.length > 0) &&
         !personField(key === "phone" ? "phones" : "emails", [value])
       )
         errors[`${key}-${index}`] =
@@ -94,6 +99,8 @@ export function validateConsultationFields(
             : "Ingresá un correo electrónico válido, hasta 254 caracteres.";
     });
   }
+  if (draft.documentType === "Otros" && !errors.document)
+    errors.documentType = "Otros requiere una actualización de persistencia pendiente de aprobación. No se guardó la consulta.";
   return errors;
 }
 export function fieldLabel(key: string): string {

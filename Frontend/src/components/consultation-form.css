@@ -1,0 +1,12 @@
+/* Package 2: keep repeated fields usable when the phone-type placeholder is present. */
+.consultation-form .repeat-field {
+  flex-wrap: wrap;
+}
+.consultation-form .repeat-field > .field {
+  flex: 1 1 180px;
+}
+@media (max-width: 550px) {
+  .consultation-form .repeat-field > .field {
+    flex-basis: 100%;
+  }
+}

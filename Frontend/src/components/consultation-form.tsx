@@ -1,4 +1,5 @@
 "use client";
+import "./consultation-form.css";
 import {
   useEffect,
   useId,
@@ -7,7 +8,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH } from "@backend/domain";
+import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, MAX_CONTACT_ENTRIES } from "@backend/domain";
 import { useRequestScope } from "./use-request-scope";
 import { isAbort } from "./request-scope";
 import { request, type Consultation, type ParcelRef } from "./contracts";
@@ -41,6 +42,7 @@ export function ConsultationForm({
   const requestId = useRef<string | null>(null),
     summary = useRef<HTMLElement | null>(null);
   const idPrefix = useId();
+  const [documentType, setDocumentType] = useState(initial?.person.documentType ?? "CI");
   const requests = useRequestScope();
   useEffect(() => {
     if (validationAttempt > 0) summary.current?.focus();
@@ -95,7 +97,7 @@ export function ConsultationForm({
         document: draft.document,
         relationship: draft.relationship,
         phones: phones.map((s) => s.trim()).filter(Boolean),
-        emails: emails.map((s) => s.trim()).filter(Boolean),
+        emails: emails.filter((s) => s.length > 0),
       },
       ...(initial
         ? { version: initial.version }
@@ -194,10 +196,12 @@ export function ConsultationForm({
             <select
               {...attrs("documentType")}
               name="documentType"
-              defaultValue={initial?.person.documentType ?? "CI"}
+              value={documentType}
+              onChange={(event) => setDocumentType(event.target.value as typeof documentType)}
             >
               <option value="CI">Cédula de identidad</option>
               <option value="RUT">RUT</option>
+              <option value="Otros">Otros</option>
             </select>
           </Field>
           <Field fieldKey="document" idPrefix={idPrefix} errors={fieldErrors}>
@@ -207,10 +211,13 @@ export function ConsultationForm({
               defaultValue={initial?.person.document}
               required
               maxLength={30}
-              inputMode="numeric"
+              inputMode={documentType === "Otros" ? "text" : "numeric"}
             />
           </Field>
         </div>
+        {documentType === "Otros" && (
+          <p className="notice" role="status">Podés ingresar un identificador de hasta 30 caracteres. Guardar documentos de tipo Otros requiere aprobar una actualización de persistencia.</p>
+        )}
         <ContactFields
           kind="phone"
           type="tel"
@@ -340,7 +347,8 @@ function ContactFields({
   const label = kind === "phone" ? "teléfono" : "correo electrónico";
   return (
     <div className="form-stack">
-      <p className="muted">Ingresá al menos un {label}.</p>
+      <p className="muted">Ingresá entre 1 y {MAX_CONTACT_ENTRIES} {kind === "phone" ? "teléfonos" : "correos electrónicos"}.</p>
+      {kind === "phone" && <p className="notice">La clasificación Fijo/Celular está pendiente de habilitación en persistencia. Los teléfonos existentes se conservan sin clasificar.</p>}
       {values.map((value, index) => {
         const key = `${kind}-${index}`;
         return (
@@ -362,7 +370,17 @@ function ContactFields({
                 }
               />
             </Field>
-            {!readOnly && index > 0 && (
+            {kind === "phone" && (
+              <div className="field">
+                <label htmlFor={`${idPrefix}-phone-type-${index}`}>Tipo de teléfono {index + 1}</label>
+                <select id={`${idPrefix}-phone-type-${index}`} disabled aria-describedby={`${idPrefix}-phone-type-pending`}>
+                  <option value="">Sin clasificar</option>
+                  <option value="Fijo">Fijo</option>
+                  <option value="Celular">Celular</option>
+                </select>
+              </div>
+            )}
+            {!readOnly && values.length > 1 && (
               <button
                 className="btn small"
                 type="button"
@@ -375,11 +393,15 @@ function ContactFields({
           </div>
         );
       })}
+      {kind === "phone" && <p className="muted" id={`${idPrefix}-phone-type-pending`}>Selector pendiente de aprobación; no se envía ni se guarda una clasificación.</p>}
       {!readOnly && (
         <button
           type="button"
           className="link"
-          onClick={() => setValues([...values, ""])}
+          disabled={values.length >= MAX_CONTACT_ENTRIES}
+          onClick={() => {
+            if (values.length < MAX_CONTACT_ENTRIES) setValues([...values, ""]);
+          }}
         >
           + Agregar {label}
         </button>

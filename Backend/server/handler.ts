@@ -80,7 +80,7 @@ function payload(body: Record<string, unknown>, editing = false) {
   ];
   if (Object.keys(body).some((key) => !allowed.includes(key)))
     throw new HttpError(400, "VALIDATION", "Campo no permitido.");
-  return {
+  const data = {
     ...parseParcel({ locality: body.locality, parcel: body.parcel }),
     ...parseData({
       person: body.person,
@@ -88,6 +88,9 @@ function payload(body: Record<string, unknown>, editing = false) {
       description: body.description,
     }),
   };
+  if (data.person.documentType === "Otros")
+    throw new HttpError(409, "PERSISTENCE_UNSUPPORTED", "El documento Otros requiere una actualización de persistencia pendiente de aprobación. No se guardó la consulta.");
+  return data;
 }
 export type HandlerDependencies = Readonly<{
   configuration: typeof configuration;

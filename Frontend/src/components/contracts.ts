@@ -6,7 +6,7 @@ export type Session = {
 export type ParcelRef = { locality: string; parcel: string; address: string };
 export type Person = {
   name: string;
-  documentType: "CI" | "RUT";
+  documentType: "CI" | "RUT" | "Otros";
   document: string;
   relationship: string;
   phones: string[];
