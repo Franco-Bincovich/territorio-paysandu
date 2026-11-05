@@ -187,7 +187,7 @@ export function ParcelView({
                       <span className="badge">{recordRelationship}</span>
                     </summary>
                     <dl className="data-grid">
-                      {recordContact.map(([label, value]) => (
+                      {recordContact.filter(([label]) => !/^Vínculo/.test(label)).map(([label, value]) => (
                         <div key={label}>
                           <dt>{label.replace(/ \(prototipo\)$/i, "")}</dt>
                           <dd>{value}</dd>
@@ -213,9 +213,6 @@ export function ParcelView({
                             <span className="contact-name">{c.name}</span>
                             <span className="badge">{c.relationship}</span>
                           </summary>
-                          <p>
-                            <span className="badge">{c.relationship}</span>
-                          </p>
                           <dl>
                             <dt>Teléfonos</dt>
                             <dd>

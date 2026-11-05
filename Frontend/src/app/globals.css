@@ -398,8 +398,8 @@ strong {
   gap: 6px;
   min-width: 0;
   font-size: 12px;
-  color: var(--muted);
-  font-weight: 600;
+  color: var(--ink);
+  font-weight: 700;
 }
 .field input,
 .field select,
@@ -534,6 +534,7 @@ strong {
 }
 .tabs button {
   background: transparent;
+  font-weight: 700;
   padding: 14px;
   border: 0;
   border-bottom: 3px solid transparent;
@@ -549,10 +550,12 @@ strong {
   gap: 20px;
 }
 dt {
-  color: var(--muted);
+  color: var(--ink);
+  font-weight: 700;
   font-size: 12px;
 }
 dd {
+  font-weight: 400;
   margin: 5px 0 0;
   overflow-wrap: anywhere;
 }
@@ -713,9 +716,9 @@ table {
   font-size: 12px;
 }
 th {
-  color: var(--muted);
+  color: var(--ink);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   background: var(--surface);
 }
 th,
@@ -993,6 +996,7 @@ td {
 }
 .record-main .tabs button {
   flex: 1 0 auto;
+  font-weight: 700;
 }
 .tabbody {
   padding: 22px;
@@ -1032,12 +1036,12 @@ td {
 }
 .data-grid dt, .contact dt {
   font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
+  font-weight: 700;
+  color: var(--ink);
 }
 .data-grid dd, .contact dd {
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 400;
   color: var(--ink);
   line-height: 1.5;
 }
