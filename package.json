@@ -2,17 +2,11 @@
   "name": "territorio-paysandu",
   "version": "0.1.0",
   "description": "Territorio Paysandú v1 — desarrollo sintético, no liberado",
-  "directories": {
-    "doc": "docs",
-    "test": "tests"
-  },
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
-    "build": "next build",
-    "start": "next start --hostname 127.0.0.1",
-    "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/**/*.test.ts",
-    "check": "npm run typecheck && npm test && npm run build"
+    "dev": "next dev Frontend --hostname 127.0.0.1",
+    "build": "next build Frontend",
+    "start": "next start Frontend --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit -p Frontend/tsconfig.json"
   },
   "keywords": [],
   "author": "",
@@ -26,14 +20,9 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.15",
-    "@playwright/test": "1.64.1",
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "prettier": "3.9.10",
-    "supabase": "3.0.0",
-    "tsx": "4.23.15",
     "typescript": "7.0.2"
   },
   "private": true

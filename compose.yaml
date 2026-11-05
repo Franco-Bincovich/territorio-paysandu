@@ -1,0 +1,36 @@
+services:
+  app:
+    image: territorio-paysandu-organizado:70bef308
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:26-bookworm-slim}
+    init: true
+    restart: unless-stopped
+    # Compose >= 2.30: raw prevents $ interpolation in credentials / JSON values.
+    env_file:
+      - path: ${RUNTIME_ENV_FILE:?Indique un archivo privado de variables externo al paquete}
+        format: raw
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      NEXT_TELEMETRY_DISABLED: "1"
+    # Only a same-host HTTPS reverse proxy should expose the application.
+    ports:
+      - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /app/Frontend/.next/cache:rw,nosuid,size=128m,uid=1001,gid=1001,mode=0700
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

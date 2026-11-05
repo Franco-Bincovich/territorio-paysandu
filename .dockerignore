@@ -1,0 +1,12 @@
+**
+!package.json
+!package-lock.json
+!Backend/
+!Backend/**
+!Frontend/
+!Frontend/**
+Frontend/.next
+**/node_modules
+**/.env*
+**/runtime.env
+**/*.tsbuildinfo
