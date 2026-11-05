@@ -31,6 +31,12 @@ export function ParcelView({
   onHistoryRestored?: () => void;
 }) {
   const [tab, setTab] = useState<ParcelTab>(initialTab);
+  const recordContact = Object.entries(parcel.fields ?? {}).filter(([label]) =>
+    /^(Titular|Documento|Teléfono|Correo|Vínculo)/.test(label),
+  );
+  const hasRecordContact = recordContact.some(([label]) => /^(Titular|Teléfono|Correo)/.test(label));
+  const recordName = recordContact.find(([label]) => /^Titular/.test(label))?.[1] ?? "Contacto del expediente";
+  const recordRelationship = recordContact.find(([label]) => /^Vínculo/.test(label))?.[1] ?? "Vínculo sin informar";
   return (
     <>
       <button className="back" onClick={onBack}>
@@ -141,7 +147,7 @@ export function ParcelView({
                     )
                     .map(({ label, value }) => (
                       <div key={label}>
-                        <dt>{label}</dt>
+                        <dt>{label.replace(/ \(prototipo\)$/i, "")}</dt>
                         <dd>
                           {value == null
                             ? "No disponible"
@@ -155,7 +161,7 @@ export function ParcelView({
                     )
                     .map(([label, value]) => (
                       <div key={label}>
-                        <dt>{label}</dt>
+                        <dt>{label.replace(/ \(prototipo\)$/i, "")}</dt>
                         <dd>{value}</dd>
                       </div>
                     ))}
@@ -168,34 +174,30 @@ export function ParcelView({
                 <div className="panel-head">
                   <h2>Contactos del padrón</h2>
                   <span className="badge">
-                    {parcel.contacts.length} contactos
+                    {parcel.contacts.length + Number(hasRecordContact)} contactos
                   </span>
                 </div>
-                {Object.keys(parcel.fields ?? {}).some((label) =>
-                  /^(Titular|Teléfono|Correo)/.test(label),
-                ) && (
-                  <section className="contact">
-                    <h3>Contacto del expediente</h3>
+                {hasRecordContact && (
+                  <details className="contact record-contact">
+                    <summary>
+                      <span className="contact-name">{recordName}</span>
+                      {recordContact.some(([label]) => /ficticio/i.test(label)) && (
+                        <span className="badge">Datos ficticios</span>
+                      )}
+                      <span className="badge">{recordRelationship}</span>
+                    </summary>
                     <dl className="data-grid">
-                      {Object.entries(parcel.fields ?? {})
-                        .filter(([label]) =>
-                          /^(Titular|Documento|Teléfono|Correo|Vínculo)/.test(
-                            label,
-                          ),
-                        )
-                        .map(([label, value]) => (
-                          <div key={label}>
-                            <dt>{label}</dt>
-                            <dd>{value}</dd>
-                          </div>
-                        ))}
+                      {recordContact.map(([label, value]) => (
+                        <div key={label}>
+                          <dt>{label.replace(/ \(prototipo\)$/i, "")}</dt>
+                          <dd>{value}</dd>
+                        </div>
+                      ))}
                     </dl>
-                    {parcel.provenance && (
-                      <p className="meta">{parcel.provenance}</p>
-                    )}
-                  </section>
+                    {parcel.provenance && <p className="meta">{parcel.provenance}</p>}
+                  </details>
                 )}
-                {parcel.contacts.length === 0 ? (
+                {parcel.contacts.length === 0 && !hasRecordContact ? (
                   <p className="empty">No hay contactos disponibles.</p>
                 ) : (
                   <div className="contact-list">
@@ -207,7 +209,10 @@ export function ParcelView({
                       )
                       .map((c) => (
                         <details className="contact" key={c.id}>
-                          <summary>{c.name}</summary>
+                          <summary>
+                            <span className="contact-name">{c.name}</span>
+                            <span className="badge">{c.relationship}</span>
+                          </summary>
                           <p>
                             <span className="badge">{c.relationship}</span>
                           </p>
@@ -287,6 +292,11 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
     [retry, setRetry] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  function resetView() {
+    setZoom(1);
+    stage.current?.scrollTo(0, 0);
+  }
   const slots = (["historical", "survey"] as const).map(
     (kind) =>
       images.find((i) => i.kind === kind) ?? {
@@ -299,7 +309,7 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
   const title = index === 0 ? "Imagen histórica" : "Imagen de relevamiento";
   function next() {
     setIndex((i) => 1 - i);
-    setZoom(1);
+    resetView();
   }
   const available = Boolean(image.url) && failed !== image.url;
   return (
@@ -370,8 +380,8 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
         ref={opener}
         disabled={!available}
         onClick={() => {
-          setZoom(1);
           dialog.current?.showModal();
+          resetView();
         }}
       >
         Ampliar imagen
@@ -394,18 +404,21 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
           </button>
         </header>
         <div
+          ref={stage}
           className="viewer-stage"
           tabIndex={0}
           role="region"
           aria-label="Imagen ampliada; usá las flechas para desplazar"
         >
           {available ? (
-            <img
-              src={image.url ?? undefined}
-              alt={title}
-              style={{ width: `${zoom * 100}%`, maxWidth: "none" }}
-              onError={() => setFailed(image.url ?? "")}
-            />
+            <div className="viewer-canvas" style={{ width: `${zoom * 100}%`, height: `${zoom * 100}%` }}>
+              <img
+                key={`${image.url}-${retry}`}
+                src={image.url ?? undefined}
+                alt={title}
+                onError={() => setFailed(image.url ?? "")}
+              />
+            </div>
           ) : (
             <p>Imagen no disponible.</p>
           )}
@@ -431,7 +444,7 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
           >
             +
           </button>
-          <button className="btn" onClick={() => setZoom(1)}>
+          <button className="btn" onClick={resetView}>
             Restablecer
           </button>
         </div>

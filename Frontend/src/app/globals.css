@@ -594,7 +594,7 @@ dd {
 .contact[open] summary {
   margin-bottom: 12px;
 }
-.contact dl {
+.contact dl:not(.data-grid) {
   display: grid;
   grid-template-columns: 130px 1fr;
   gap: 10px;
@@ -634,12 +634,19 @@ dd {
 }
 .viewer-stage {
   overflow: auto;
-  max-height: 65dvh;
+  height: 55dvh;
+  min-height: 140px;
   background: var(--surface);
 }
 .viewer-stage img {
   display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+}
+.viewer-canvas {
+  min-width: 100%;
+  min-height: 100%;
 }
 .empty {
   text-align: center;
@@ -896,7 +903,7 @@ td {
   .panel {
     padding: 18px;
   }
-  .contact dl {
+  .contact dl:not(.data-grid) {
     grid-template-columns: 1fr;
   }
   .image-preview {
@@ -1014,5 +1021,62 @@ td {
 @media (max-width: 550px) {
   .record-main .data-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Field hierarchy shared by cadastral records, contact details and metadata. */
+.data-grid > div {
+  min-width: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.data-grid dt, .contact dt {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.data-grid dd, .contact dd {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.contact summary {
+  overflow-wrap: anywhere;
+  min-height: 44px;
+}
+.contact-name {
+  margin-right: 12px;
+  font-size: 15px;
+}
+.contact summary .badge {
+  vertical-align: middle;
+  white-space: normal;
+}
+.record-contact {
+  margin-bottom: 10px;
+}
+.image-preview {
+  height: clamp(240px, 50dvh, 520px);
+}
+.image-preview img {
+  min-width: 0;
+  min-height: 0;
+}
+.viewer-dialog .panel-head {
+  flex-wrap: wrap;
+}
+@media (max-width: 550px) {
+  .viewer-dialog {
+    padding: 14px;
+  }
+  .viewer-dialog .viewer-tools {
+    gap: 8px;
+  }
+  .contact dl:not(.data-grid) {
+    gap: 5px;
+  }
+  .contact dl:not(.data-grid) dd {
+    margin: 0 0 12px;
   }
 }
