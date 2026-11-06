@@ -10,6 +10,7 @@ import {
 } from "react";
 import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, MAX_CONTACT_ENTRIES } from "@backend/domain";
 import { useRequestScope } from "./use-request-scope";
+import { OptionalDomicileSection } from "./optional-domicile-section";
 import { isAbort } from "./request-scope";
 import { request, type Consultation, type ParcelRef } from "./contracts";
 import {
@@ -248,6 +249,7 @@ export function ConsultationForm({
           errors={fieldErrors}
           idPrefix={idPrefix}
         />
+        <OptionalDomicileSection />
       </fieldset>
       <fieldset disabled={readOnly || busy}>
         <legend>Datos de la consulta</legend>

@@ -10,6 +10,7 @@ import {
 import { ConsultationForm } from "./consultation-form";
 import { ParcelView, type ParcelTab } from "./parcel-view";
 import { ParcelClassificationNotice } from "./parcel-classification-notice";
+import { ParcelSearchResults } from "./parcel-search-results";
 import { requiresClassificationNotice, type ParcelSearchResult } from "./parcel-classification";
 import {
   request,
@@ -679,6 +680,7 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
     [error, setError] = useState("");
   const requests = useRequestScope();
   const [classificationNoticeOpen, setClassificationNoticeOpen] = useState(false);
+  const [nameSearch, setNameSearch] = useState(false);
   const searchSubmitter = useRef<HTMLElement | null>(null);
   async function search(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -692,6 +694,7 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
     new FormData(e.currentTarget).forEach((v, k) =>
       query.set(k, String(v).trim()),
     );
+    setNameSearch(query.get("kind") === "name");
     try {
       const result = await request<{ results: ParcelSearchResult[] }>(
         `/api/search?${query}`,
@@ -804,36 +807,10 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
           </form>
         </section>
       </div>
-      {busy && <p role="status">Buscando…</p>}
       <ParcelClassificationNotice open={classificationNoticeOpen}
         onDismiss={() => setClassificationNoticeOpen(false)} returnFocus={searchSubmitter.current} />
-      {error && <ErrorBox text={error} />}{" "}
-      {results !== null && (
-        <section className="panel results" aria-live="polite">
-          <h2>Resultados de búsqueda</h2>
-          {results.length === 0 ? (
-            <p className="empty">No se encontraron coincidencias.</p>
-          ) : (
-            <div className="padron-list">
-              {results.map((p) => (
-                <button
-                  className="padron-card"
-                  key={`${p.locality}/${p.parcel}`}
-                  onClick={() => void onOpen(p)}
-                >
-                  <span>
-                    <strong>
-                      Padrón {p.parcel} · {p.locality}
-                    </strong>
-                    <small>{p.address}</small>
-                  </span>
-                  <span aria-hidden="true">→</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      <ParcelSearchResults results={results} busy={busy} error={error}
+        nameSearch={nameSearch} onOpen={onOpen} />
     </>
   );
 }
