@@ -9,6 +9,8 @@ import {
 } from "react";
 import { ConsultationForm } from "./consultation-form";
 import { ParcelView, type ParcelTab } from "./parcel-view";
+import { ParcelClassificationNotice } from "./parcel-classification-notice";
+import { requiresClassificationNotice, type ParcelSearchResult } from "./parcel-classification";
 import {
   request,
   RequestError,
@@ -672,26 +674,36 @@ function AuthForm({
   );
 }
 function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
-  const [results, setResults] = useState<ParcelRef[] | null>(null),
+  const [results, setResults] = useState<ParcelSearchResult[] | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const requests = useRequestScope();
+  const [classificationNoticeOpen, setClassificationNoticeOpen] = useState(false);
+  const searchSubmitter = useRef<HTMLElement | null>(null);
   async function search(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const submitter = (e.nativeEvent as SubmitEvent).submitter;
     const operation = requests.begin();
     setBusy(true);
     setError("");
     setResults(null);
+    setClassificationNoticeOpen(false);
     const query = new URLSearchParams();
     new FormData(e.currentTarget).forEach((v, k) =>
       query.set(k, String(v).trim()),
     );
     try {
-      const result = await request<{ results: ParcelRef[] }>(
+      const result = await request<{ results: ParcelSearchResult[] }>(
         `/api/search?${query}`,
         { signal: operation.signal },
       );
-      if (operation.isCurrent()) setResults(result.results);
+      if (operation.isCurrent()) {
+        setResults(result.results);
+        if (!query.has("kind") && result.results.some((record) => requiresClassificationNotice(record.classification))) {
+          searchSubmitter.current = submitter instanceof HTMLElement ? submitter : null;
+          setClassificationNoticeOpen(true);
+        }
+      }
     } catch (e) {
       if (operation.isCurrent() && !isAbort(e)) setError(message(e));
     } finally {
@@ -740,12 +752,10 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
           <form className="search-grid" onSubmit={search}>
             <label className="field">
               Localidad
-              <input
-                name="locality"
-                required
-                maxLength={120}
-                placeholder="Localidad"
-              />
+              <select name="locality" aria-label="Localidad" required defaultValue="Paysandú">
+                <option value="Paysandú">Paysandú</option>
+                <option value="Paysandú Chacras">Paysandú Chacras</option>
+              </select>
             </label>
             <label className="field">
               Número de padrón
@@ -795,6 +805,8 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
         </section>
       </div>
       {busy && <p role="status">Buscando…</p>}
+      <ParcelClassificationNotice open={classificationNoticeOpen}
+        onDismiss={() => setClassificationNoticeOpen(false)} returnFocus={searchSubmitter.current} />
       {error && <ErrorBox text={error} />}{" "}
       {results !== null && (
         <section className="panel results" aria-live="polite">

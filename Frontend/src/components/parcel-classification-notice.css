@@ -1,0 +1,20 @@
+.classification-notice {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 24px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.classification-notice::backdrop {
+  background: rgb(21 41 75 / 45%);
+}
+.classification-notice p {
+  margin: 16px 0 22px;
+}
+.classification-notice .btn {
+  width: 100%;
+}
