@@ -26,7 +26,7 @@ const parcel = { locality: 'Paysandú', parcel: '17718', address: 'Dirección QA
         await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
       });
       await page.goto('http://127.0.0.1:3102');
-      await page.getByLabel('Localidad', { exact: true }).fill('Paysandú');
+      await page.getByLabel('Localidad', { exact: true }).selectOption('Paysandú');
       await page.getByLabel('Número de padrón').fill('17718');
       await page.getByRole('button', { name: 'Buscar padrón', exact: true }).click();
       await page.getByRole('button', { name: /Padrón 17718/ }).click();
