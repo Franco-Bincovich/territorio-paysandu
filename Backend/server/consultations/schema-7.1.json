@@ -1,0 +1,3216 @@
+{
+  "columns": [
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "PADRON",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "PADCOD",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "LOCALIDAD_PADRON",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "NOMBRE_COMPLETO",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "REL_COD",
+      "COLUMN_TYPE": "char(3)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TIPO_DOCUMENTO",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOCUMENTO",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOMICILIO_CALLE",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOMICILIO_PUERTA",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOMICILIO_BLOCK",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOMICILIO_APTO",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOMICILIO_LOCALIDAD",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOMICILIO_DEPARTAMENTO",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TELEFONO_1",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TIPO_TELEFONO_1",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TELEFONO_2",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TIPO_TELEFONO_2",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TELEFONO_3",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TIPO_TELEFONO_3",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TELEFONO_4",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TIPO_TELEFONO_4",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TELEFONO_5",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TIPO_TELEFONO_5",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "MAIL_1",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "MAIL_2",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "MAIL_3",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "MAIL_4",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "MAIL_5",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "TIPO_CONSULTA",
+      "COLUMN_TYPE": "varchar(40)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DESCRIPCION",
+      "COLUMN_TYPE": "text",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "USUARIO_CREADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "FECHA_ALTA",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "FECHA_MODIFICACION",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "on update current_timestamp(6)",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "VERSION",
+      "COLUMN_TYPE": "int(11)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "USUARIO_MODIFICADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "ID_PERSONA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "ID_PERSONA_CP",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "CONCOD",
+      "COLUMN_TYPE": "int(10) unsigned",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "RELACION_DECLARADA",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "DOMICILIO_DECLARADO_JSON",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "REFERENCIAS_CP_JSON",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "ACTUALIZA_CONTACTO",
+      "COLUMN_TYPE": "tinyint(4)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "COLUMN_NAME": "CONTACTO_VERSION_ESPERADA",
+      "COLUMN_TYPE": "int(11)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "ID_HISTORIAL",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "VERSION",
+      "COLUMN_TYPE": "int(11)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "TIPO_OPERACION",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "USUARIO_MODIFICADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "DATOS_ANTERIORES",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "DATOS_NUEVOS",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "COLUMN_NAME": "FECHA_MODIFICACION",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "COLUMN_NAME": "USUARIO_ID",
+      "COLUMN_TYPE": "char(36)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "ascii_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "COLUMN_NAME": "CLAVE",
+      "COLUMN_TYPE": "char(36)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "ascii_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "COLUMN_NAME": "PAYLOAD_HASH",
+      "COLUMN_TYPE": "char(64)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "ascii_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "COLUMN_NAME": "RESERVA_TOKEN",
+      "COLUMN_TYPE": "char(36)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "ascii_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "COLUMN_NAME": "RESPUESTA_JSON",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "COLUMN_NAME": "FECHA_ALTA",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "ID_CONTACTO",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TELEFONO_1",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TIPO_TELEFONO_1",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TELEFONO_2",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TIPO_TELEFONO_2",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TELEFONO_3",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TIPO_TELEFONO_3",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TELEFONO_4",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TIPO_TELEFONO_4",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TELEFONO_5",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TIPO_TELEFONO_5",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "MAIL_1",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "MAIL_2",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "MAIL_3",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "MAIL_4",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "MAIL_5",
+      "COLUMN_TYPE": "varchar(254)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "FECHA_ALTA",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "NOMBRE_COMPLETO",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "TIPO_DOCUMENTO",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "DOCUMENTO",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "DOCUMENTO_NORMALIZADO",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "STORED GENERATED",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": "ucase(regexp_replace(trim(`DOCUMENTO`),'[-.[:space:]]',''))"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "USUARIO_MODIFICADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "FECHA_MODIFICACION",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "on update current_timestamp(6)",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "VERSION",
+      "COLUMN_TYPE": "int(11)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "COLUMN_NAME": "ID_PERSONA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "ID_HISTORIAL",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "ID_CONTACTO",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "VERSION",
+      "COLUMN_TYPE": "int(11)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "USUARIO_MODIFICADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "DATOS_ANTERIORES",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "DATOS_NUEVOS",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "COLUMN_NAME": "FECHA_MODIFICACION",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "ID_DOMICILIO",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "ID_PERSONA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "ID_PERSONA_CP",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "ID_DOMICILIO_CP",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "CALLE",
+      "COLUMN_TYPE": "varchar(250)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "NUMERO",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "BARRIO",
+      "COLUMN_TYPE": "varchar(250)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "LOCALIDAD",
+      "COLUMN_TYPE": "varchar(250)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "DEPARTAMENTO",
+      "COLUMN_TYPE": "varchar(150)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "CODIGO_POSTAL",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "PH",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "BLOCK",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "DEPTO",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "PUERTA",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "DOMICILIO_COMPLETO",
+      "COLUMN_TYPE": "varchar(1000)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "REFERENCIA",
+      "COLUMN_TYPE": "varchar(150)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "SECTOR",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "MANZANA",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "LOTE",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "VERSION",
+      "COLUMN_TYPE": "int(11)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "FECHA_ALTA",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "FECHA_MODIFICACION",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "on update current_timestamp(6)",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "USUARIO_MODIFICADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "COLUMN_NAME": "VERIFICACION_CP_JSON",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "ID_HISTORIAL",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "ID_DOMICILIO",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "VERSION",
+      "COLUMN_TYPE": "int(11)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "USUARIO_MODIFICADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "DATOS_ANTERIORES",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "DATOS_NUEVOS",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "COLUMN_NAME": "FECHA_MODIFICACION",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_MODELO_REVISION",
+      "COLUMN_NAME": "MODELO",
+      "COLUMN_TYPE": "varchar(40)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_uca1400_ai_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_MODELO_REVISION",
+      "COLUMN_NAME": "REVISION",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_uca1400_ai_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_MODELO_REVISION",
+      "COLUMN_NAME": "FECHA",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "ID_PERSONA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "ID_PERSONA_CP",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "NOMBRE_COMPLETO",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "TIPO_DOCUMENTO",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "DOCUMENTO",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "DOCUMENTO_NORMALIZADO",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "STORED GENERATED",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": "ucase(regexp_replace(trim(`DOCUMENTO`),'[-.[:space:]]',''))"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "FECHA_ALTA",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "FECHA_MODIFICACION",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "on update current_timestamp(6)",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "VERIFICACION_CP_JSON",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "COLUMN_NAME": "DOCUMENTO_IDENTIDAD_UNICA",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "STORED GENERATED",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": "case when `TIPO_DOCUMENTO` in ('CEDULA_IDENTIDAD','RUT') then ucase(regexp_replace(trim(`DOCUMENTO`),'[-.[:space:]]','')) else NULL end"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "ID_VINCULO",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "ID_PERSONA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "ID_PERSONA_CP",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "PADCOD",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "CONCOD",
+      "COLUMN_TYPE": "int(10) unsigned",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "COLUMN_TYPE": "bigint(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "REL_COD",
+      "COLUMN_TYPE": "char(3)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "RELACION_DECLARADA",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL",
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "FECHA_ALTA",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "current_timestamp(6)",
+      "EXTRA": "",
+      "COLLATION_NAME": null,
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "USUARIO_CREADOR_ID",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_unicode_ci",
+      "GENERATION_EXPRESSION": null
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "COLUMN_NAME": "VERIFICACION_CP_JSON",
+      "COLUMN_TYPE": "longtext",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "COLLATION_NAME": "utf8mb4_bin",
+      "GENERATION_EXPRESSION": null
+    }
+  ],
+  "indexes": [
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "FK_71_QUERY_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "FK_71_QUERY_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_CONSULTAS_CREADOR",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "USUARIO_CREADOR_ID"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_CONSULTAS_DOCUMENTO",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "TIPO_DOCUMENTO"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_CONSULTAS_DOCUMENTO",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "DOCUMENTO"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_CONSULTAS_FECHA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "FECHA_ALTA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_CONSULTAS_PADCOD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "PADCOD"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_CONSULTAS_PADRON",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "LOCALIDAD_PADRON"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_CONSULTAS_PADRON",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "PADRON"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "IDX_FB_CONSULTAS_PERSONA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "UK_71_QUERY_IDENTIDAD",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "UK_71_QUERY_IDENTIDAD",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "UK_71_QUERY_IDENTIDAD",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 3,
+      "COLUMN_NAME": "PADCOD"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "UK_71_QUERY_PERSONA",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "INDEX_NAME": "UK_71_QUERY_PERSONA",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "INDEX_NAME": "IDX_HISTORIAL_CONSULTA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "INDEX_NAME": "IDX_HISTORIAL_FECHA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "FECHA_MODIFICACION"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "INDEX_NAME": "IDX_HISTORIAL_USUARIO",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "USUARIO_MODIFICADOR_ID"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_HISTORIAL"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "INDEX_NAME": "UK_HISTORIAL_VERSION",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "INDEX_NAME": "UK_HISTORIAL_VERSION",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "VERSION"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "INDEX_NAME": "FK_71_RECEIPT_QUERY",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "USUARIO_ID"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "CLAVE"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "FK_71_CONTACTO_IDENTIDAD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "FK_71_CONTACTO_IDENTIDAD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "IDX_71_CONTACTOS_DOC",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "TIPO_DOCUMENTO"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "IDX_71_CONTACTOS_DOC",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "DOCUMENTO_NORMALIZADO"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "IDX_FB_CONTACTOS_CONSULTA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "IDX_FB_CONTACTOS_PERSONA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONTACTO"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "INDEX_NAME": "UK_FB_CONTACTOS_PERSONA",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "INDEX_NAME": "IDX_CONTACTO_HIST_CONSULTA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "INDEX_NAME": "IDX_CONTACTO_HIST_FECHA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "FECHA_MODIFICACION"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_HISTORIAL"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "INDEX_NAME": "UK_CONTACTO_VERSION",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONTACTO"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "INDEX_NAME": "UK_CONTACTO_VERSION",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "VERSION"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "FK_71_DOM_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "FK_71_DOM_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "FK_71_DOM_IDENTIDAD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "FK_71_DOM_IDENTIDAD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "IDX_FB_DOMICILIOS_CONSULTA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "IDX_FB_DOMICILIOS_PERSONA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "IDX_FB_DOMICILIOS_PERSONA_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_DOMICILIO"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "INDEX_NAME": "UK_FB_DOMICILIOS_PERSONA",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "INDEX_NAME": "IDX_FB_DOM_HIST_CONSULTA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_HISTORIAL"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "INDEX_NAME": "UK_FB_DOM_HIST_VERSION",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_DOMICILIO"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "INDEX_NAME": "UK_FB_DOM_HIST_VERSION",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "VERSION"
+    },
+    {
+      "TABLE_NAME": "FB_MODELO_REVISION",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "MODELO"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "IDX_FB_PERSONAS_DOCUMENTO",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "TIPO_DOCUMENTO"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "IDX_FB_PERSONAS_DOCUMENTO",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "DOCUMENTO_NORMALIZADO"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "UK_71_PERSONA_CP",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "UK_71_PERSONA_CP",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "UK_FB_PERSONAS_CP",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "UK_FB_PERSONAS_DOCUMENTO",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "TIPO_DOCUMENTO"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "INDEX_NAME": "UK_FB_PERSONAS_DOCUMENTO",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "DOCUMENTO_IDENTIDAD_UNICA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "FK_71_VINCULO_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "FK_71_VINCULO_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 2,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 3,
+      "COLUMN_NAME": "PADCOD"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "IDX_FB_VINCULO_PADCOD",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "PADCOD"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "IDX_FB_VINCULO_PERSONA",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "IDX_FB_VINCULO_PERSONA_CP",
+      "NON_UNIQUE": "1",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_VINCULO"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "INDEX_NAME": "UK_FB_VINCULO_CONSULTA",
+      "NON_UNIQUE": "0",
+      "SEQ_IN_INDEX": 1,
+      "COLUMN_NAME": "ID_CONSULTA"
+    }
+  ],
+  "constraints": [
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_CP",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_FLAGS",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_PAD",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_PRUEBA",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_REL",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_DESCRIPCION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_DOCUMENTO_TIPO",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_MAIL",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_NOMBRE",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TELEFONO",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_2",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_3",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_4",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_5",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_2",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_3",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_4",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_5",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TIPO",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_FB_CONSULTAS_MODIFICADOR",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_FB_CONSULTAS_VERSION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "DOMICILIO_DECLARADO_JSON",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "FK_71_QUERY_CP",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "FK_FB_CONSULTAS_PERSONA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "REFERENCIAS_CP_JSON",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "UK_71_QUERY_IDENTIDAD",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "UK_71_QUERY_PERSONA",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_HISTORIAL_OPERACION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_HISTORIAL_VERSION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_ANTERIORES",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_NUEVOS",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_HISTORIAL_CONSULTA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "UK_HISTORIAL_VERSION",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "CHK_71_RECEIPT_COMPLETO",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "FK_71_RECEIPT_ACTOR",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "FK_71_RECEIPT_QUERY",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "RESPUESTA_JSON",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "CHK_71_CONTACTO_DOC",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "CHK_FB_CONTACTOS_DOCUMENTO",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "CHK_FB_CONTACTOS_VERSION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_71_CONTACTO_IDENTIDAD",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_FB_CONTACTOS_CONSULTA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_FB_CONTACTOS_PERSONA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "UK_FB_CONTACTOS_PERSONA",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_CONTACTO_HIST_VERSION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_ANTERIORES",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_NUEVOS",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_CONTACTO_HIST_CONSULTA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_CONTACTO_HIST_CONTACTO",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "UK_CONTACTO_VERSION",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "CHK_71_DOM_CP",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "CHK_71_DOM_NO_VACIO",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "CHK_FB_DOMICILIOS_VERSION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_CP",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_IDENTIDAD",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_FB_DOMICILIOS_CONSULTA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_FB_DOMICILIOS_PERSONA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "UK_FB_DOMICILIOS_PERSONA",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "VERIFICACION_CP_JSON",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_FB_DOM_HIST_VERSION",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_ANTERIORES",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_NUEVOS",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_FB_DOM_HIST_CONSULTA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_FB_DOM_HIST_DOMICILIO",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "UK_FB_DOM_HIST_VERSION",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_MODELO_REVISION",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_71_PERSONA_CP",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_71_PERSONA_DOC",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_FB_PERSONAS_DOCUMENTO",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_FB_PERSONAS_NOMBRE",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "UK_71_PERSONA_CP",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "UK_FB_PERSONAS_CP",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "UK_FB_PERSONAS_DOCUMENTO",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "VERIFICACION_CP_JSON",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "CHK_71_VINCULO_CP",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "CHK_71_VINCULO_REL",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "CHK_FB_VINCULO_PADCOD",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_CP",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_FB_VINCULO_CONSULTA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_FB_VINCULO_PERSONA",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "UK_FB_VINCULO_CONSULTA",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "VERIFICACION_CP_JSON",
+      "CONSTRAINT_TYPE": "CHECK"
+    }
+  ],
+  "references": [
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "FK_71_QUERY_CP",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "FK_FB_CONSULTAS_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_HISTORIAL_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "FK_71_RECEIPT_ACTOR",
+      "REFERENCED_TABLE_NAME": "FB_USUARIOS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "FK_71_RECEIPT_QUERY",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_71_CONTACTO_IDENTIDAD",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_FB_CONTACTOS_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_FB_CONTACTOS_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_CONTACTO_HIST_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_CONTACTO_HIST_CONTACTO",
+      "REFERENCED_TABLE_NAME": "FB_CONTACTOS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_CP",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_IDENTIDAD",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_FB_DOMICILIOS_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_FB_DOMICILIOS_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_FB_DOM_HIST_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_FB_DOM_HIST_DOMICILIO",
+      "REFERENCED_TABLE_NAME": "FB_DOMICILIOS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_CP",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_FB_VINCULO_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_FB_VINCULO_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    }
+  ],
+  "referenceColumns": [
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "FK_71_QUERY_CP",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "FK_71_QUERY_CP",
+      "ORDINAL_POSITION": "2",
+      "COLUMN_NAME": "ID_PERSONA_CP",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "FK_FB_CONSULTAS_PERSONA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_HISTORIAL_CONSULTA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "FK_71_RECEIPT_ACTOR",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "USUARIO_ID",
+      "REFERENCED_TABLE_NAME": "FB_USUARIOS",
+      "REFERENCED_COLUMN_NAME": "USER_ID"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "FK_71_RECEIPT_QUERY",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_71_CONTACTO_IDENTIDAD",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_71_CONTACTO_IDENTIDAD",
+      "ORDINAL_POSITION": "2",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_FB_CONTACTOS_CONSULTA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "FK_FB_CONTACTOS_PERSONA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_CONTACTO_HIST_CONSULTA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_CONTACTO_HIST_CONTACTO",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONTACTO",
+      "REFERENCED_TABLE_NAME": "FB_CONTACTOS",
+      "REFERENCED_COLUMN_NAME": "ID_CONTACTO"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_CP",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_CP",
+      "ORDINAL_POSITION": "2",
+      "COLUMN_NAME": "ID_PERSONA_CP",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_IDENTIDAD",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_71_DOM_IDENTIDAD",
+      "ORDINAL_POSITION": "2",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_FB_DOMICILIOS_CONSULTA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "FK_FB_DOMICILIOS_PERSONA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_FB_DOM_HIST_CONSULTA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "FK_FB_DOM_HIST_DOMICILIO",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_DOMICILIO",
+      "REFERENCED_TABLE_NAME": "FB_DOMICILIOS",
+      "REFERENCED_COLUMN_NAME": "ID_DOMICILIO"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_CP",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_CP",
+      "ORDINAL_POSITION": "2",
+      "COLUMN_NAME": "ID_PERSONA_CP",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA_CP"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "ORDINAL_POSITION": "2",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_71_VINCULO_IDENTIDAD",
+      "ORDINAL_POSITION": "3",
+      "COLUMN_NAME": "PADCOD",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "PADCOD"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_FB_VINCULO_CONSULTA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_CONSULTA",
+      "REFERENCED_TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "REFERENCED_COLUMN_NAME": "ID_CONSULTA"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "FK_FB_VINCULO_PERSONA",
+      "ORDINAL_POSITION": "1",
+      "COLUMN_NAME": "ID_PERSONA",
+      "REFERENCED_TABLE_NAME": "FB_PERSONAS",
+      "REFERENCED_COLUMN_NAME": "ID_PERSONA"
+    }
+  ],
+  "checks": [
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_CP",
+      "CHECK_CLAUSE": "(`ID_PERSONA_CP` is null or coalesce(json_unquote(json_extract(`REFERENCIAS_CP_JSON`,'$.personId')) = cast(`ID_PERSONA_CP` as char charset utf8mb4),0)) and (`CONCOD` is null or `ID_PERSONA_CP` is not null and coalesce(json_unquote(json_extract(`REFERENCIAS_CP_JSON`,'$.conCod')) = cast(`CONCOD` as char charset utf8mb4),0))"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_FLAGS",
+      "CHECK_CLAUSE": "`ACTUALIZA_CONTACTO` in (0,1) and `CONTACTO_VERSION_ESPERADA` >= 0"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_PAD",
+      "CHECK_CLAUSE": "`PADCOD` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_PRUEBA",
+      "CHECK_CLAUSE": "coalesce(json_unquote(json_extract(`REFERENCIAS_CP_JSON`,'$.source')) = 'institutional' and json_unquote(json_extract(`REFERENCIAS_CP_JSON`,'$.padCod')) = cast(`PADCOD` as char charset utf8mb4) and json_extract(`REFERENCIAS_CP_JSON`,'$.verifiedAt') is not null,0)"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_71_QUERY_REL",
+      "CHECK_CLAUSE": "char_length(trim(`RELACION_DECLARADA`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_DESCRIPCION",
+      "CHECK_CLAUSE": "char_length(trim(`DESCRIPCION`)) between 20 and 10000"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_DOCUMENTO_TIPO",
+      "CHECK_CLAUSE": "`TIPO_DOCUMENTO` in ('CEDULA_IDENTIDAD','RUT','OTROS')"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_MAIL",
+      "CHECK_CLAUSE": "char_length(trim(`MAIL_1`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_NOMBRE",
+      "CHECK_CLAUSE": "char_length(trim(`NOMBRE_COMPLETO`)) between 1 and 200"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TELEFONO",
+      "CHECK_CLAUSE": "char_length(trim(`TELEFONO_1`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_2",
+      "CHECK_CLAUSE": "`TELEFONO_2` is null and `TIPO_TELEFONO_2` is null or `TELEFONO_2` is not null and `TIPO_TELEFONO_2` is not null"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_3",
+      "CHECK_CLAUSE": "`TELEFONO_3` is null and `TIPO_TELEFONO_3` is null or `TELEFONO_3` is not null and `TIPO_TELEFONO_3` is not null"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_4",
+      "CHECK_CLAUSE": "`TELEFONO_4` is null and `TIPO_TELEFONO_4` is null or `TELEFONO_4` is not null and `TIPO_TELEFONO_4` is not null"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_PAIR_5",
+      "CHECK_CLAUSE": "`TELEFONO_5` is null and `TIPO_TELEFONO_5` is null or `TELEFONO_5` is not null and `TIPO_TELEFONO_5` is not null"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_1",
+      "CHECK_CLAUSE": "`TIPO_TELEFONO_1` in ('FIJO','CELULAR')"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_2",
+      "CHECK_CLAUSE": "`TIPO_TELEFONO_2` is null or `TIPO_TELEFONO_2` in ('FIJO','CELULAR')"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_3",
+      "CHECK_CLAUSE": "`TIPO_TELEFONO_3` is null or `TIPO_TELEFONO_3` in ('FIJO','CELULAR')"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_4",
+      "CHECK_CLAUSE": "`TIPO_TELEFONO_4` is null or `TIPO_TELEFONO_4` in ('FIJO','CELULAR')"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TEL_TIPO_5",
+      "CHECK_CLAUSE": "`TIPO_TELEFONO_5` is null or `TIPO_TELEFONO_5` in ('FIJO','CELULAR')"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_CONSULTAS_TIPO",
+      "CHECK_CLAUSE": "`TIPO_CONSULTA` in ('GENERAL','RECLAMO','FALTA_DOCUMENTACION','DECLARACION_METROS')"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_FB_CONSULTAS_MODIFICADOR",
+      "CHECK_CLAUSE": "`VERSION` = 1 or `USUARIO_MODIFICADOR_ID` is not null and char_length(trim(`USUARIO_MODIFICADOR_ID`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "CHK_FB_CONSULTAS_VERSION",
+      "CHECK_CLAUSE": "`VERSION` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "DOMICILIO_DECLARADO_JSON",
+      "CHECK_CLAUSE": "json_valid(`DOMICILIO_DECLARADO_JSON`)"
+    },
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "CONSTRAINT_NAME": "REFERENCIAS_CP_JSON",
+      "CHECK_CLAUSE": "json_valid(`REFERENCIAS_CP_JSON`)"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_HISTORIAL_OPERACION",
+      "CHECK_CLAUSE": "`TIPO_OPERACION` in ('CREACION','MODIFICACION')"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_HISTORIAL_VERSION",
+      "CHECK_CLAUSE": "`VERSION` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_ANTERIORES",
+      "CHECK_CLAUSE": "json_valid(`DATOS_ANTERIORES`)"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_NUEVOS",
+      "CHECK_CLAUSE": "json_valid(`DATOS_NUEVOS`)"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "CHK_71_RECEIPT_COMPLETO",
+      "CHECK_CLAUSE": "`ID_CONSULTA` is null and `RESPUESTA_JSON` is null or `ID_CONSULTA` is not null and `RESPUESTA_JSON` is not null"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "CONSTRAINT_NAME": "RESPUESTA_JSON",
+      "CHECK_CLAUSE": "json_valid(`RESPUESTA_JSON`)"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "CHK_71_CONTACTO_DOC",
+      "CHECK_CLAUSE": "`TIPO_DOCUMENTO` in ('CEDULA_IDENTIDAD','RUT','OTROS') and (`TIPO_DOCUMENTO` = 'CEDULA_IDENTIDAD' and `DOCUMENTO_NORMALIZADO` regexp '^[0-9]{7,8}$' or `TIPO_DOCUMENTO` = 'RUT' and `DOCUMENTO_NORMALIZADO` regexp '^[0-9]{12}$' or `TIPO_DOCUMENTO` = 'OTROS' and char_length(`DOCUMENTO_NORMALIZADO`) > 0)"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "CHK_FB_CONTACTOS_DOCUMENTO",
+      "CHECK_CLAUSE": "char_length(trim(`DOCUMENTO_NORMALIZADO`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "CONSTRAINT_NAME": "CHK_FB_CONTACTOS_VERSION",
+      "CHECK_CLAUSE": "`VERSION` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_CONTACTO_HIST_VERSION",
+      "CHECK_CLAUSE": "`VERSION` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_ANTERIORES",
+      "CHECK_CLAUSE": "json_valid(`DATOS_ANTERIORES`)"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_NUEVOS",
+      "CHECK_CLAUSE": "json_valid(`DATOS_NUEVOS`)"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "CHK_71_DOM_CP",
+      "CHECK_CLAUSE": "`ID_DOMICILIO_CP` is null and `VERIFICACION_CP_JSON` is null or `ID_DOMICILIO_CP` > 0 and `ID_PERSONA_CP` is not null and `VERIFICACION_CP_JSON` is not null and coalesce(json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.addressId')) = cast(`ID_DOMICILIO_CP` as char charset utf8mb4) and json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.personId')) = cast(`ID_PERSONA_CP` as char charset utf8mb4) and json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.source')) = 'institutional',0)"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "CHK_71_DOM_NO_VACIO",
+      "CHECK_CLAUSE": "char_length(trim(concat_ws('',`CALLE`,`NUMERO`,`BARRIO`,`LOCALIDAD`,`DEPARTAMENTO`,`CODIGO_POSTAL`,`PH`,`BLOCK`,`DEPTO`,`PUERTA`,`DOMICILIO_COMPLETO`,`REFERENCIA`,`SECTOR`,`MANZANA`,`LOTE`))) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "CHK_FB_DOMICILIOS_VERSION",
+      "CHECK_CLAUSE": "`VERSION` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "CONSTRAINT_NAME": "VERIFICACION_CP_JSON",
+      "CHECK_CLAUSE": "json_valid(`VERIFICACION_CP_JSON`)"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "CHK_FB_DOM_HIST_VERSION",
+      "CHECK_CLAUSE": "`VERSION` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_ANTERIORES",
+      "CHECK_CLAUSE": "json_valid(`DATOS_ANTERIORES`)"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "CONSTRAINT_NAME": "DATOS_NUEVOS",
+      "CHECK_CLAUSE": "json_valid(`DATOS_NUEVOS`)"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_71_PERSONA_CP",
+      "CHECK_CLAUSE": "`ID_PERSONA_CP` is null and `VERIFICACION_CP_JSON` is null or `ID_PERSONA_CP` > 0 and `VERIFICACION_CP_JSON` is not null and coalesce(json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.personId')) = cast(`ID_PERSONA_CP` as char charset utf8mb4) and json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.source')) = 'institutional',0)"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_71_PERSONA_DOC",
+      "CHECK_CLAUSE": "`TIPO_DOCUMENTO` in ('CEDULA_IDENTIDAD','RUT','OTROS') and (`TIPO_DOCUMENTO` = 'CEDULA_IDENTIDAD' and `DOCUMENTO_NORMALIZADO` regexp '^[0-9]{7,8}$' or `TIPO_DOCUMENTO` = 'RUT' and `DOCUMENTO_NORMALIZADO` regexp '^[0-9]{12}$' or `TIPO_DOCUMENTO` = 'OTROS' and char_length(`DOCUMENTO_NORMALIZADO`) > 0)"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_FB_PERSONAS_DOCUMENTO",
+      "CHECK_CLAUSE": "char_length(trim(`DOCUMENTO`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "CHK_FB_PERSONAS_NOMBRE",
+      "CHECK_CLAUSE": "char_length(trim(`NOMBRE_COMPLETO`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "CONSTRAINT_NAME": "VERIFICACION_CP_JSON",
+      "CHECK_CLAUSE": "json_valid(`VERIFICACION_CP_JSON`)"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "CHK_71_VINCULO_CP",
+      "CHECK_CLAUSE": "coalesce(json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.source')) = 'institutional' and json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.padCod')) = cast(`PADCOD` as char charset utf8mb4),0) and (`ID_PERSONA_CP` is null or coalesce(json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.personId')) = cast(`ID_PERSONA_CP` as char charset utf8mb4),0)) and (`CONCOD` is null or `ID_PERSONA_CP` is not null and coalesce(json_unquote(json_extract(`VERIFICACION_CP_JSON`,'$.conCod')) = cast(`CONCOD` as char charset utf8mb4),0))"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "CHK_71_VINCULO_REL",
+      "CHECK_CLAUSE": "`RELACION_DECLARADA` is not null and char_length(trim(`RELACION_DECLARADA`)) > 0"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "CHK_FB_VINCULO_PADCOD",
+      "CHECK_CLAUSE": "`PADCOD` > 0"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "CONSTRAINT_NAME": "VERIFICACION_CP_JSON",
+      "CHECK_CLAUSE": "json_valid(`VERIFICACION_CP_JSON`)"
+    }
+  ],
+  "triggers": [
+    {
+      "TRIGGER_NAME": "TRG_FB_CONSULTAS_HIST_ALTA",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "FB_CIU_CONSULTAS_WEB",
+      "ACTION_STATEMENT": "BEGIN\nIF NEW.VERSION<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_VERSION_INICIAL'; END IF;\nINSERT INTO FB_CONSULTAS_HISTORIAL (ID_CONSULTA,VERSION,TIPO_OPERACION,USUARIO_MODIFICADOR_ID,DATOS_ANTERIORES,DATOS_NUEVOS) VALUES (NEW.ID_CONSULTA,NEW.VERSION,'CREACION',NEW.USUARIO_CREADOR_ID,NULL,JSON_OBJECT('id_consulta',CAST(NEW.`ID_CONSULTA` AS CHAR),'padron',NEW.`PADRON`,'padcod',CAST(NEW.`PADCOD` AS CHAR),'localidad_padron',NEW.`LOCALIDAD_PADRON`,'nombre_completo',NEW.`NOMBRE_COMPLETO`,'rel_cod',NEW.`REL_COD`,'tipo_documento',NEW.`TIPO_DOCUMENTO`,'documento',NEW.`DOCUMENTO`,'domicilio_calle',NEW.`DOMICILIO_CALLE`,'domicilio_puerta',NEW.`DOMICILIO_PUERTA`,'domicilio_block',NEW.`DOMICILIO_BLOCK`,'domicilio_apto',NEW.`DOMICILIO_APTO`,'domicilio_localidad',NEW.`DOMICILIO_LOCALIDAD`,'domicilio_departamento',NEW.`DOMICILIO_DEPARTAMENTO`,'telefono_1',NEW.`TELEFONO_1`,'tipo_telefono_1',NEW.`TIPO_TELEFONO_1`,'telefono_2',NEW.`TELEFONO_2`,'tipo_telefono_2',NEW.`TIPO_TELEFONO_2`,'telefono_3',NEW.`TELEFONO_3`,'tipo_telefono_3',NEW.`TIPO_TELEFONO_3`,'telefono_4',NEW.`TELEFONO_4`,'tipo_telefono_4',NEW.`TIPO_TELEFONO_4`,'telefono_5',NEW.`TELEFONO_5`,'tipo_telefono_5',NEW.`TIPO_TELEFONO_5`,'mail_1',NEW.`MAIL_1`,'mail_2',NEW.`MAIL_2`,'mail_3',NEW.`MAIL_3`,'mail_4',NEW.`MAIL_4`,'mail_5',NEW.`MAIL_5`,'tipo_consulta',NEW.`TIPO_CONSULTA`,'descripcion',NEW.`DESCRIPCION`,'usuario_creador_id',NEW.`USUARIO_CREADOR_ID`,'fecha_alta',NEW.`FECHA_ALTA`,'fecha_modificacion',NEW.`FECHA_MODIFICACION`,'version',NEW.`VERSION`,'usuario_modificador_id',NEW.`USUARIO_MODIFICADOR_ID`,'id_persona',CAST(NEW.`ID_PERSONA` AS CHAR),'id_persona_cp',CAST(NEW.`ID_PERSONA_CP` AS CHAR),'concod',CAST(NEW.`CONCOD` AS CHAR),'relacion_declarada',NEW.`RELACION_DECLARADA`,'domicilio_declarado_json',JSON_QUERY(NEW.`DOMICILIO_DECLARADO_JSON`,'$'),'referencias_cp_json',JSON_QUERY(NEW.`REFERENCIAS_CP_JSON`,'$'),'actualiza_contacto',NEW.`ACTUALIZA_CONTACTO`,'contacto_version_esperada',NEW.`CONTACTO_VERSION_ESPERADA`));\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_CONSULTAS_HIST_UPDATE",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "FB_CIU_CONSULTAS_WEB",
+      "ACTION_STATEMENT": "BEGIN\nIF NEW.VERSION>OLD.VERSION THEN INSERT INTO FB_CONSULTAS_HISTORIAL (ID_CONSULTA,VERSION,TIPO_OPERACION,USUARIO_MODIFICADOR_ID,DATOS_ANTERIORES,DATOS_NUEVOS) VALUES (NEW.ID_CONSULTA,NEW.VERSION,'MODIFICACION',NEW.USUARIO_MODIFICADOR_ID,JSON_OBJECT('id_consulta',CAST(OLD.`ID_CONSULTA` AS CHAR),'padron',OLD.`PADRON`,'padcod',CAST(OLD.`PADCOD` AS CHAR),'localidad_padron',OLD.`LOCALIDAD_PADRON`,'nombre_completo',OLD.`NOMBRE_COMPLETO`,'rel_cod',OLD.`REL_COD`,'tipo_documento',OLD.`TIPO_DOCUMENTO`,'documento',OLD.`DOCUMENTO`,'domicilio_calle',OLD.`DOMICILIO_CALLE`,'domicilio_puerta',OLD.`DOMICILIO_PUERTA`,'domicilio_block',OLD.`DOMICILIO_BLOCK`,'domicilio_apto',OLD.`DOMICILIO_APTO`,'domicilio_localidad',OLD.`DOMICILIO_LOCALIDAD`,'domicilio_departamento',OLD.`DOMICILIO_DEPARTAMENTO`,'telefono_1',OLD.`TELEFONO_1`,'tipo_telefono_1',OLD.`TIPO_TELEFONO_1`,'telefono_2',OLD.`TELEFONO_2`,'tipo_telefono_2',OLD.`TIPO_TELEFONO_2`,'telefono_3',OLD.`TELEFONO_3`,'tipo_telefono_3',OLD.`TIPO_TELEFONO_3`,'telefono_4',OLD.`TELEFONO_4`,'tipo_telefono_4',OLD.`TIPO_TELEFONO_4`,'telefono_5',OLD.`TELEFONO_5`,'tipo_telefono_5',OLD.`TIPO_TELEFONO_5`,'mail_1',OLD.`MAIL_1`,'mail_2',OLD.`MAIL_2`,'mail_3',OLD.`MAIL_3`,'mail_4',OLD.`MAIL_4`,'mail_5',OLD.`MAIL_5`,'tipo_consulta',OLD.`TIPO_CONSULTA`,'descripcion',OLD.`DESCRIPCION`,'usuario_creador_id',OLD.`USUARIO_CREADOR_ID`,'fecha_alta',OLD.`FECHA_ALTA`,'fecha_modificacion',OLD.`FECHA_MODIFICACION`,'version',OLD.`VERSION`,'usuario_modificador_id',OLD.`USUARIO_MODIFICADOR_ID`,'id_persona',CAST(OLD.`ID_PERSONA` AS CHAR),'id_persona_cp',CAST(OLD.`ID_PERSONA_CP` AS CHAR),'concod',CAST(OLD.`CONCOD` AS CHAR),'relacion_declarada',OLD.`RELACION_DECLARADA`,'domicilio_declarado_json',JSON_QUERY(OLD.`DOMICILIO_DECLARADO_JSON`,'$'),'referencias_cp_json',JSON_QUERY(OLD.`REFERENCIAS_CP_JSON`,'$'),'actualiza_contacto',OLD.`ACTUALIZA_CONTACTO`,'contacto_version_esperada',OLD.`CONTACTO_VERSION_ESPERADA`),JSON_OBJECT('id_consulta',CAST(NEW.`ID_CONSULTA` AS CHAR),'padron',NEW.`PADRON`,'padcod',CAST(NEW.`PADCOD` AS CHAR),'localidad_padron',NEW.`LOCALIDAD_PADRON`,'nombre_completo',NEW.`NOMBRE_COMPLETO`,'rel_cod',NEW.`REL_COD`,'tipo_documento',NEW.`TIPO_DOCUMENTO`,'documento',NEW.`DOCUMENTO`,'domicilio_calle',NEW.`DOMICILIO_CALLE`,'domicilio_puerta',NEW.`DOMICILIO_PUERTA`,'domicilio_block',NEW.`DOMICILIO_BLOCK`,'domicilio_apto',NEW.`DOMICILIO_APTO`,'domicilio_localidad',NEW.`DOMICILIO_LOCALIDAD`,'domicilio_departamento',NEW.`DOMICILIO_DEPARTAMENTO`,'telefono_1',NEW.`TELEFONO_1`,'tipo_telefono_1',NEW.`TIPO_TELEFONO_1`,'telefono_2',NEW.`TELEFONO_2`,'tipo_telefono_2',NEW.`TIPO_TELEFONO_2`,'telefono_3',NEW.`TELEFONO_3`,'tipo_telefono_3',NEW.`TIPO_TELEFONO_3`,'telefono_4',NEW.`TELEFONO_4`,'tipo_telefono_4',NEW.`TIPO_TELEFONO_4`,'telefono_5',NEW.`TELEFONO_5`,'tipo_telefono_5',NEW.`TIPO_TELEFONO_5`,'mail_1',NEW.`MAIL_1`,'mail_2',NEW.`MAIL_2`,'mail_3',NEW.`MAIL_3`,'mail_4',NEW.`MAIL_4`,'mail_5',NEW.`MAIL_5`,'tipo_consulta',NEW.`TIPO_CONSULTA`,'descripcion',NEW.`DESCRIPCION`,'usuario_creador_id',NEW.`USUARIO_CREADOR_ID`,'fecha_alta',NEW.`FECHA_ALTA`,'fecha_modificacion',NEW.`FECHA_MODIFICACION`,'version',NEW.`VERSION`,'usuario_modificador_id',NEW.`USUARIO_MODIFICADOR_ID`,'id_persona',CAST(NEW.`ID_PERSONA` AS CHAR),'id_persona_cp',CAST(NEW.`ID_PERSONA_CP` AS CHAR),'concod',CAST(NEW.`CONCOD` AS CHAR),'relacion_declarada',NEW.`RELACION_DECLARADA`,'domicilio_declarado_json',JSON_QUERY(NEW.`DOMICILIO_DECLARADO_JSON`,'$'),'referencias_cp_json',JSON_QUERY(NEW.`REFERENCIAS_CP_JSON`,'$'),'actualiza_contacto',NEW.`ACTUALIZA_CONTACTO`,'contacto_version_esperada',NEW.`CONTACTO_VERSION_ESPERADA`)); END IF;\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_CONSULTAS_VERSION",
+      "ACTION_TIMING": "BEFORE",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "FB_CIU_CONSULTAS_WEB",
+      "ACTION_STATEMENT": "BEGIN\nIF NOT (BINARY OLD.`ID_CONSULTA` <=> BINARY NEW.`ID_CONSULTA`) OR NOT (BINARY OLD.`ID_PERSONA` <=> BINARY NEW.`ID_PERSONA`) OR NOT (BINARY OLD.`PADCOD` <=> BINARY NEW.`PADCOD`) OR NOT (BINARY OLD.`PADRON` <=> BINARY NEW.`PADRON`) OR NOT (BINARY OLD.`LOCALIDAD_PADRON` <=> BINARY NEW.`LOCALIDAD_PADRON`) OR NOT (BINARY OLD.`USUARIO_CREADOR_ID` <=> BINARY NEW.`USUARIO_CREADOR_ID`) OR NOT (BINARY OLD.`FECHA_ALTA` <=> BINARY NEW.`FECHA_ALTA`) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_IDENTIDAD_INMUTABLE'; END IF;\nIF NOT (BINARY OLD.`ID_CONSULTA` <=> BINARY NEW.`ID_CONSULTA`) OR NOT (BINARY OLD.`PADRON` <=> BINARY NEW.`PADRON`) OR NOT (BINARY OLD.`PADCOD` <=> BINARY NEW.`PADCOD`) OR NOT (BINARY OLD.`LOCALIDAD_PADRON` <=> BINARY NEW.`LOCALIDAD_PADRON`) OR NOT (BINARY OLD.`NOMBRE_COMPLETO` <=> BINARY NEW.`NOMBRE_COMPLETO`) OR NOT (BINARY OLD.`REL_COD` <=> BINARY NEW.`REL_COD`) OR NOT (BINARY OLD.`TIPO_DOCUMENTO` <=> BINARY NEW.`TIPO_DOCUMENTO`) OR NOT (BINARY OLD.`DOCUMENTO` <=> BINARY NEW.`DOCUMENTO`) OR NOT (BINARY OLD.`DOMICILIO_CALLE` <=> BINARY NEW.`DOMICILIO_CALLE`) OR NOT (BINARY OLD.`DOMICILIO_PUERTA` <=> BINARY NEW.`DOMICILIO_PUERTA`) OR NOT (BINARY OLD.`DOMICILIO_BLOCK` <=> BINARY NEW.`DOMICILIO_BLOCK`) OR NOT (BINARY OLD.`DOMICILIO_APTO` <=> BINARY NEW.`DOMICILIO_APTO`) OR NOT (BINARY OLD.`DOMICILIO_LOCALIDAD` <=> BINARY NEW.`DOMICILIO_LOCALIDAD`) OR NOT (BINARY OLD.`DOMICILIO_DEPARTAMENTO` <=> BINARY NEW.`DOMICILIO_DEPARTAMENTO`) OR NOT (BINARY OLD.`TELEFONO_1` <=> BINARY NEW.`TELEFONO_1`) OR NOT (BINARY OLD.`TIPO_TELEFONO_1` <=> BINARY NEW.`TIPO_TELEFONO_1`) OR NOT (BINARY OLD.`TELEFONO_2` <=> BINARY NEW.`TELEFONO_2`) OR NOT (BINARY OLD.`TIPO_TELEFONO_2` <=> BINARY NEW.`TIPO_TELEFONO_2`) OR NOT (BINARY OLD.`TELEFONO_3` <=> BINARY NEW.`TELEFONO_3`) OR NOT (BINARY OLD.`TIPO_TELEFONO_3` <=> BINARY NEW.`TIPO_TELEFONO_3`) OR NOT (BINARY OLD.`TELEFONO_4` <=> BINARY NEW.`TELEFONO_4`) OR NOT (BINARY OLD.`TIPO_TELEFONO_4` <=> BINARY NEW.`TIPO_TELEFONO_4`) OR NOT (BINARY OLD.`TELEFONO_5` <=> BINARY NEW.`TELEFONO_5`) OR NOT (BINARY OLD.`TIPO_TELEFONO_5` <=> BINARY NEW.`TIPO_TELEFONO_5`) OR NOT (BINARY OLD.`MAIL_1` <=> BINARY NEW.`MAIL_1`) OR NOT (BINARY OLD.`MAIL_2` <=> BINARY NEW.`MAIL_2`) OR NOT (BINARY OLD.`MAIL_3` <=> BINARY NEW.`MAIL_3`) OR NOT (BINARY OLD.`MAIL_4` <=> BINARY NEW.`MAIL_4`) OR NOT (BINARY OLD.`MAIL_5` <=> BINARY NEW.`MAIL_5`) OR NOT (BINARY OLD.`TIPO_CONSULTA` <=> BINARY NEW.`TIPO_CONSULTA`) OR NOT (BINARY OLD.`DESCRIPCION` <=> BINARY NEW.`DESCRIPCION`) OR NOT (BINARY OLD.`USUARIO_CREADOR_ID` <=> BINARY NEW.`USUARIO_CREADOR_ID`) OR NOT (BINARY OLD.`FECHA_ALTA` <=> BINARY NEW.`FECHA_ALTA`) OR NOT (BINARY OLD.`ID_PERSONA` <=> BINARY NEW.`ID_PERSONA`) OR NOT (BINARY OLD.`ID_PERSONA_CP` <=> BINARY NEW.`ID_PERSONA_CP`) OR NOT (BINARY OLD.`CONCOD` <=> BINARY NEW.`CONCOD`) OR NOT (BINARY OLD.`RELACION_DECLARADA` <=> BINARY NEW.`RELACION_DECLARADA`) OR NOT (BINARY OLD.`DOMICILIO_DECLARADO_JSON` <=> BINARY NEW.`DOMICILIO_DECLARADO_JSON`) OR NOT (BINARY OLD.`REFERENCIAS_CP_JSON` <=> BINARY NEW.`REFERENCIAS_CP_JSON`) THEN\n IF NEW.USUARIO_MODIFICADOR_ID IS NULL OR CHAR_LENGTH(TRIM(NEW.USUARIO_MODIFICADOR_ID))=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ACTOR_REQUERIDO'; END IF;\n SET NEW.VERSION=OLD.VERSION+1; SET NEW.FECHA_MODIFICACION=UTC_TIMESTAMP(6);\n ELSE SET NEW.VERSION=OLD.VERSION; SET NEW.FECHA_MODIFICACION=OLD.FECHA_MODIFICACION; SET NEW.USUARIO_MODIFICADOR_ID=OLD.USUARIO_MODIFICADOR_ID; END IF;\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_CONSULTA_CONTACTO_ALTA",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "FB_CIU_CONSULTAS_WEB",
+      "ACTION_STATEMENT": "BEGIN\nDECLARE v_version INT DEFAULT 0; DECLARE v_origen BIGINT DEFAULT 0;\nIF NEW.ACTUALIZA_CONTACTO=1 THEN\n IF EXISTS (SELECT 1 FROM FB_CIU_CONSULTAS_WEB WHERE ID_PERSONA=NEW.ID_PERSONA AND ID_CONSULTA>NEW.ID_CONSULTA) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_CONSULTA_HISTORICA'; END IF;\n SELECT COALESCE(MAX(VERSION),0),COALESCE(MAX(ID_CONSULTA),0) INTO v_version,v_origen FROM FB_CONTACTOS WHERE ID_PERSONA=NEW.ID_PERSONA;\n IF v_version<>NEW.CONTACTO_VERSION_ESPERADA THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_CONTACTO_VERSION'; END IF;\n IF v_origen>NEW.ID_CONSULTA THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ORIGEN_ANTIGUO'; END IF;\n IF v_version=0 THEN\n  INSERT INTO FB_CONTACTOS (`ID_CONSULTA`,`TELEFONO_1`,`TIPO_TELEFONO_1`,`TELEFONO_2`,`TIPO_TELEFONO_2`,`TELEFONO_3`,`TIPO_TELEFONO_3`,`TELEFONO_4`,`TIPO_TELEFONO_4`,`TELEFONO_5`,`TIPO_TELEFONO_5`,`MAIL_1`,`MAIL_2`,`MAIL_3`,`MAIL_4`,`MAIL_5`,`NOMBRE_COMPLETO`,`TIPO_DOCUMENTO`,`DOCUMENTO`,`USUARIO_MODIFICADOR_ID`,`ID_PERSONA`) VALUES (NEW.`ID_CONSULTA`,NEW.`TELEFONO_1`,NEW.`TIPO_TELEFONO_1`,NEW.`TELEFONO_2`,NEW.`TIPO_TELEFONO_2`,NEW.`TELEFONO_3`,NEW.`TIPO_TELEFONO_3`,NEW.`TELEFONO_4`,NEW.`TIPO_TELEFONO_4`,NEW.`TELEFONO_5`,NEW.`TIPO_TELEFONO_5`,NEW.`MAIL_1`,NEW.`MAIL_2`,NEW.`MAIL_3`,NEW.`MAIL_4`,NEW.`MAIL_5`,NEW.`NOMBRE_COMPLETO`,NEW.`TIPO_DOCUMENTO`,NEW.`DOCUMENTO`,NEW.USUARIO_CREADOR_ID,NEW.`ID_PERSONA`);\n ELSE\n  UPDATE FB_CONTACTOS SET `ID_CONSULTA`=NEW.`ID_CONSULTA`,`TELEFONO_1`=NEW.`TELEFONO_1`,`TIPO_TELEFONO_1`=NEW.`TIPO_TELEFONO_1`,`TELEFONO_2`=NEW.`TELEFONO_2`,`TIPO_TELEFONO_2`=NEW.`TIPO_TELEFONO_2`,`TELEFONO_3`=NEW.`TELEFONO_3`,`TIPO_TELEFONO_3`=NEW.`TIPO_TELEFONO_3`,`TELEFONO_4`=NEW.`TELEFONO_4`,`TIPO_TELEFONO_4`=NEW.`TIPO_TELEFONO_4`,`TELEFONO_5`=NEW.`TELEFONO_5`,`TIPO_TELEFONO_5`=NEW.`TIPO_TELEFONO_5`,`MAIL_1`=NEW.`MAIL_1`,`MAIL_2`=NEW.`MAIL_2`,`MAIL_3`=NEW.`MAIL_3`,`MAIL_4`=NEW.`MAIL_4`,`MAIL_5`=NEW.`MAIL_5`,`NOMBRE_COMPLETO`=NEW.`NOMBRE_COMPLETO`,`TIPO_DOCUMENTO`=NEW.`TIPO_DOCUMENTO`,`DOCUMENTO`=NEW.`DOCUMENTO`,`USUARIO_MODIFICADOR_ID`=NEW.USUARIO_CREADOR_ID\n  WHERE ID_PERSONA=NEW.ID_PERSONA AND VERSION=v_version;\n END IF;\nEND IF;\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_CONSULTA_CONTACTO_EDICION",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "FB_CIU_CONSULTAS_WEB",
+      "ACTION_STATEMENT": "BEGIN\nDECLARE v_version INT DEFAULT 0; DECLARE v_origen BIGINT DEFAULT 0;\nIF NEW.ACTUALIZA_CONTACTO=1 AND NEW.VERSION>OLD.VERSION THEN\n IF EXISTS (SELECT 1 FROM FB_CIU_CONSULTAS_WEB WHERE ID_PERSONA=NEW.ID_PERSONA AND ID_CONSULTA>NEW.ID_CONSULTA) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_CONSULTA_HISTORICA'; END IF;\n SELECT COALESCE(MAX(VERSION),0),COALESCE(MAX(ID_CONSULTA),0) INTO v_version,v_origen FROM FB_CONTACTOS WHERE ID_PERSONA=NEW.ID_PERSONA;\n IF v_version<>NEW.CONTACTO_VERSION_ESPERADA THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_CONTACTO_VERSION'; END IF;\n IF v_origen>NEW.ID_CONSULTA THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ORIGEN_ANTIGUO'; END IF;\n IF v_version=0 THEN\n  INSERT INTO FB_CONTACTOS (`ID_CONSULTA`,`TELEFONO_1`,`TIPO_TELEFONO_1`,`TELEFONO_2`,`TIPO_TELEFONO_2`,`TELEFONO_3`,`TIPO_TELEFONO_3`,`TELEFONO_4`,`TIPO_TELEFONO_4`,`TELEFONO_5`,`TIPO_TELEFONO_5`,`MAIL_1`,`MAIL_2`,`MAIL_3`,`MAIL_4`,`MAIL_5`,`NOMBRE_COMPLETO`,`TIPO_DOCUMENTO`,`DOCUMENTO`,`USUARIO_MODIFICADOR_ID`,`ID_PERSONA`) VALUES (NEW.`ID_CONSULTA`,NEW.`TELEFONO_1`,NEW.`TIPO_TELEFONO_1`,NEW.`TELEFONO_2`,NEW.`TIPO_TELEFONO_2`,NEW.`TELEFONO_3`,NEW.`TIPO_TELEFONO_3`,NEW.`TELEFONO_4`,NEW.`TIPO_TELEFONO_4`,NEW.`TELEFONO_5`,NEW.`TIPO_TELEFONO_5`,NEW.`MAIL_1`,NEW.`MAIL_2`,NEW.`MAIL_3`,NEW.`MAIL_4`,NEW.`MAIL_5`,NEW.`NOMBRE_COMPLETO`,NEW.`TIPO_DOCUMENTO`,NEW.`DOCUMENTO`,NEW.`USUARIO_MODIFICADOR_ID`,NEW.`ID_PERSONA`);\n ELSE\n  UPDATE FB_CONTACTOS SET `ID_CONSULTA`=NEW.`ID_CONSULTA`,`TELEFONO_1`=NEW.`TELEFONO_1`,`TIPO_TELEFONO_1`=NEW.`TIPO_TELEFONO_1`,`TELEFONO_2`=NEW.`TELEFONO_2`,`TIPO_TELEFONO_2`=NEW.`TIPO_TELEFONO_2`,`TELEFONO_3`=NEW.`TELEFONO_3`,`TIPO_TELEFONO_3`=NEW.`TIPO_TELEFONO_3`,`TELEFONO_4`=NEW.`TELEFONO_4`,`TIPO_TELEFONO_4`=NEW.`TIPO_TELEFONO_4`,`TELEFONO_5`=NEW.`TELEFONO_5`,`TIPO_TELEFONO_5`=NEW.`TIPO_TELEFONO_5`,`MAIL_1`=NEW.`MAIL_1`,`MAIL_2`=NEW.`MAIL_2`,`MAIL_3`=NEW.`MAIL_3`,`MAIL_4`=NEW.`MAIL_4`,`MAIL_5`=NEW.`MAIL_5`,`NOMBRE_COMPLETO`=NEW.`NOMBRE_COMPLETO`,`TIPO_DOCUMENTO`=NEW.`TIPO_DOCUMENTO`,`DOCUMENTO`=NEW.`DOCUMENTO`,`USUARIO_MODIFICADOR_ID`=NEW.USUARIO_MODIFICADOR_ID\n  WHERE ID_PERSONA=NEW.ID_PERSONA AND VERSION=v_version;\n END IF;\nEND IF;\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_CONTACTOS_HIST_ALTA",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "FB_CONTACTOS",
+      "ACTION_STATEMENT": "BEGIN\nIF NEW.VERSION<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_VERSION_INICIAL'; END IF;\nIF EXISTS (SELECT 1 FROM FB_CIU_CONSULTAS_WEB WHERE ID_PERSONA=NEW.ID_PERSONA AND ID_CONSULTA>NEW.ID_CONSULTA) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ORIGEN_ANTIGUO'; END IF;\nINSERT INTO FB_CONTACTOS_HISTORIAL (ID_CONTACTO,ID_CONSULTA,VERSION,USUARIO_MODIFICADOR_ID,DATOS_ANTERIORES,DATOS_NUEVOS) VALUES (NEW.ID_CONTACTO,NEW.ID_CONSULTA,NEW.VERSION,NEW.USUARIO_MODIFICADOR_ID,NULL,JSON_OBJECT('id_contacto',CAST(NEW.`ID_CONTACTO` AS CHAR),'id_consulta',CAST(NEW.`ID_CONSULTA` AS CHAR),'telefono_1',NEW.`TELEFONO_1`,'tipo_telefono_1',NEW.`TIPO_TELEFONO_1`,'telefono_2',NEW.`TELEFONO_2`,'tipo_telefono_2',NEW.`TIPO_TELEFONO_2`,'telefono_3',NEW.`TELEFONO_3`,'tipo_telefono_3',NEW.`TIPO_TELEFONO_3`,'telefono_4',NEW.`TELEFONO_4`,'tipo_telefono_4',NEW.`TIPO_TELEFONO_4`,'telefono_5',NEW.`TELEFONO_5`,'tipo_telefono_5',NEW.`TIPO_TELEFONO_5`,'mail_1',NEW.`MAIL_1`,'mail_2',NEW.`MAIL_2`,'mail_3',NEW.`MAIL_3`,'mail_4',NEW.`MAIL_4`,'mail_5',NEW.`MAIL_5`,'fecha_alta',NEW.`FECHA_ALTA`,'nombre_completo',NEW.`NOMBRE_COMPLETO`,'tipo_documento',NEW.`TIPO_DOCUMENTO`,'documento',NEW.`DOCUMENTO`,'documento_normalizado',NEW.`DOCUMENTO_NORMALIZADO`,'usuario_modificador_id',NEW.`USUARIO_MODIFICADOR_ID`,'fecha_modificacion',NEW.`FECHA_MODIFICACION`,'version',NEW.`VERSION`,'id_persona',CAST(NEW.`ID_PERSONA` AS CHAR)));\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_CONTACTOS_HIST_UPDATE",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "FB_CONTACTOS",
+      "ACTION_STATEMENT": "BEGIN\nIF NEW.VERSION>OLD.VERSION THEN INSERT INTO FB_CONTACTOS_HISTORIAL (ID_CONTACTO,ID_CONSULTA,VERSION,USUARIO_MODIFICADOR_ID,DATOS_ANTERIORES,DATOS_NUEVOS) VALUES (NEW.ID_CONTACTO,NEW.ID_CONSULTA,NEW.VERSION,NEW.USUARIO_MODIFICADOR_ID,JSON_OBJECT('id_contacto',CAST(OLD.`ID_CONTACTO` AS CHAR),'id_consulta',CAST(OLD.`ID_CONSULTA` AS CHAR),'telefono_1',OLD.`TELEFONO_1`,'tipo_telefono_1',OLD.`TIPO_TELEFONO_1`,'telefono_2',OLD.`TELEFONO_2`,'tipo_telefono_2',OLD.`TIPO_TELEFONO_2`,'telefono_3',OLD.`TELEFONO_3`,'tipo_telefono_3',OLD.`TIPO_TELEFONO_3`,'telefono_4',OLD.`TELEFONO_4`,'tipo_telefono_4',OLD.`TIPO_TELEFONO_4`,'telefono_5',OLD.`TELEFONO_5`,'tipo_telefono_5',OLD.`TIPO_TELEFONO_5`,'mail_1',OLD.`MAIL_1`,'mail_2',OLD.`MAIL_2`,'mail_3',OLD.`MAIL_3`,'mail_4',OLD.`MAIL_4`,'mail_5',OLD.`MAIL_5`,'fecha_alta',OLD.`FECHA_ALTA`,'nombre_completo',OLD.`NOMBRE_COMPLETO`,'tipo_documento',OLD.`TIPO_DOCUMENTO`,'documento',OLD.`DOCUMENTO`,'documento_normalizado',OLD.`DOCUMENTO_NORMALIZADO`,'usuario_modificador_id',OLD.`USUARIO_MODIFICADOR_ID`,'fecha_modificacion',OLD.`FECHA_MODIFICACION`,'version',OLD.`VERSION`,'id_persona',CAST(OLD.`ID_PERSONA` AS CHAR)),JSON_OBJECT('id_contacto',CAST(NEW.`ID_CONTACTO` AS CHAR),'id_consulta',CAST(NEW.`ID_CONSULTA` AS CHAR),'telefono_1',NEW.`TELEFONO_1`,'tipo_telefono_1',NEW.`TIPO_TELEFONO_1`,'telefono_2',NEW.`TELEFONO_2`,'tipo_telefono_2',NEW.`TIPO_TELEFONO_2`,'telefono_3',NEW.`TELEFONO_3`,'tipo_telefono_3',NEW.`TIPO_TELEFONO_3`,'telefono_4',NEW.`TELEFONO_4`,'tipo_telefono_4',NEW.`TIPO_TELEFONO_4`,'telefono_5',NEW.`TELEFONO_5`,'tipo_telefono_5',NEW.`TIPO_TELEFONO_5`,'mail_1',NEW.`MAIL_1`,'mail_2',NEW.`MAIL_2`,'mail_3',NEW.`MAIL_3`,'mail_4',NEW.`MAIL_4`,'mail_5',NEW.`MAIL_5`,'fecha_alta',NEW.`FECHA_ALTA`,'nombre_completo',NEW.`NOMBRE_COMPLETO`,'tipo_documento',NEW.`TIPO_DOCUMENTO`,'documento',NEW.`DOCUMENTO`,'documento_normalizado',NEW.`DOCUMENTO_NORMALIZADO`,'usuario_modificador_id',NEW.`USUARIO_MODIFICADOR_ID`,'fecha_modificacion',NEW.`FECHA_MODIFICACION`,'version',NEW.`VERSION`,'id_persona',CAST(NEW.`ID_PERSONA` AS CHAR))); END IF;\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_CONTACTOS_VERSION",
+      "ACTION_TIMING": "BEFORE",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "FB_CONTACTOS",
+      "ACTION_STATEMENT": "BEGIN\nIF NOT (BINARY OLD.`ID_CONTACTO` <=> BINARY NEW.`ID_CONTACTO`) OR NOT (BINARY OLD.`ID_PERSONA` <=> BINARY NEW.`ID_PERSONA`) OR NOT (BINARY OLD.`FECHA_ALTA` <=> BINARY NEW.`FECHA_ALTA`) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_IDENTIDAD_INMUTABLE'; END IF;\nIF NEW.ID_CONSULTA < OLD.ID_CONSULTA OR EXISTS (SELECT 1 FROM FB_CIU_CONSULTAS_WEB WHERE ID_PERSONA=NEW.ID_PERSONA AND ID_CONSULTA>NEW.ID_CONSULTA) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ORIGEN_ANTIGUO'; END IF;\nIF NOT (BINARY OLD.`ID_CONTACTO` <=> BINARY NEW.`ID_CONTACTO`) OR NOT (BINARY OLD.`ID_CONSULTA` <=> BINARY NEW.`ID_CONSULTA`) OR NOT (BINARY OLD.`TELEFONO_1` <=> BINARY NEW.`TELEFONO_1`) OR NOT (BINARY OLD.`TIPO_TELEFONO_1` <=> BINARY NEW.`TIPO_TELEFONO_1`) OR NOT (BINARY OLD.`TELEFONO_2` <=> BINARY NEW.`TELEFONO_2`) OR NOT (BINARY OLD.`TIPO_TELEFONO_2` <=> BINARY NEW.`TIPO_TELEFONO_2`) OR NOT (BINARY OLD.`TELEFONO_3` <=> BINARY NEW.`TELEFONO_3`) OR NOT (BINARY OLD.`TIPO_TELEFONO_3` <=> BINARY NEW.`TIPO_TELEFONO_3`) OR NOT (BINARY OLD.`TELEFONO_4` <=> BINARY NEW.`TELEFONO_4`) OR NOT (BINARY OLD.`TIPO_TELEFONO_4` <=> BINARY NEW.`TIPO_TELEFONO_4`) OR NOT (BINARY OLD.`TELEFONO_5` <=> BINARY NEW.`TELEFONO_5`) OR NOT (BINARY OLD.`TIPO_TELEFONO_5` <=> BINARY NEW.`TIPO_TELEFONO_5`) OR NOT (BINARY OLD.`MAIL_1` <=> BINARY NEW.`MAIL_1`) OR NOT (BINARY OLD.`MAIL_2` <=> BINARY NEW.`MAIL_2`) OR NOT (BINARY OLD.`MAIL_3` <=> BINARY NEW.`MAIL_3`) OR NOT (BINARY OLD.`MAIL_4` <=> BINARY NEW.`MAIL_4`) OR NOT (BINARY OLD.`MAIL_5` <=> BINARY NEW.`MAIL_5`) OR NOT (BINARY OLD.`FECHA_ALTA` <=> BINARY NEW.`FECHA_ALTA`) OR NOT (BINARY OLD.`NOMBRE_COMPLETO` <=> BINARY NEW.`NOMBRE_COMPLETO`) OR NOT (BINARY OLD.`TIPO_DOCUMENTO` <=> BINARY NEW.`TIPO_DOCUMENTO`) OR NOT (BINARY OLD.`DOCUMENTO` <=> BINARY NEW.`DOCUMENTO`) OR NOT (BINARY OLD.`ID_PERSONA` <=> BINARY NEW.`ID_PERSONA`) THEN\n IF NEW.USUARIO_MODIFICADOR_ID IS NULL OR CHAR_LENGTH(TRIM(NEW.USUARIO_MODIFICADOR_ID))=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ACTOR_REQUERIDO'; END IF;\n SET NEW.VERSION=OLD.VERSION+1; SET NEW.FECHA_MODIFICACION=UTC_TIMESTAMP(6);\n ELSE SET NEW.VERSION=OLD.VERSION; SET NEW.FECHA_MODIFICACION=OLD.FECHA_MODIFICACION; SET NEW.USUARIO_MODIFICADOR_ID=OLD.USUARIO_MODIFICADOR_ID; END IF;\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_DOMICILIOS_HIST_ALTA",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "FB_DOMICILIOS",
+      "ACTION_STATEMENT": "BEGIN\nIF NEW.VERSION<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_VERSION_INICIAL'; END IF;\nIF EXISTS (SELECT 1 FROM FB_CIU_CONSULTAS_WEB WHERE ID_PERSONA=NEW.ID_PERSONA AND ID_CONSULTA>NEW.ID_CONSULTA) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ORIGEN_ANTIGUO'; END IF;\nINSERT INTO FB_DOMICILIOS_HISTORIAL (ID_DOMICILIO,ID_CONSULTA,VERSION,USUARIO_MODIFICADOR_ID,DATOS_ANTERIORES,DATOS_NUEVOS) VALUES (NEW.ID_DOMICILIO,NEW.ID_CONSULTA,NEW.VERSION,NEW.USUARIO_MODIFICADOR_ID,NULL,JSON_OBJECT('id_domicilio',CAST(NEW.`ID_DOMICILIO` AS CHAR),'id_persona',CAST(NEW.`ID_PERSONA` AS CHAR),'id_persona_cp',CAST(NEW.`ID_PERSONA_CP` AS CHAR),'id_domicilio_cp',CAST(NEW.`ID_DOMICILIO_CP` AS CHAR),'id_consulta',CAST(NEW.`ID_CONSULTA` AS CHAR),'calle',NEW.`CALLE`,'numero',NEW.`NUMERO`,'barrio',NEW.`BARRIO`,'localidad',NEW.`LOCALIDAD`,'departamento',NEW.`DEPARTAMENTO`,'codigo_postal',NEW.`CODIGO_POSTAL`,'ph',NEW.`PH`,'block',NEW.`BLOCK`,'depto',NEW.`DEPTO`,'puerta',NEW.`PUERTA`,'domicilio_completo',NEW.`DOMICILIO_COMPLETO`,'referencia',NEW.`REFERENCIA`,'sector',NEW.`SECTOR`,'manzana',NEW.`MANZANA`,'lote',NEW.`LOTE`,'version',NEW.`VERSION`,'fecha_alta',NEW.`FECHA_ALTA`,'fecha_modificacion',NEW.`FECHA_MODIFICACION`,'usuario_modificador_id',NEW.`USUARIO_MODIFICADOR_ID`,'verificacion_cp_json',JSON_QUERY(NEW.`VERIFICACION_CP_JSON`,'$')));\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_DOMICILIOS_HIST_UPDATE",
+      "ACTION_TIMING": "AFTER",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "FB_DOMICILIOS",
+      "ACTION_STATEMENT": "BEGIN\nIF NEW.VERSION>OLD.VERSION THEN INSERT INTO FB_DOMICILIOS_HISTORIAL (ID_DOMICILIO,ID_CONSULTA,VERSION,USUARIO_MODIFICADOR_ID,DATOS_ANTERIORES,DATOS_NUEVOS) VALUES (NEW.ID_DOMICILIO,NEW.ID_CONSULTA,NEW.VERSION,NEW.USUARIO_MODIFICADOR_ID,JSON_OBJECT('id_domicilio',CAST(OLD.`ID_DOMICILIO` AS CHAR),'id_persona',CAST(OLD.`ID_PERSONA` AS CHAR),'id_persona_cp',CAST(OLD.`ID_PERSONA_CP` AS CHAR),'id_domicilio_cp',CAST(OLD.`ID_DOMICILIO_CP` AS CHAR),'id_consulta',CAST(OLD.`ID_CONSULTA` AS CHAR),'calle',OLD.`CALLE`,'numero',OLD.`NUMERO`,'barrio',OLD.`BARRIO`,'localidad',OLD.`LOCALIDAD`,'departamento',OLD.`DEPARTAMENTO`,'codigo_postal',OLD.`CODIGO_POSTAL`,'ph',OLD.`PH`,'block',OLD.`BLOCK`,'depto',OLD.`DEPTO`,'puerta',OLD.`PUERTA`,'domicilio_completo',OLD.`DOMICILIO_COMPLETO`,'referencia',OLD.`REFERENCIA`,'sector',OLD.`SECTOR`,'manzana',OLD.`MANZANA`,'lote',OLD.`LOTE`,'version',OLD.`VERSION`,'fecha_alta',OLD.`FECHA_ALTA`,'fecha_modificacion',OLD.`FECHA_MODIFICACION`,'usuario_modificador_id',OLD.`USUARIO_MODIFICADOR_ID`,'verificacion_cp_json',JSON_QUERY(OLD.`VERIFICACION_CP_JSON`,'$')),JSON_OBJECT('id_domicilio',CAST(NEW.`ID_DOMICILIO` AS CHAR),'id_persona',CAST(NEW.`ID_PERSONA` AS CHAR),'id_persona_cp',CAST(NEW.`ID_PERSONA_CP` AS CHAR),'id_domicilio_cp',CAST(NEW.`ID_DOMICILIO_CP` AS CHAR),'id_consulta',CAST(NEW.`ID_CONSULTA` AS CHAR),'calle',NEW.`CALLE`,'numero',NEW.`NUMERO`,'barrio',NEW.`BARRIO`,'localidad',NEW.`LOCALIDAD`,'departamento',NEW.`DEPARTAMENTO`,'codigo_postal',NEW.`CODIGO_POSTAL`,'ph',NEW.`PH`,'block',NEW.`BLOCK`,'depto',NEW.`DEPTO`,'puerta',NEW.`PUERTA`,'domicilio_completo',NEW.`DOMICILIO_COMPLETO`,'referencia',NEW.`REFERENCIA`,'sector',NEW.`SECTOR`,'manzana',NEW.`MANZANA`,'lote',NEW.`LOTE`,'version',NEW.`VERSION`,'fecha_alta',NEW.`FECHA_ALTA`,'fecha_modificacion',NEW.`FECHA_MODIFICACION`,'usuario_modificador_id',NEW.`USUARIO_MODIFICADOR_ID`,'verificacion_cp_json',JSON_QUERY(NEW.`VERIFICACION_CP_JSON`,'$'))); END IF;\nEND"
+    },
+    {
+      "TRIGGER_NAME": "TRG_FB_DOMICILIOS_VERSION",
+      "ACTION_TIMING": "BEFORE",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "FB_DOMICILIOS",
+      "ACTION_STATEMENT": "BEGIN\nIF NOT (BINARY OLD.`ID_DOMICILIO` <=> BINARY NEW.`ID_DOMICILIO`) OR NOT (BINARY OLD.`ID_PERSONA` <=> BINARY NEW.`ID_PERSONA`) OR NOT (BINARY OLD.`FECHA_ALTA` <=> BINARY NEW.`FECHA_ALTA`) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_IDENTIDAD_INMUTABLE'; END IF;\nIF NEW.ID_CONSULTA < OLD.ID_CONSULTA OR EXISTS (SELECT 1 FROM FB_CIU_CONSULTAS_WEB WHERE ID_PERSONA=NEW.ID_PERSONA AND ID_CONSULTA>NEW.ID_CONSULTA) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ORIGEN_ANTIGUO'; END IF;\nIF NOT (BINARY OLD.`ID_DOMICILIO` <=> BINARY NEW.`ID_DOMICILIO`) OR NOT (BINARY OLD.`ID_PERSONA` <=> BINARY NEW.`ID_PERSONA`) OR NOT (BINARY OLD.`ID_PERSONA_CP` <=> BINARY NEW.`ID_PERSONA_CP`) OR NOT (BINARY OLD.`ID_DOMICILIO_CP` <=> BINARY NEW.`ID_DOMICILIO_CP`) OR NOT (BINARY OLD.`ID_CONSULTA` <=> BINARY NEW.`ID_CONSULTA`) OR NOT (BINARY OLD.`CALLE` <=> BINARY NEW.`CALLE`) OR NOT (BINARY OLD.`NUMERO` <=> BINARY NEW.`NUMERO`) OR NOT (BINARY OLD.`BARRIO` <=> BINARY NEW.`BARRIO`) OR NOT (BINARY OLD.`LOCALIDAD` <=> BINARY NEW.`LOCALIDAD`) OR NOT (BINARY OLD.`DEPARTAMENTO` <=> BINARY NEW.`DEPARTAMENTO`) OR NOT (BINARY OLD.`CODIGO_POSTAL` <=> BINARY NEW.`CODIGO_POSTAL`) OR NOT (BINARY OLD.`PH` <=> BINARY NEW.`PH`) OR NOT (BINARY OLD.`BLOCK` <=> BINARY NEW.`BLOCK`) OR NOT (BINARY OLD.`DEPTO` <=> BINARY NEW.`DEPTO`) OR NOT (BINARY OLD.`PUERTA` <=> BINARY NEW.`PUERTA`) OR NOT (BINARY OLD.`DOMICILIO_COMPLETO` <=> BINARY NEW.`DOMICILIO_COMPLETO`) OR NOT (BINARY OLD.`REFERENCIA` <=> BINARY NEW.`REFERENCIA`) OR NOT (BINARY OLD.`SECTOR` <=> BINARY NEW.`SECTOR`) OR NOT (BINARY OLD.`MANZANA` <=> BINARY NEW.`MANZANA`) OR NOT (BINARY OLD.`LOTE` <=> BINARY NEW.`LOTE`) OR NOT (BINARY OLD.`FECHA_ALTA` <=> BINARY NEW.`FECHA_ALTA`) OR NOT (BINARY OLD.`VERIFICACION_CP_JSON` <=> BINARY NEW.`VERIFICACION_CP_JSON`) THEN\n IF NEW.USUARIO_MODIFICADOR_ID IS NULL OR CHAR_LENGTH(TRIM(NEW.USUARIO_MODIFICADOR_ID))=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='71_ACTOR_REQUERIDO'; END IF;\n SET NEW.VERSION=OLD.VERSION+1; SET NEW.FECHA_MODIFICACION=UTC_TIMESTAMP(6);\n ELSE SET NEW.VERSION=OLD.VERSION; SET NEW.FECHA_MODIFICACION=OLD.FECHA_MODIFICACION; SET NEW.USUARIO_MODIFICADOR_ID=OLD.USUARIO_MODIFICADOR_ID; END IF;\nEND"
+    }
+  ],
+  "engines": [
+    {
+      "TABLE_NAME": "FB_CIU_CONSULTAS_WEB",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_HISTORIAL",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    },
+    {
+      "TABLE_NAME": "FB_CONSULTAS_IDEMPOTENCIA",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_uca1400_ai_ci"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    },
+    {
+      "TABLE_NAME": "FB_CONTACTOS_HISTORIAL",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    },
+    {
+      "TABLE_NAME": "FB_DOMICILIOS_HISTORIAL",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    },
+    {
+      "TABLE_NAME": "FB_MODELO_REVISION",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_uca1400_ai_ci"
+    },
+    {
+      "TABLE_NAME": "FB_PERSONAS",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    },
+    {
+      "TABLE_NAME": "FB_VINCULOS_DECLARADOS",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci"
+    }
+  ]
+}

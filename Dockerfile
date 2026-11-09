@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
-# Pin NODE_IMAGE to a verified official digest before a reproducible release.
-ARG NODE_IMAGE=node:26-bookworm-slim
+# Official multi-platform manifest verified for this delivery.
+ARG NODE_IMAGE=node:26-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68
 FROM ${NODE_IMAGE} AS dependencies
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 
 FROM ${NODE_IMAGE} AS builder
 WORKDIR /app

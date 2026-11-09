@@ -1,4 +1,5 @@
 import { identity } from "@backend/server/supabase";
+import { mariaResponse } from "@backend/server/auth-dispatch";
 import { createImageDownloadHandler } from "@backend/server/image-download";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -7,8 +8,9 @@ const download = createImageDownloadHandler({
   enabled: () => process.env.IMAGE_PROVIDER === "supabase",
 });
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ kind: string }> },
 ) {
-  return download((await context.params).kind);
+  const kind = (await context.params).kind;
+  return await mariaResponse(request, ["parcel-image", kind]) ?? download(kind);
 }

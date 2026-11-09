@@ -1,10 +1,15 @@
+import type { InstitutionalPerson, InstitutionalRef } from "@backend/domain/institutional";
+export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
   user: { id: string; username: string } | null;
   mustChangePassword: boolean;
   synthetic: boolean;
+  institutional?: boolean;
 };
-export type ParcelRef = { locality: string; parcel: string; address: string };
+export type ParcelRef = { locality: string; parcel: string; address: string;
+  padCod?: string; source?: string; matchedPeople?: InstitutionalRef["matchedPeople"] };
 export type Person = {
+  localPersonId?: string;
   name: string;
   documentType: "CI" | "RUT" | "Otros";
   document: string;
@@ -29,8 +34,16 @@ export type Parcel = ParcelRef & {
   detectedBuiltArea?: number | null;
   contacts: Contact[];
   images: ParcelImage[];
+  readOnly?: boolean;
+  consultationsRead?: boolean;
+  institutionalPeople?: InstitutionalPerson[];
 };
 export type Consultation = {
+  padCod?: string;
+  address?: Record<string,string> | null;
+  creatorUsername?: string;
+  isHistorical?: boolean;
+  history?: {version:number;operation:string;by:string;byUsername?:string;at:string;before:unknown;after:unknown}[];
   id: string;
   locality: string;
   parcel: string;

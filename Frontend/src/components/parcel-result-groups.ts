@@ -1,11 +1,11 @@
 import type { ParcelRef } from "./contracts";
 
-/** Group properties, never identities. Keep all source rows for future presentation.
- * The existing DTO contains no person identifier: matching names cannot be merged. */
+/** Institutional properties use PadCod; legacy records keep their composite key.
+ * Keep all source rows. Never merge person identities by name. */
 export function groupParcelResults<T extends ParcelRef>(records: readonly T[]) {
   const groups = new Map<string, { key: string; records: T[]; addresses: string[] }>();
   for (const record of records) {
-    const key = JSON.stringify([record.locality, record.parcel]);
+    const key = record.padCod !== undefined ? JSON.stringify(["institutional", record.padCod]) : JSON.stringify([record.locality, record.parcel]);
     let group = groups.get(key);
     if (!group) {
       group = { key, records: [], addresses: [] };

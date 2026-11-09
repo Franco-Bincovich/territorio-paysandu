@@ -4,6 +4,8 @@
   "description": "Territorio Paysandú v1 — desarrollo sintético, no liberado",
   "scripts": {
     "dev": "next dev Frontend --hostname 127.0.0.1",
+    "dev:mariadb": "node scripts/dev-mariadb.cjs",
+    "consultations:check": "node scripts/check-consultations.cjs",
     "build": "next build Frontend",
     "start": "next start Frontend --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit -p Frontend/tsconfig.json"
@@ -14,6 +16,8 @@
   "dependencies": {
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.118.0",
+    "argon2": "^0.45.2",
+    "mariadb": "^3.5.5",
     "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",

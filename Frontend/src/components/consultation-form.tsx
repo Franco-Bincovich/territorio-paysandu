@@ -42,6 +42,20 @@ export function ConsultationForm({
     [validationAttempt, setValidationAttempt] = useState(0);
   const requestId = useRef<string | null>(null),
     summary = useRef<HTMLElement | null>(null);
+  const submitting = useRef(false);
+  const sentPayload = useRef('');
+  const [writeAvailable,setWriteAvailable] = useState(!parcel.padCod);
+  const [formValid,setFormValid] = useState(Boolean(initial));
+  const maxContacts=parcel.padCod?5:MAX_CONTACT_ENTRIES;
+  useEffect(() => {
+    if (!parcel.padCod) return;
+    const controller=new AbortController();
+    request<{write:boolean}>('/api/consultations/capabilities',{signal:controller.signal})
+      .then(c=>{if(!controller.signal.aborted)setWriteAvailable(c.write);})
+      .catch(()=>{if(!controller.signal.aborted)setWriteAvailable(false);});
+    return ()=>controller.abort();
+  },[parcel.padCod]);
+  const blocked=readOnly || !writeAvailable;
   const idPrefix = useId();
   const [documentType, setDocumentType] = useState(initial?.person.documentType ?? "CI");
   const [phoneTypes, setPhoneTypes] = useState<string[]>(
@@ -69,7 +83,7 @@ export function ConsultationForm({
   });
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (readOnly || busy) return;
+    if (blocked || submitting.current) return;
     const form = new FormData(e.currentTarget);
     setError("");
     setNotice("");
@@ -84,21 +98,25 @@ export function ConsultationForm({
       phoneTypes,
       emails,
     };
-    const errors = validateConsultationFields(draft);
+    const errors = validateConsultationFields(draft,maxContacts);
+    if(parcel.padCod) phones.forEach((p,i)=>{if(p.trim().length>30)errors[`phone-${i}`]='Ingresá hasta 30 caracteres.';});
     setFieldErrors(errors);
     if (Object.keys(errors).length) {
       setValidationAttempt((n) => n + 1);
       return;
     }
     const operation = requests.begin();
+    submitting.current=true;
     setBusy(true);
     requestId.current ??= crypto.randomUUID();
     const input = {
+      ...(parcel.padCod ? { padCod:parcel.padCod, address:Object.fromEntries(addressFields.map(([key])=>[key,String(form.get(`address-${key}`)??'').trim()]).filter(([,v])=>v)) } : {}),
       locality: parcel.locality,
       parcel: parcel.parcel,
       type: draft.type,
       description: draft.description,
       person: {
+        ...(initial?.person.localPersonId ? {localPersonId:initial.person.localPersonId}:{}),
         name: draft.name,
         documentType: draft.documentType,
         document: draft.document,
@@ -107,10 +125,13 @@ export function ConsultationForm({
         phoneTypes: phoneTypes.filter((_, index) => phones[index]?.trim()),
         emails: emails.filter((s) => s.length > 0),
       },
-      ...(initial
-        ? { version: initial.version }
-        : { idempotencyKey: requestId.current }),
+      version: initial?.version,
+      idempotencyKey: initial ? undefined : requestId.current,
     };
+    const fingerprint=JSON.stringify({...input,idempotencyKey:undefined});
+    if(!initial && sentPayload.current && sentPayload.current!==fingerprint)input.idempotencyKey=crypto.randomUUID();
+    if(!initial)requestId.current=input.idempotencyKey??null;
+    sentPayload.current=fingerprint;
     try {
       const saved = await request<Consultation>(
         initial
@@ -123,7 +144,7 @@ export function ConsultationForm({
         },
       );
       if (!operation.isCurrent()) return;
-      setNotice("Consulta guardada correctamente.");
+      setNotice(`Consulta ${saved.id} guardada correctamente.`);
       requestId.current = null;
       await onSaved(saved);
     } catch (e) {
@@ -132,11 +153,16 @@ export function ConsultationForm({
         setValidationAttempt((n) => n + 1);
       }
     } finally {
+      submitting.current=false;
       if (operation.isCurrent()) setBusy(false);
     }
   }
   return (
-    <form className="form-stack consultation-form" onSubmit={submit} noValidate>
+    <form className="form-stack consultation-form" onSubmit={submit} noValidate onChange={event=>{
+      const form=new FormData(event.currentTarget);
+      const draft={name:String(form.get('name')??''),relationship:String(form.get('relationship')??''),documentType:String(form.get('documentType')??''),document:String(form.get('document')??''),type:String(form.get('type')??''),description:String(form.get('description')??''),phones:form.getAll('phone').map(String),phoneTypes:form.getAll('phoneType').map(String),emails:form.getAll('email').map(String)};
+      setFormValid(!Object.keys(validateConsultationFields(draft,maxContacts)).length && (!parcel.padCod || draft.phones.every(p=>p.trim().length<=30)));
+    }}>
       {(Object.keys(fieldErrors).length > 0 || error) && (
         <section
           className="error"
@@ -168,7 +194,7 @@ export function ConsultationForm({
           )}
         </section>
       )}
-      <fieldset disabled={readOnly || busy}>
+      <fieldset disabled={blocked || busy}>
         <legend>Persona que realiza la consulta</legend>
         <div className="pair">
           <Field fieldKey="name" idPrefix={idPrefix} errors={fieldErrors}>
@@ -224,6 +250,8 @@ export function ConsultationForm({
           </Field>
         </div>
         <ContactFields
+          maxEntries={maxContacts}
+          phoneMaxLength={parcel.padCod?30:40}
           kind="phone"
           phoneTypes={phoneTypes}
           setPhoneTypes={setPhoneTypes}
@@ -238,6 +266,7 @@ export function ConsultationForm({
           idPrefix={idPrefix}
         />
         <ContactFields
+          maxEntries={maxContacts}
           kind="email"
           type="email"
           values={emails}
@@ -249,9 +278,14 @@ export function ConsultationForm({
           errors={fieldErrors}
           idPrefix={idPrefix}
         />
-        <OptionalDomicileSection />
+        <OptionalDomicileSection>{parcel.padCod && <div className="pair">
+          {addressFields.map(([key,label,max])=><label className="field" key={key}>{label}
+            <input name={`address-${key}`} maxLength={max} defaultValue={initial?.address?.[key]??''}/>
+          </label>)}
+          <p className="muted">Domicilio de la persona; puede ser distinto al del inmueble.</p>
+        </div>}</OptionalDomicileSection>
       </fieldset>
-      <fieldset disabled={readOnly || busy}>
+      <fieldset disabled={blocked || busy}>
         <legend>Datos de la consulta</legend>
         <Field fieldKey="type" idPrefix={idPrefix} errors={fieldErrors}>
           <select
@@ -290,8 +324,7 @@ export function ConsultationForm({
       </fieldset>
       {!initial && (
         <p className="notice">
-          Al registrar se conserva una copia histórica de los datos y se agrega
-          un contacto nuevo al padrón. Los contactos existentes se conservan.
+          Al registrar se conserva una copia de los datos declarados. El vínculo declarado no confirma titularidad institucional.
         </p>
       )}
       {readOnly && (
@@ -300,8 +333,9 @@ export function ConsultationForm({
         </p>
       )}
       {notice && <p role="status">{notice}</p>}
+      {!writeAvailable && <p role="status" className="notice">El guardado de consultas no está habilitado o el modelo no está verificado.</p>}
       {!readOnly && (
-        <button className="btn primary" disabled={busy}>
+        <button className="btn primary" disabled={busy || blocked || !formValid}>
           {busy
             ? "Guardando…"
             : initial
@@ -312,6 +346,12 @@ export function ConsultationForm({
     </form>
   );
 }
+const addressFields = [
+  ['CALLE','Calle',250],['NUMERO','Número',50],['BARRIO','Barrio',250],['LOCALIDAD','Localidad',250],
+  ['DEPARTAMENTO','Departamento',150],['CODIGO_POSTAL','Código postal',50],['PH','PH',50],['BLOCK','Block',50],
+  ['DEPTO','Apartamento',50],['PUERTA','Puerta',50],['DOMICILIO_COMPLETO','Domicilio completo',1000],
+  ['REFERENCIA','Referencia',150],['SECTOR','Sector',50],['MANZANA','Manzana',50],['LOTE','Lote',50],
+] as const;
 function Field({
   fieldKey,
   idPrefix,
@@ -345,6 +385,8 @@ function ContactFields({
   idPrefix,
   phoneTypes,
   setPhoneTypes,
+  maxEntries,
+  phoneMaxLength=40,
 }: {
   kind: "phone" | "email";
   type: string;
@@ -355,17 +397,20 @@ function ContactFields({
   readOnly: boolean;
   errors: FieldErrors;
   idPrefix: string;
+  maxEntries:number;
+  phoneMaxLength?:number;
 }) {
   const label = kind === "phone" ? "teléfono" : "correo electrónico";
   return (
     <div className="form-stack">
-      <p className="muted">Ingresá entre 1 y {MAX_CONTACT_ENTRIES} {kind === "phone" ? "teléfonos" : "correos electrónicos"}.</p>
+      <p className="muted">Ingresá entre 1 y {maxEntries} {kind === "phone" ? "teléfonos" : "correos electrónicos"}.</p>
       {values.map((value, index) => {
         const key = `${kind}-${index}`;
         return (
           <div className="repeat-field" key={index}>
             <Field fieldKey={key} idPrefix={idPrefix} errors={errors}>
               <input
+                name={kind}
                 id={`${idPrefix}-${key}`}
                 type={type}
                 value={value}
@@ -373,7 +418,7 @@ function ContactFields({
                 aria-describedby={
                   errors[key] ? `${idPrefix}-${key}-error` : undefined
                 }
-                maxLength={kind === "email" ? 254 : 40}
+                maxLength={kind === "email" ? 254 : phoneMaxLength}
                 onChange={(e) =>
                   setValues(
                     values.map((v, i) => (i === index ? e.target.value : v)),
@@ -383,7 +428,7 @@ function ContactFields({
             </Field>
             {kind === "phone" && (
               <Field fieldKey={`phone-type-${index}`} idPrefix={idPrefix} errors={errors}>
-                <select id={`${idPrefix}-phone-type-${index}`} required
+                <select name="phoneType" id={`${idPrefix}-phone-type-${index}`} required
                   value={phoneTypes?.[index] ?? ""}
                   aria-invalid={Boolean(errors[`phone-type-${index}`])}
                   aria-describedby={errors[`phone-type-${index}`] ? `${idPrefix}-phone-type-${index}-error` : undefined}
@@ -414,9 +459,9 @@ function ContactFields({
         <button
           type="button"
           className="link"
-          disabled={values.length >= MAX_CONTACT_ENTRIES}
+          disabled={values.length >= maxEntries}
           onClick={() => {
-            if (values.length < MAX_CONTACT_ENTRIES) {
+            if (values.length < maxEntries) {
               setValues([...values, ""]);
               if (kind === "phone") setPhoneTypes?.([...(phoneTypes ?? []), ""]);
             }

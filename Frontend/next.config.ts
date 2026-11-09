@@ -5,6 +5,8 @@ const config: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, ".."),
   turbopack: { root: path.join(__dirname, "..") },
   poweredByHeader: false,
+  // Search query strings contain personal documents. Never log incoming search URLs.
+  logging: { incomingRequests: { ignore: [/\/api\/search(?:\?|$)/] }, browserToTerminal: false },
   async headers() {
     return [
       {

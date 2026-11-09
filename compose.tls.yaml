@@ -1,0 +1,8 @@
+# Optional private-CA mount. Use with -f compose.yaml -f compose.tls.yaml.
+services:
+  app:
+    volumes:
+      - type: bind
+        source: ${TLS_CA_DIRECTORY:?Indique el directorio privado de CA autorizado}
+        target: /run/territorio-ca
+        read_only: true

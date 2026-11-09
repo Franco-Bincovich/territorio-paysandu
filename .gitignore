@@ -1,0 +1,44 @@
+node_modules/
+.npm-cache/
+.next/
+.vercel/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+runtime.env
+*.log
+coverage/
+.DS_Store
+Thumbs.db
+**/.env.local
+
+# Local work, evidence and generated Next declarations (never delete locally).
+/Docs/
+/tests/
+/Frontend/AGENTS.md
+/Frontend/next-env.d.ts
+*.zip
+*.bak
+*.tmp
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Local-only QA provisioning and diagnostic helpers.
+/scripts/*
+!/scripts/dev-mariadb.cjs
+!/scripts/check-consultations.cjs
+!/scripts/register-runtime-ts.cjs
+/Backend/server/mariadb/test-user.ts
+/Backend/sql/mariadb-auth-inspect.sql
+/Backend/sql/package-2-validation-qa.sql
+
+# Keep operational steps/recovery; retain duplicate exports and QA fixture locally.
+/Backend/sql/package-7.1/baseline-isolated-only.sql
+/Backend/sql/package-7.1/02-constraints.sql
+/Backend/sql/package-7.1/03-idempotency.sql
+/Backend/sql/package-7.1/README.md
+/Backend/sql/package-7.1/ENTREGA.md
+/Backend/sql/package-7.1/SHA256SUMS.txt

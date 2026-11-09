@@ -2,6 +2,7 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { HistoryView, type HistoryReturnState } from "./territory-app";
 import type { Parcel, ParcelImage } from "./contracts";
+import { InstitutionalPeople } from "./institutional-people";
 export type ParcelTab = "record" | "images" | "contacts" | "consultations";
 const parcelTabs: { key: ParcelTab; label: string }[] = [
   { key: "record", label: "Datos catastrales" },
@@ -51,9 +52,10 @@ export function ParcelView({
           </p>
         </div>
         <div className="actions">
-          <button className="btn primary" onClick={onCreate}>
+          <button className="btn primary" onClick={onCreate} disabled={parcel.readOnly}>
             + Registrar consulta
           </button>
+          {parcel.readOnly && <p className="muted">El registro de consultas todavía no está habilitado.</p>}
         </div>
       </div>
       <div className="parcel-detail-grid">
@@ -125,7 +127,7 @@ export function ParcelView({
                     <dt>Domicilio</dt>
                     <dd>{parcel.address}</dd>
                   </div>
-                  {[
+                  {(parcel.source === "institutional" ? [] : [
                     {
                       label: "Superficie de terreno",
                       original: "Terreno (texto original)",
@@ -141,7 +143,7 @@ export function ParcelView({
                       original: "Detectada (texto original)",
                       value: parcel.detectedBuiltArea,
                     },
-                  ]
+                  ])
                     .filter(
                       ({ original }) => !(original in (parcel.fields ?? {})),
                     )
@@ -174,9 +176,10 @@ export function ParcelView({
                 <div className="panel-head">
                   <h2>Contactos del padrón</h2>
                   <span className="badge">
-                    {parcel.contacts.length + Number(hasRecordContact)} contactos
+                    {parcel.institutionalPeople?.length ?? parcel.contacts.length + Number(hasRecordContact)} contactos
                   </span>
                 </div>
+                {parcel.institutionalPeople && <InstitutionalPeople people={parcel.institutionalPeople} />}
                 {hasRecordContact && (
                   <details className="contact record-contact">
                     <summary>
@@ -197,7 +200,7 @@ export function ParcelView({
                     {parcel.provenance && <p className="meta">{parcel.provenance}</p>}
                   </details>
                 )}
-                {parcel.contacts.length === 0 && !hasRecordContact ? (
+                {!parcel.institutionalPeople && (parcel.contacts.length === 0 && !hasRecordContact ? (
                   <p className="empty">No hay contactos disponibles.</p>
                 ) : (
                   <div className="contact-list">
@@ -232,21 +235,21 @@ export function ParcelView({
                         </details>
                       ))}
                   </div>
-                )}
+                ))}
                 <p className="muted">
-                  Los contactos se agregan al registrar una nueva consulta.
+                  {parcel.source === "institutional" ? "Estos contactos provienen de la fuente institucional y no se editan desde esta aplicación." : "Los contactos se agregan al registrar una nueva consulta."}
                 </p>
               </section>
             )}
             {tab === "consultations" && (
               <div>
-                <HistoryView
+                {parcel.readOnly && !parcel.consultationsRead ? <p className="notice">El historial de la base propia todavía no está conectado a esta ficha institucional.</p> : <HistoryView
                   parcel={parcel}
                   onDetail={onDetail}
                   returnState={historyReturnState}
                   onRemember={onHistoryRemember}
                   onRestored={onHistoryRestored}
-                />
+                />}
               </div>
             )}
           </div>

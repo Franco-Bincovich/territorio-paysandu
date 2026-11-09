@@ -1,15 +1,20 @@
 "use client";
 import { useId, useMemo } from "react";
-import type { ParcelRef } from "./contracts";
+import type { ParcelRef, PersonCandidate } from "./contracts";
 import { groupParcelResults } from "./parcel-result-groups";
 import "./package-4-visual.css";
 
-export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen }: {
+export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, people = [],
+  requiresDisambiguation = false, unidentifiedMatches = 0, onChoosePerson }: {
   results: readonly ParcelRef[] | null;
   busy: boolean;
   error: string;
   nameSearch: boolean;
   onOpen: (parcel: ParcelRef) => Promise<void>;
+  people?: readonly PersonCandidate[];
+  requiresDisambiguation?: boolean;
+  unidentifiedMatches?: number;
+  onChoosePerson?: (personId: string) => Promise<void>;
 }) {
   const headingId = useId();
   const groups = useMemo(() => groupParcelResults(results ?? []), [results]);
@@ -25,6 +30,21 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen }
           <p>{error}</p>
           <p>Revisá los datos y volvé a buscar.</p>
         </div>
+      ) : requiresDisambiguation ? (
+        <>
+          <p className="notice" role="status">Hay varias personas con coincidencia exacta. Seleccioná una antes de mostrar sus padrones.</p>
+          <ul className="padron-list">
+            {people.map(person => <li key={person.personId}>
+              <button type="button" className="padron-card" onClick={() => void onChoosePerson?.(person.personId)}>
+                <span className="search-result-content"><strong>{person.name}</strong>
+                  <span>ID institucional de persona: {person.personId}</span>
+                  <span>{person.documentType ?? "Tipo no informado"}: {person.document ?? "Documento no informado"}</span>
+                  <span>{person.parcelCount} padrones vinculados</span>
+                </span><span aria-hidden="true">→</span>
+              </button>
+            </li>)}
+          </ul>
+        </>
       ) : groups.length === 0 ? (
         <p className="empty" role="status">No se encontraron coincidencias.</p>
       ) : (
@@ -33,7 +53,7 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen }
             {groups.length} {groups.length === 1 ? "padrón encontrado" : "padrones encontrados"}
             {results && results.length > groups.length ? ` · ${results.length} coincidencias recibidas` : ""}.
           </p>
-          {nameSearch && (results?.length ?? 0) > 1 && (
+          {nameSearch && !people.length && (results?.length ?? 0) > 1 && (
             <p className="notice">Una coincidencia de nombre puede corresponder a personas distintas. Cada padrón se abre por separado.</p>
           )}
           <div className="search-results-scroll" role="region" aria-label="Padrones encontrados" tabIndex={0}>
@@ -61,6 +81,14 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen }
                           </span>
                         </span>
                         {group.records.length > 1 && <span className="muted">{group.records.length} coincidencias para este padrón</span>}
+                        {parcel.padCod && <span className="muted">PadCod: {parcel.padCod}</span>}
+                        {parcel.matchedPeople?.map((person, index) => (
+                          <span className="search-result-details" key={`${person.personId ?? "unresolved"}-${index}`}>
+                            <span>{person.name}</span>
+                            {person.document && <span>{person.documentType ?? "Tipo sin informar"}: {person.document}</span>}
+                            {person.links?.map((link, i) => <span key={`${link.conCod}-${i}`}>Vínculo: {link.relationship}</span>)}
+                          </span>
+                        ))}
                       </span>
                       <span aria-hidden="true">→</span>
                     </button>
@@ -71,6 +99,7 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen }
           </div>
         </>
       )}
+      {!busy && !error && unidentifiedMatches > 0 && <p className="notice">Hay vínculos sin identificador de persona. No se atribuyen a otra persona por nombre o documento.</p>}
     </section>
   );
 }

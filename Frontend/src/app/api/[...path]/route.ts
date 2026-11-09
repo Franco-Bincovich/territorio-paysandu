@@ -1,4 +1,4 @@
-import { handle } from "@backend/server/handler";
+import { dispatch as handle } from "@backend/server/auth-dispatch";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 type Context = { params: Promise<{ path: string[] }> };

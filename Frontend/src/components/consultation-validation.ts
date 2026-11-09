@@ -40,6 +40,7 @@ function accepts(value: unknown): boolean {
 }
 export function validateConsultationFields(
   draft: ConsultationDraft,
+  maxEntries = MAX_CONTACT_ENTRIES,
 ): FieldErrors {
   const errors: FieldErrors = {};
   const personField = (field: string, value: unknown) =>
@@ -85,8 +86,8 @@ export function validateConsultationFields(
     ["phone", draft.phones, "teléfono"],
     ["email", draft.emails, "correo electrónico"],
   ] as const) {
-    if (values.length > MAX_CONTACT_ENTRIES)
-      errors[`${key}-0`] = `Se permiten hasta 3 entradas. Los datos existentes se conservan; quitá entradas solo si corresponde.`;
+    if (values.length > maxEntries)
+      errors[`${key}-0`] = `Se permiten hasta ${maxEntries} entradas. Los datos existentes se conservan; quitá entradas solo si corresponde.`;
     if (!values.some((value) => value.trim()))
       errors[`${key}-0`] = `Ingresá al menos un ${label}.`;
     values.forEach((value, index) => {

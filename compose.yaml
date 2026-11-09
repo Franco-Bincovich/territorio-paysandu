@@ -1,11 +1,9 @@
 services:
   app:
-    image: territorio-paysandu-organizado:70bef308
+    image: ${APP_IMAGE:-territorio-paysandu:7.2}
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        NODE_IMAGE: ${NODE_IMAGE:-node:26-bookworm-slim}
     init: true
     restart: unless-stopped
     # Compose >= 2.30: raw prevents $ interpolation in credentials / JSON values.

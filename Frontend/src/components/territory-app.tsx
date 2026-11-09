@@ -182,9 +182,14 @@ export function TerritoryApp() {
     setError("");
     try {
       const result = await request<Parcel>(
-        `/api/parcels/${encodeURIComponent(ref.locality)}/${encodeURIComponent(ref.parcel)}`,
+        `/api/parcels/${encodeURIComponent(ref.locality)}/${encodeURIComponent(ref.parcel)}${ref.padCod ? `?padCod=${encodeURIComponent(ref.padCod)}` : ""}`,
         { signal: operation.signal },
       );
+      if (result.source === 'institutional') {
+        const capability = await request<{read:boolean;write:boolean}>('/api/consultations/capabilities', {signal:operation.signal}).catch(() => ({read:false,write:false}));
+        result.consultationsRead = capability.read;
+        result.readOnly = !capability.write;
+      }
       if (!operation.isCurrent()) return;
       setRestoreHistory(restore ? "parcel" : null);
       if (!restore) parcelHistoryReturn.current = null;
@@ -417,10 +422,10 @@ export function TerritoryApp() {
               />
             </section>
           )}
-          {screen === "search" && <SearchView onOpen={openParcel} />}{" "}
+          {screen === "search" && <SearchView onOpen={openParcel} institutional={session.institutional} />}{" "}
           {screen === "parcel" && parcel && (
             <ParcelView
-              key={`${parcel.locality}/${parcel.parcel}`}
+              key={parcel.padCod ?? `${parcel.locality}/${parcel.parcel}`}
               parcel={parcel}
               initialTab={parcelTab}
               historyReturnState={
@@ -429,7 +434,7 @@ export function TerritoryApp() {
               onHistoryRemember={rememberParcelHistory}
               onHistoryRestored={finishHistoryRestore}
               onTabChange={setParcelTab}
-              onCreate={() => navigate("create")}
+              onCreate={() => { if (!parcel.readOnly) navigate("create"); }}
               onDetail={openDetail}
               onBack={() => navigate("search")}
             />
@@ -455,6 +460,7 @@ export function TerritoryApp() {
               </p>
               <ConsultationForm
                 parcel={parcel}
+                readOnly={parcel.readOnly}
                 onSaved={(c) => {
                   setDetail(c);
                   setDetailOrigin("parcel");
@@ -482,11 +488,12 @@ export function TerritoryApp() {
               </p>
               <h1>{detail.type}</h1>
               <p className="muted">
-                Registrada el (UTC) {historyDate(detail.createdAt)}
+                Consulta {detail.id} · Registrada el (UTC) {historyDate(detail.createdAt)} · {detail.creatorUsername ?? detail.creatorUserId}
               </p>
               <ConsultationForm
-                key={detail.id}
+                key={`${detail.id}-${detail.version}`}
                 parcel={{
+                  padCod: detail.padCod,
                   locality: detail.locality,
                   parcel: detail.parcel,
                   address: "",
@@ -495,12 +502,27 @@ export function TerritoryApp() {
                 readOnly={detail.creatorUserId !== session.user.id}
                 onSaved={setDetail}
               />
+              {detail.isHistorical && <p className="notice">Esta consulta es histórica. Las correcciones se conservan en su presentación y no reemplazan los contactos ni el domicilio personal vigentes.</p>}
+              {detail.history && <section className="form-stack" aria-label="Historial de modificaciones">
+                <h2>Historial de modificaciones</h2>
+                {detail.history.map(h => <details key={h.version}>
+                  <summary>Versión {h.version} · {historyDate(h.at)} · {h.operation==='CREACION'?'Registro':'Corrección'} · {h.byUsername??h.by}</summary>
+                  <p className="muted">Datos declarados en esta versión</p>
+                  <AuditSnapshot value={h.after}/>
+                </details>)}
+              </section>}
             </section>
           )}
         </main>
       </div>
     </div>
   );
+}
+function AuditSnapshot({value}:{value:unknown}) {
+  const row=(value??{}) as Record<string,unknown>;
+  const labels:Record<string,string>={nombre_completo:'Nombre',tipo_documento:'Tipo de documento',documento:'Documento',relacion_declarada:'Vínculo declarado',descripcion:'Descripción',tipo_consulta:'Tipo de consulta',domicilio_declarado_json:'Domicilio personal'};
+  for(let i=1;i<=5;i++){labels[`telefono_${i}`]=`Teléfono ${i}`;labels[`tipo_telefono_${i}`]=`Tipo de teléfono ${i}`;labels[`mail_${i}`]=`Correo ${i}`;}
+  return <dl>{Object.entries(labels).filter(([key])=>row[key]!=null).map(([key,label])=><div key={key}><dt>{label}</dt><dd>{typeof row[key]==='object'?Object.values(row[key] as Record<string,unknown>).map(String).join(', '):String(row[key])}</dd></div>)}</dl>;
 }
 function Brand() {
   return (
@@ -674,7 +696,11 @@ function AuthForm({
     </form>
   );
 }
-function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
+function SearchView({ onOpen, institutional }: { onOpen: (p: ParcelRef) => Promise<void>; institutional?: boolean }) {
+  const [people, setPeople] = useState<import("./contracts").PersonCandidate[]>([]);
+  const [ambiguity, setAmbiguity] = useState(false);
+  const [unidentified, setUnidentified] = useState(0);
+  const lastPersonQuery = useRef<URLSearchParams | null>(null);
   const [results, setResults] = useState<ParcelSearchResult[] | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -689,19 +715,24 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
     setBusy(true);
     setError("");
     setResults(null);
+    setPeople([]); setAmbiguity(false); setUnidentified(0);
     setClassificationNoticeOpen(false);
     const query = new URLSearchParams();
     new FormData(e.currentTarget).forEach((v, k) =>
       query.set(k, String(v).trim()),
     );
     setNameSearch(query.get("kind") === "name");
+    lastPersonQuery.current = query.has("kind") ? new URLSearchParams(query) : null;
     try {
-      const result = await request<{ results: ParcelSearchResult[] }>(
+      const result = await request<{ results: ParcelSearchResult[]; people?: import("./contracts").PersonCandidate[];
+        requiresDisambiguation?: boolean; unidentifiedMatches?: number }>(
         `/api/search?${query}`,
         { signal: operation.signal },
       );
       if (operation.isCurrent()) {
         setResults(result.results);
+        setPeople(result.people ?? []); setAmbiguity(result.requiresDisambiguation ?? false);
+        setUnidentified(result.unidentifiedMatches ?? 0);
         if (!query.has("kind") && result.results.some((record) => requiresClassificationNotice(record.classification))) {
           searchSubmitter.current = submitter instanceof HTMLElement ? submitter : null;
           setClassificationNoticeOpen(true);
@@ -712,6 +743,20 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
     } finally {
       if (operation.isCurrent()) setBusy(false);
     }
+  }
+  async function choosePerson(personId: string) {
+    if (!lastPersonQuery.current) return;
+    const query = new URLSearchParams(lastPersonQuery.current);
+    query.set("personId", personId);
+    const operation = requests.begin();
+    setBusy(true); setError(""); setResults(null);
+    try {
+      const result = await request<{ results: ParcelSearchResult[]; people: import("./contracts").PersonCandidate[];
+        requiresDisambiguation: boolean; unidentifiedMatches: number }>(`/api/search?${query}`, { signal: operation.signal });
+      if (!operation.isCurrent()) return;
+      setResults(result.results); setPeople(result.people); setAmbiguity(result.requiresDisambiguation); setUnidentified(result.unidentifiedMatches);
+    } catch (e) { if (operation.isCurrent() && !isAbort(e)) setError(message(e)); }
+    finally { if (operation.isCurrent()) setBusy(false); }
   }
   return (
     <>
@@ -786,7 +831,7 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
             <label className="field">
               Buscar mediante
               <select name="kind">
-                <option value="name">Nombre exacto</option>
+                <option value="name">{institutional ? "Nombre completo" : "Nombre exacto"}</option>
                 <option value="ci">Cédula</option>
                 <option value="rut">RUT</option>
               </select>
@@ -810,7 +855,8 @@ function SearchView({ onOpen }: { onOpen: (p: ParcelRef) => Promise<void> }) {
       <ParcelClassificationNotice open={classificationNoticeOpen}
         onDismiss={() => setClassificationNoticeOpen(false)} returnFocus={searchSubmitter.current} />
       <ParcelSearchResults results={results} busy={busy} error={error}
-        nameSearch={nameSearch} onOpen={onOpen} />
+        nameSearch={nameSearch} onOpen={onOpen} people={people}
+        requiresDisambiguation={ambiguity} unidentifiedMatches={unidentified} onChoosePerson={choosePerson} />
     </>
   );
 }
@@ -863,6 +909,7 @@ export function HistoryView({
     const params = new URLSearchParams(query);
     params.set("page", String(page));
     if (parcel) {
+      if (parcel.padCod) params.set('padCod', parcel.padCod);
       params.set("locality", parcel.locality);
       params.set("parcel", parcel.parcel);
     }
@@ -882,7 +929,7 @@ export function HistoryView({
       active = false;
       controller.abort();
     };
-  }, [page, query, parcel?.locality, parcel?.parcel]);
+  }, [page, query, parcel?.locality, parcel?.parcel, parcel?.padCod]);
   useEffect(() => {
     if (!returnState || !data || busy) return;
     const frame = requestAnimationFrame(() => {
@@ -1014,6 +1061,7 @@ export function HistoryView({
                     <th>Localidad / Padrón</th>
                     <th>Tipo</th>
                     <th>Persona</th>
+                    <th>Creador</th>
                     <th>Detalle</th>
                   </tr>
                 </thead>
@@ -1026,6 +1074,7 @@ export function HistoryView({
                       </td>
                       <td>{c.type}</td>
                       <td>{c.person.name}</td>
+                      <td>{c.creatorUsername??c.creatorUserId}</td>
                       <td>
                         <button
                           className="link"
