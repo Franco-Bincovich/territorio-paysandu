@@ -19,6 +19,10 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     read_only: true
+    # Initial conservative envelope; tune only after isolated measurement.
+    cpus: 1.0
+    mem_limit: 1g
+    pids_limit: 128
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
       - /app/Frontend/.next/cache:rw,nosuid,size=128m,uid=1001,gid=1001,mode=0700

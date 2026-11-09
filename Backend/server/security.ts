@@ -29,9 +29,14 @@ export async function jsonBody(
   const reader = request.body?.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
+  const deadline=Date.now()+5000;
   if (reader)
     for (;;) {
-      const { done, value } = await reader.read();
+      let timer:ReturnType<typeof setTimeout>|undefined;
+      const { done, value } = await Promise.race([
+        reader.read(),
+        new Promise<never>((_,reject)=>{timer=setTimeout(()=>{reject(new HttpError(408,'BODY_TIMEOUT','La solicitud excedió el tiempo permitido.'));void reader.cancel().catch(()=>{});},Math.max(0,deadline-Date.now()));}),
+      ]).finally(()=>{if(timer)clearTimeout(timer);});
       if (done) break;
       size += value.byteLength;
       if (size > 65536) {

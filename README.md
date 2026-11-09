@@ -8,7 +8,7 @@ adaptadores. Las rutas de imágenes tienen su entrada en `api/parcel-image/[kind
 ## Construcción y ejecución
 
 Docker fija Node.js 26.13.0. El desarrollo local se verificó con Node.js 24.14.0;
-las doce dependencias directas coinciden con el lockfile en Windows y Linux.
+las dependencias directas están fijadas en el lockfile para Windows y Linux.
 Para construir o ejecutar fuera de Docker, instalar una versión Node compatible
 con esas dependencias y usar npm ci. Desde la raíz:
 
@@ -27,6 +27,9 @@ mediante RUNTIME_ENV_FILE y publica solo en loopback; requiere proxy HTTPS exter
 No ejecutar Compose ni desplegar sin revisar la configuración de infraestructura.
 La imagen oficial Node 26 está fijada por digest en Dockerfile; npm ci usa el lockfile.
 Los binarios nativos se instalan dentro de Linux, sin reutilizar node_modules de Windows.
+La compilación Docker acota el heap Node a 768 MiB, un worker de Next y dos hilos
+Rayon para evitar sobredimensionar por las CPU visibles del host. Esas variables
+se aplican solo al build, sin propagarse a la imagen de ejecución.
 
 ## Configuración sin secretos
 
@@ -55,7 +58,8 @@ Para ejecutar el entorno MariaDB local ya autorizado:
 4. Habilitar CONSULTATIONS_WRITE_ENABLED=true únicamente después de aprobar la
    prueba de escritura y el chequeo. Reiniciar con `npm run dev:mariadb`.
 
-El launcher carga exclusivamente los dos archivos privados indicados, mediante
+El launcher carga los archivos privados indicados y, si existe,
+`Backend/server/sftp-images/.env.local`, mediante
 una lista de variables permitidas, sin propagar --env-file a NODE_OPTIONS.
 No cambiar las credenciales ni generar usuarios automáticamente al iniciar.
 
@@ -63,8 +67,8 @@ No cambiar las credenciales ni generar usuarios automáticamente al iniciar.
 
 La imagen no incluye certificados, secretos, SQL, herramientas, tests ni datos de
 bases. Solo contiene el standalone de Next, sus dependencias trazadas, assets de
-compilación y el logo de interfaz. No hay servidor de imágenes catastrales ficticio.
-Los puntos institucionales de imágenes siguen indicando indisponibilidad.
+compilación y el logo de interfaz. Las imágenes institucionales se leen por SFTP
+desde el backend cuando se configura explícitamente el proveedor siguiente.
 
 Copiar `deploy/runtime.env.example` a una ubicación privada EXTERNA al repositorio.
 Completar sus variables con la configuración autorizada: host/puerto/base/usuario/
@@ -98,8 +102,9 @@ encabezados de forwarding aportados por el cliente. Usar el navegador sobre el
 APP_ORIGIN HTTPS configurado: las cookies Secure no funcionan accediendo al puerto
 HTTP directamente. No publicar el backend sin ese proxy. El healthcheck de `/`
 es de vida; la disponibilidad del esquema se valida al acceder a Consultas.
-El login limita intentos por cuenta; antes de exposición pública se requieren
-límites globales y por origen en el proxy. Este paquete no instala ni publica ese proxy.
+El login combina intentos por cuenta y cuotas Redis; antes de exposición pública
+el proxy debe añadir límites globales/origen, buffering y timeouts. Este paquete
+no instala ni publica ese proxy.
 
 La red debe resolver ambos hosts MariaDB y permitir salida a sus puertos TLS
 (normalmente 3306). VPN, rutas de Windows y túneles de DBeaver no se trasladan
@@ -114,6 +119,77 @@ servicios de base de datos. Solo /tmp y caché efímera son escribibles (tmpfs).
 Se ejecuta con UID 1001, filesystem de solo lectura, sin capabilities y con
 no-new-privileges. El reinicio es unless-stopped; la parada concede 30 segundos.
 El archivo compose no introduce redes o volúmenes persistentes para datos de negocio.
+
+## Controles de seguridad V1.0
+
+Producción requiere un **Redis externo**, con credencial de servicio y TLS validado.
+No se crea un contenedor Redis de producción ni se reutilizan tablas MariaDB para
+cuotas. Completar `SECURITY_REDIS_HOST`, `SECURITY_REDIS_PORT` (6380 por defecto),
+`SECURITY_REDIS_USER`, `SECURITY_REDIS_PASSWORD`, `SECURITY_REDIS_TLS=true` y, si
+corresponde, `SECURITY_REDIS_CA_FILE` en el archivo privado externo. La plantilla
+adicional es `Backend/server/security/.env.example`. Para desarrollo, el launcher
+lee opcionalmente `Backend/server/security/.env.local` mediante allowlist.
+Sin Redis configurado, solo desarrollo usa memoria local; producción nunca hace
+ese fallback. Redis ausente, sin identidad válida o caído produce 503 sanitizado.
+
+El proxy del mismo host debe **sobrescribir**, nunca conservar del cliente,
+`X-TP-Client-IP` con una IP canónica y `X-TP-Proxy-Token` con el valor privado de
+`SECURITY_PROXY_SECRET` (aleatorio de al menos 32 caracteres, máximo 256). Backend
+valida esa credencial en tiempo constante. No se confía en X-Forwarded-For ni se
+devuelve/registra esa IP. Mantener Host y esquema HTTPS como se describe arriba.
+No activar producción sin preparar este contrato en el proxy autorizado.
+
+Las cuotas usan buckets de tokens atómicos con reloj Redis: capacidad inicial
+acotada, reposición continua, sin reinicio del cupo al reiniciar la aplicación.
+Las claves contienen hashes de identidad, no documentos/username/IP en claro.
+Una petición debe cumplir todas las cuotas y recibe 429 con Retry-After si falla.
+
+| Operación | Capacidad / reposición | Control adicional |
+| --- | --- | --- |
+| Login/cambio de contraseña | Global 30/min y 300/h; origen 10/min | Dos operaciones simultáneas por proceso, sin cola; se conserva 5 intentos/cuenta/15 min en MariaDB |
+| API general | Global 600/min y origen 180/min | Doce solicitudes simultáneas por proceso |
+| Usuario autenticado | 120/min agregadas | Búsqueda, catálogos, lectura de consultas y otras lecturas: 60/min y 300/h por categoría |
+| Escrituras de Consultas | 10/min y 60/h por usuario | También consumen cuota los rechazos; autorización y transacciones se conservan |
+| Descarga de imágenes | 20/min y 100/h por usuario | Presupuesto 200 MiB/h: se reservan conservadoramente 20 MiB por intento antes de SFTP, sin reembolso por error |
+
+Son capacidades de ráfaga y tasas de reposición, no ventanas fijas. Los límites
+son iniciales y conservadores: cualquier ajuste debe revisarse y medirse en QA.
+El logout conserva una ruta de revocación si Redis cae, con 120 solicitudes/min
+y concurrencia acotada localmente; sigue validando Origin/Host e identidad de proxy.
+No existe flag para desactivar estas protecciones en producción.
+
+Infraestructura debe provisionar Redis dedicado por entorno, ACL sobre
+`~tp:security:*` y comandos `EVAL`, `TIME`, `HMGET`, `HSET`, `PEXPIRE` y los comandos
+de handshake del cliente (`AUTH`/`HELLO`, `CLIENT SETINFO`/`SETNAME` según versión).
+No conceder administración, FLUSHALL/FLUSHDB, CONFIG ni acceso a otros espacios.
+Requiere persistencia AOF/recuperación aprobada, `maxmemory-policy noeviction`,
+capacidad y monitorización; un Redis vacío permite la ráfaga inicial nuevamente.
+Una cuenta/Redis independiente de MariaDB y SFTP conserva la separación.
+No se ejecutó esta provisión sobre servicios institucionales.
+
+Compose fija 1 CPU, 1 GiB y 128 procesos por contenedor, además del usuario 1001,
+filesystem de solo lectura y restricciones anteriores. Son valores de partida;
+deben ajustarse tras medición aislada. El healthcheck de `/` sigue siendo de vida:
+no demuestra disponibilidad de Redis/DB ni habilita automáticamente tráfico.
+
+El historial de detalle usa `historyPageSize` (20 por defecto, máximo 50) y cursor
+`historyBefore` por versión descendente; `historyPagination.nextBeforeVersion`
+indica la siguiente página. La UI permite «Ver versiones anteriores» sin descargar
+todo el historial de una vez. No se borra ni modifica ningún snapshot en DB; la API
+proyecta campos de negocio y omite referencias/flags internos. Parámetros extra
+o duplicados se rechazan con 400. Las mutaciones no aceptan query parameters.
+
+Todas las rutas MariaDB, heredadas y de imágenes emiten telemetría HTTP con ID
+aleatorio generado en servidor, plantilla de ruta, estado y duración; nunca URL
+completa, parámetros, cuerpo, cookie, credenciales, documentos ni IP. La retención,
+acceso, alertas y recolección de estos eventos requieren configuración operativa.
+
+La CSP se aplica con nonce aleatorio por documento y render dinámico de Next.
+Scripts sin nonce se bloquean; producción no permite unsafe-eval ni unsafe-inline
+en scripts. Conexiones de frontend solo al mismo origen, imágenes same-origin y
+blobs; atributos de estilo inline se permiten explícitamente para conservar el
+visor/zoom existente. WebSocket/eval solo se habilitan en desarrollo para HMR.
+La CSP no sustituye HTTPS, autorización ni validación de parámetros.
 
 Con variables de entrega ya inyectadas en un entorno Node autorizado, el comando
 `npm run consultations:check` también valida el modo producción sin depender de
@@ -156,3 +232,64 @@ por el administrador: este repositorio no incluye dumps ni fixtures de bases.
 
 Las pruebas, diagnósticos, informes de trabajo y evidencias permanecen únicamente
 en la copia local del equipo de desarrollo. No son dependencias de ejecución.
+
+## Imágenes institucionales SFTP
+
+El proveedor es opcional (`IMAGE_PROVIDER=sftp`) y exige sesión autenticada y
+usuario habilitado mediante el circuito MariaDB existente. No cambia el proveedor
+de autenticación predeterminado. El backend resuelve el PadCod contra
+AGM_CIU_PADRONES mediante SELECT parametrizado antes de buscar archivos: el número
+del nombre del archivo corresponde al padrón, no al PadCod.
+
+Para pruebas locales, completar `Backend/server/sftp-images/.env.local` usando
+`.env.example` de esa carpeta. El archivo privado está ignorado por Git y Docker.
+Configurar host, puerto 22, usuario exclusivo `sftp-lectura`, contraseña y huella
+SHA-256 de la clave ED25519. Confirmar la huella con infraestructura por un canal
+independiente antes de establecer `SFTP_IMAGES_HOST_KEY_VERIFIED=true` y
+`SFTP_IMAGES_ENABLED=true`. Una huella observada en una primera conexión no basta.
+El lector compara estrictamente la clave presentada con la huella configurada;
+no acepta automáticamente claves nuevas ni utiliza el agente SSH o sftp-admin.
+
+```powershell
+npm run images:check -- --config-only
+npm run images:check
+npm run dev:mariadb
+```
+
+El primer comando informa únicamente presencia de configuración, sin valores.
+El segundo autentica y lista ambos directorios, sin descargar ni escribir archivos;
+no prueba permisos de escritura. Reiniciar Next después de cambiar configuración.
+En Docker, inyectar las mismas variables en el archivo privado externo de Compose;
+no copiar `.env.local` ni contraseñas a la imagen. Permitir salida TCP 22 hacia
+el servidor desde el contenedor; las rutas/VPN del host no garantizan esa salida.
+
+En `/Satelitales`, la convención confirmada es
+`AÑO_LOCALIDAD_PADRON[_SUFIJO].png`. Se compara exactamente localidad y padrón
+institucionales, sin coincidencias parciales. La localidad se convierte a mayúsculas,
+sin tildes, con espacios o guiones bajos consecutivos convertidos en un guion bajo;
+se admiten localidades compuestas. El padrón conserva sus dígitos originales.
+Se prioriza el token ANTES (sin distinguir mayúsculas y delimitado por `_` o `-`),
+después el año más antiguo. DESPUES no tiene prioridad especial. Empates de año y
+prioridad se resuelven por orden ordinal del nombre en mayúsculas. Nombres que
+solo difieren por mayúsculas generan ambigüedad y no se seleccionan.
+
+La convención de relevamiento sigue pendiente de ejemplos reales. Mantener
+`SFTP_IMAGES_SURVEY_MAPPING_CONFIRMED=false` y basename vacío. Si `/PDFs` está
+vacío se informa ausencia de relevamiento; si contiene archivos sin una convención
+aprobada se informa asociación pendiente. No se infieren correspondencias.
+La visualización de futuros PDF requiere validar esa convención y su visor.
+
+Los títulos son «Imagen histórica» e «Imagen de relevamiento». Sin archivos:
+«Este padrón aún no registra imágenes históricas» y
+«Este padrón aún no registra imágenes de relevamiento». El visor consulta
+disponibilidad cada 30 segundos mientras está montado y la página visible;
+también permite reintentar. No exige reconstruir Docker al cargar nuevos archivos.
+La API entrega referencias por PadCod, sin nombres ni rutas internas. Las descargas
+usan sesión y no-store; no se guarda material institucional en disco o caché pública.
+Errores de ausencia, conexión, autenticación, identidad SSH, permisos y ambigüedad
+tienen códigos separados y mensajes sin datos sensibles.
+
+Límites predeterminados: 10 MiB por archivo (máximo configurable 20 MiB), 10 segundos
+por operación completa (máximo 15), 10.000 entradas históricas (máximo 100.000),
+y tres conexiones simultáneas por proceso. Se rechazan enlaces simbólicos,
+salidas del directorio, extensiones o firmas de contenido incompatibles.

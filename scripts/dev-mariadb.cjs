@@ -33,7 +33,7 @@ function configuration() {
   if ((env.NODE_OPTIONS ?? '').includes('--env-file'))
     throw Error('Quitá --env-file de NODE_OPTIONS en esta terminal antes de iniciar.');
   env.NODE_ENV = 'development';
-  return env;
+  return require('./load-security-env.cjs').securityEnvironment(require('./load-sftp-env.cjs').sftpEnvironment(env));
 }
 
 if (require.main === module) {

@@ -3,6 +3,7 @@ import { applicationCatalogue } from "./prototype-catalogue";
 import { imageResponse } from "./images";
 import { imageProvider } from "./storage-images";
 import { historyFilters, queryKeys } from "./filters";
+import { requestLimits, LimitError } from './request-limits';
 import {
   observeRequest,
   routeTemplate,
@@ -105,7 +106,12 @@ export function createHandler(dependencies: HandlerDependencies) {
   return async (request: Request, segments: string[], logger?: RequestLogger) =>
     observeRequest(
       routeTemplate(segments),
-      () => handleRequest(request, segments, adapters),
+      async () => {
+        let release=()=>{};
+        try {release=await requestLimits().enter(request,segments);return await handleRequest(request, segments, adapters);}
+        catch(error){const r=response({error:{code:error instanceof HttpError?error.code:'SECURITY_UNAVAILABLE',message:error instanceof HttpError?error.message:'El servicio no está disponible temporalmente.'}},error instanceof HttpError?error.status:503);if(error instanceof LimitError)r.headers.set('Retry-After',String(error.retryAfter));return r;}
+        finally{release();}
+      },
       logger,
     );
 }
@@ -229,6 +235,7 @@ async function handleRequest(
     }
     if (path === "auth/password" && request.method === "POST") {
       const { client, user } = await identity(true);
+      await requestLimits().user(user.id,request,segments);
       const body = await jsonBody(request);
       if (Object.keys(body).some((key) => key !== "password"))
         throw new HttpError(400, "VALIDATION", "Campo no permitido.");
@@ -306,13 +313,15 @@ async function handleRequest(
     }
     if (path === "session" && request.method === "GET") {
       const { user, profile } = await identity(true);
+      await requestLimits().user(user.id,request,segments);
       return response({
         user: { id: user.id, username: profile.username },
         mustChangePassword: profile.must_change_password,
         synthetic: process.env.DATA_MODE === "synthetic",
       });
     }
-    const { client } = await identity();
+    const { client, user: quotaUser } = await identity();
+    await requestLimits().user(quotaUser.id,request,segments);
     if (path === "search" && request.method === "GET") {
       queryKeys(
         url.searchParams,
@@ -447,6 +456,7 @@ async function handleRequest(
       segments.length === 2 &&
       uuid.test(segments[1])
     ) {
+      queryKeys(url.searchParams,[]);
       if (request.method === "GET") {
         const { data, error } = await client
           .from("consultations")
@@ -477,11 +487,14 @@ async function handleRequest(
       404,
     );
   } catch (error) {
-    if (error instanceof HttpError)
-      return response(
+    if (error instanceof HttpError) {
+      const rejected=response(
         { error: { code: error.code, message: error.message } },
         error.status,
       );
+      if(error instanceof LimitError)rejected.headers.set('Retry-After',String(error.retryAfter));
+      return rejected;
+    }
     if (error instanceof DomainError)
       return response(
         {

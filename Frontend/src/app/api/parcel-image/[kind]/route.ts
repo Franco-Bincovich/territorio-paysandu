@@ -12,5 +12,5 @@ export async function GET(
   context: { params: Promise<{ kind: string }> },
 ) {
   const kind = (await context.params).kind;
-  return await mariaResponse(request, ["parcel-image", kind]) ?? download(kind);
+  return await mariaResponse(request, ["parcel-image", kind]) ?? download(kind,request);
 }

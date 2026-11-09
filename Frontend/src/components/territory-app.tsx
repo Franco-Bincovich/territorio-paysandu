@@ -221,6 +221,17 @@ export function TerritoryApp() {
       if (operation.isCurrent()) setBusy(false);
     }
   }
+  async function loadOlderHistory() {
+    if(!detail?.historyPagination?.nextBeforeVersion)return;
+    const current=detail,operation=navigationRequests.begin();setBusy(true);setError('');
+    try {
+      const older=await request<Consultation>(`/api/consultations/${encodeURIComponent(current.id)}?historyBefore=${encodeURIComponent(current.historyPagination!.nextBeforeVersion!)}&historyPageSize=20`,{signal:operation.signal});
+      if(!operation.isCurrent())return;
+      if(older.version!==current.version){setError('La consulta cambió. Volvé a abrirla antes de continuar con el historial.');return;}
+      setDetail(latest=>!latest||latest.id!==current.id||latest.version!==current.version?latest:{...latest,history:[...(latest.history??[]),...(older.history??[]).filter(h=>!latest.history?.some(old=>old.version===h.version))],historyPagination:older.historyPagination});
+    }catch(e){if(operation.isCurrent()&&!isAbort(e))setError(message(e));}
+    finally{if(operation.isCurrent())setBusy(false);}
+  }
   async function logout() {
     clearSession("Cerrando sesión…");
     setLoggingOut(true);
@@ -510,6 +521,7 @@ export function TerritoryApp() {
                   <p className="muted">Datos declarados en esta versión</p>
                   <AuditSnapshot value={h.after}/>
                 </details>)}
+                {detail.historyPagination?.nextBeforeVersion&&<button className="btn" type="button" disabled={busy} onClick={()=>void loadOlderHistory()}>Ver versiones anteriores</button>}
               </section>}
             </section>
           )}

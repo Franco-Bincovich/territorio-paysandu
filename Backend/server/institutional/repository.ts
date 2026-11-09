@@ -35,6 +35,14 @@ export function normalizePersonName(value: string) {
 function bounded<T>(rows: T[], max: number) { if (rows.length > max) throw limit(); return rows; }
 
 export class InstitutionalRepository {
+  async imageParcel(padCod:string) {
+    if(!/^[1-9]\d{0,18}$/.test(padCod)||BigInt(padCod)>9223372036854775807n)throw validation();
+    return this.read(async r=>{
+      const rows=await r.query('SELECT PadCod,PADRON,LOCALIDAD FROM AGM_CIU_PADRONES WHERE PadCod = ? LIMIT 2',[padCod]);
+      if(rows.length!==1)throw new HttpError(rows.length?409:404,'NOT_FOUND','Padrón no encontrado.');
+      return {padCod:String(rows[0].PadCod),locality:String(rows[0].LOCALIDAD),parcel:String(rows[0].PADRON)};
+    });
+  }
   constructor(private read: InstitutionalRead = institutionalRead) {}
   async searchParcel(locality: string, parcel: string) {
     const params = [normalizeLocality(locality), parcelNumber(parcel)];

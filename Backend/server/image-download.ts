@@ -1,18 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { downloadPrototypeImage } from "./storage-images";
 import { HttpError } from "./security";
+import { requestLimits, LimitError } from './request-limits';
+import { observeRequest } from './observability';
 const headers = {
   "Cache-Control": "private, no-store, max-age=0",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",
 };
 export function createImageDownloadHandler(dependencies: {
-  identity: () => Promise<{ client: SupabaseClient }>;
+  identity: () => Promise<{ client: SupabaseClient;user?:{id:string} }>;
   enabled: () => boolean;
 }) {
-  return async (kind: string): Promise<Response> => {
+  return async (kind: string,request?:Request): Promise<Response> => observeRequest('/api/parcel-image/{kind}',async()=>{
+    let release=()=>{};
     try {
-      const { client } = await dependencies.identity();
+      if(request)release=await requestLimits().enter(request,['parcel-image',kind]);
+      const { client,user } = await dependencies.identity();
+      if(request)await requestLimits().user(user?.id??'legacy',request,['parcel-image',kind]);
       if (!dependencies.enabled())
         throw new HttpError(
           404,
@@ -33,9 +38,9 @@ export function createImageDownloadHandler(dependencies: {
         },
         {
           status: error instanceof HttpError ? error.status : 503,
-          headers,
+          headers:{...headers,...(error instanceof LimitError?{'Retry-After':String(error.retryAfter)}:{})},
         },
       );
-    }
-  };
+    } finally {release();}
+  });
 }

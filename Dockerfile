@@ -12,7 +12,11 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+# Build-only limits: do not spawn a worker per visible host CPU in small VMs.
+RUN NODE_OPTIONS=--max-old-space-size=768 \
+    CIRCLE_NODE_TOTAL=1 \
+    RAYON_NUM_THREADS=2 \
+    npm run build
 
 FROM ${NODE_IMAGE} AS runner
 WORKDIR /app

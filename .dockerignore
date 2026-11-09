@@ -19,3 +19,10 @@ Frontend/.next
 **/runtime.env
 **/*.tsbuildinfo
 Backend/server/mariadb/test-user.ts
+**/*.pem
+**/*.key
+**/*.ppk
+**/*.pfx
+**/*.p12
+**/known_hosts
+**/*.pdf

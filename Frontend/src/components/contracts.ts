@@ -20,6 +20,9 @@ export type Person = {
 };
 export type Contact = Person & { id: string };
 export type ParcelImage = {
+  provider?: 'sftp';
+  mediaType?: string;
+  unavailableCode?:string;
   kind: "historical" | "survey";
   url?: string | null;
   source: string;
@@ -43,6 +46,7 @@ export type Consultation = {
   address?: Record<string,string> | null;
   creatorUsername?: string;
   isHistorical?: boolean;
+  historyPagination?: {pageSize:number;nextBeforeVersion:string|null};
   history?: {version:number;operation:string;by:string;byUsername?:string;at:string;before:unknown;after:unknown}[];
   id: string;
   locality: string;

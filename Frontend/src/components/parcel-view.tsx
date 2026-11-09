@@ -3,6 +3,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { HistoryView, type HistoryReturnState } from "./territory-app";
 import type { Parcel, ParcelImage } from "./contracts";
 import { InstitutionalPeople } from "./institutional-people";
+import { useSftpCatalogue,useSftpMedia } from './use-sftp-images';
 export type ParcelTab = "record" | "images" | "contacts" | "consultations";
 const parcelTabs: { key: ParcelTab; label: string }[] = [
   { key: "record", label: "Datos catastrales" },
@@ -170,7 +171,7 @@ export function ParcelView({
                 </dl>
               </section>
             )}
-            {tab === "images" && <ImageViewer images={parcel.images} />}
+            {tab === "images" && <ImageViewer images={parcel.images} padCod={parcel.padCod} />}
             {tab === "contacts" && (
               <section className="panel">
                 <div className="panel-head">
@@ -287,7 +288,7 @@ function trapViewerFocus(event: KeyboardEvent<HTMLDialogElement>) {
     first.focus();
   }
 }
-function ImageViewer({ images }: { images: ParcelImage[] }) {
+export function ImageViewer({ images:initialImages,padCod }: { images: ParcelImage[];padCod?:string }) {
   const [index, setIndex] = useState(0),
     [zoom, setZoom] = useState(1),
     [failed, setFailed] = useState(""),
@@ -295,6 +296,7 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const stage = useRef<HTMLDivElement>(null);
+  const images=useSftpCatalogue(initialImages,padCod,retry);
   function resetView() {
     setZoom(1);
     stage.current?.scrollTo(0, 0);
@@ -304,16 +306,20 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
       images.find((i) => i.kind === kind) ?? {
         kind,
         source: kind === "historical" ? "Google Earth" : "Relevamiento",
-        unavailableReason: "Imagen no disponible.",
+        unavailableReason: kind==='survey'?"Este padrón aún no registra imágenes de relevamiento":"Este padrón aún no registra imágenes históricas",
       },
   );
   const image = slots[index];
+  const media=useSftpMedia(image,retry);
+  const mediaUrl=image.provider==='sftp'?media.url:image.url;
   const title = index === 0 ? "Imagen histórica" : "Imagen de relevamiento";
   function next() {
     setIndex((i) => 1 - i);
     resetView();
   }
-  const available = Boolean(image.url) && failed !== image.url;
+  const available = Boolean(mediaUrl) && failed !== image.url;
+  const pdf=media.type==='application/pdf';
+  const unavailable=media.error??(image.provider==='sftp'&&image.url&&!failed?'Cargando imagen…':image.unavailableReason??"La imagen no está disponible en este momento.");
   return (
     <section className="panel">
       <div className="panel-head">
@@ -321,10 +327,10 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
         <span className="badge">{index + 1} de 2</span>
       </div>
       <div className="image-preview">
-        {available ? (
+        {available && pdf ? <iframe title={title} src={mediaUrl+'#toolbar=0'} sandbox="" style={{width:'100%',height:'100%',border:0}}/> : available ? (
           <img
             key={`${image.url}-${retry}`}
-            src={image.url ?? undefined}
+            src={mediaUrl ?? undefined}
             alt={title}
             onError={() => setFailed(image.url ?? "")}
           />
@@ -332,10 +338,9 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
           <div className="empty">
             <h3>{title}</h3>
             <p>
-              {image.unavailableReason ??
-                "La imagen no está disponible en este momento."}
+              {unavailable}
             </p>
-            {image.url && (
+            {(image.url||image.provider==='sftp') && (
               <button
                 className="btn"
                 type="button"
@@ -412,17 +417,17 @@ function ImageViewer({ images }: { images: ParcelImage[] }) {
           role="region"
           aria-label="Imagen ampliada; usá las flechas para desplazar"
         >
-          {available ? (
+          {available && pdf ? <iframe title={title} src={mediaUrl+'#toolbar=0'} sandbox="" style={{width:'100%',height:'100%',minHeight:'50vh',border:0}}/> : available ? (
             <div className="viewer-canvas" style={{ width: `${zoom * 100}%`, height: `${zoom * 100}%` }}>
               <img
                 key={`${image.url}-${retry}`}
-                src={image.url ?? undefined}
+                src={mediaUrl ?? undefined}
                 alt={title}
                 onError={() => setFailed(image.url ?? "")}
               />
             </div>
           ) : (
-            <p>Imagen no disponible.</p>
+            <p>{unavailable}</p>
           )}
         </div>
         <div className="viewer-tools">

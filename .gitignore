@@ -25,12 +25,16 @@ Thumbs.db
 *.key
 *.pfx
 *.p12
+*.ppk
 
 # Local-only QA provisioning and diagnostic helpers.
 /scripts/*
 !/scripts/dev-mariadb.cjs
 !/scripts/check-consultations.cjs
 !/scripts/register-runtime-ts.cjs
+!/scripts/load-sftp-env.cjs
+!/scripts/load-security-env.cjs
+!/scripts/check-sftp-images.cjs
 /Backend/server/mariadb/test-user.ts
 /Backend/sql/mariadb-auth-inspect.sql
 /Backend/sql/package-2-validation-qa.sql

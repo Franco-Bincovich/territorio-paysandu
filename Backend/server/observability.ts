@@ -6,6 +6,8 @@ export const routes = {
   "/api/auth/password": ["POST"],
   "/api/session": ["GET"],
   "/api/search": ["GET"],
+  "/api/parcel-images": ["GET"],
+  "/api/parcel-image/{kind}": ["GET"],
   "/api/parcels/{locality}/{parcel}": ["GET"],
   "/api/consultations": ["GET", "POST"],
   "/api/consultations/{id}": ["GET", "PATCH"],
@@ -27,6 +29,8 @@ export function routeTemplate(segments: readonly string[]): RouteTemplate {
     return "/api/parcels/{locality}/{parcel}";
   if (segments.length === 2 && segments[0] === "consultations")
     return "/api/consultations/{id}";
+  if (segments.length === 2 && segments[0] === "parcel-image")
+    return "/api/parcel-image/{kind}";
   return "unmatched";
 }
 export const structuredLogger: RequestLogger = (event) => {

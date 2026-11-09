@@ -5,6 +5,8 @@ import type { ConsultationRepository } from './repository';
 import type { ConsultationReads } from './reads';
 import { webInput } from './contracts';
 import { productionMariaEnabled } from '../mariadb/provider';
+import { queryKeys } from '../filters';
+import { historyQuery } from './reads';
 
 export function writesRequested(env:NodeJS.ProcessEnv=process.env) {
   return (productionMariaEnabled(env) || (env.NODE_ENV!=='production' && env.AUTH_PROVIDER==='mariadb-test' && env.MARIADB_AUTH_TEST_ENABLED==='true')) &&
@@ -14,13 +16,16 @@ export function createConsultationHttp(repository:ConsultationRepository,reads:C
   return async(request:Request,segments:string[],actor:Actor):Promise<Response|null>=>{
     if(segments[0]!=='consultations')return null;
     authorize(actor,Date.now());
+    const query=new URL(request.url).searchParams;
+    if(request.method==='GET'&&segments.length===2&&segments[1]!=='capabilities')historyQuery(query);
+    else if(request.method!=='GET'||segments[1]==='capabilities')queryKeys(query,[]);
     const result=(body:unknown)=>Response.json(body,{headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
     await compatible();
     if(segments.length===2 && segments[1]==='capabilities') {
       if(request.method!=='GET')throw new HttpError(405,'METHOD_NOT_ALLOWED','Método no permitido.');
       return result({read:true,write:enabled()});
     }
-    if(request.method==='GET')return result(segments.length===1?await reads.list(new URL(request.url).searchParams,actor):await reads.detail(segments[1],actor));
+    if(request.method==='GET')return result(segments.length===1?await reads.list(query,actor):await reads.detail(segments[1],actor,query));
     if(!enabled())throw new HttpError(403,'WRITES_DISABLED','El guardado de consultas está deshabilitado para este entorno.');
     const body=await jsonBody(request);
     if(request.method==='POST' && segments.length===1) {

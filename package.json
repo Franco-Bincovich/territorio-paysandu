@@ -6,6 +6,7 @@
     "dev": "next dev Frontend --hostname 127.0.0.1",
     "dev:mariadb": "node scripts/dev-mariadb.cjs",
     "consultations:check": "node scripts/check-consultations.cjs",
+    "images:check": "node scripts/check-sftp-images.cjs",
     "build": "next build Frontend",
     "start": "next start Frontend --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit -p Frontend/tsconfig.json"
@@ -21,12 +22,15 @@
     "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "redis": "6.3.1",
+    "ssh2": "1.17.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/ssh2": "1.15.6",
     "typescript": "7.0.2"
   },
   "private": true
