@@ -422,3 +422,5 @@ export class ConsultationService {
     });
   }
 }
+
+export { personalAddressFields, personalLocalities, retiredAddressFields, normalizeAddressPlace, personalAddressErrors } from './personal-address';

@@ -1,5 +1,7 @@
 import {
   parseData,
+  personalAddressFields,
+  personalAddressErrors,
   DESCRIPTION_MIN_LENGTH,
   DESCRIPTION_MAX_LENGTH,
   MAX_CONTACT_ENTRIES,
@@ -108,6 +110,7 @@ export function validateConsultationFields(
   return errors;
 }
 export function fieldLabel(key: string): string {
+  if(key.startsWith("address-"))return personalAddressFields.find(([k])=>k===key.slice(8))?.[1]??"Domicilio";
   const labels: Record<string, string> = {
     name: "Nombre completo",
     relationship: "Vínculo con el padrón",
@@ -122,3 +125,9 @@ export function fieldLabel(key: string): string {
     return `Correo electrónico ${Number(key.slice(6)) + 1}`;
   return labels[key] ?? "Formulario";
 }
+
+export function formPersonalAddress(form: FormData): Record<string,string>|null {
+  const values=Object.fromEntries(personalAddressFields.filter(([k])=>k!=='DEPARTAMENTO').map(([k])=>[k,String(form.get('address-'+k)??'').trim()]).filter(([,v])=>v));
+  return Object.keys(values).length?{...values,DEPARTAMENTO:'PAYSANDU'}:null;
+}
+export const addressFieldErrors=(address:Record<string,string>|null)=>Object.fromEntries(Object.entries(personalAddressErrors(address)).map(([k,v])=>['address-'+k,v]));

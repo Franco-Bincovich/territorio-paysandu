@@ -1,4 +1,5 @@
-import type { InstitutionalRef, PersonCandidate, PersonSearchResult } from "../../domain/institutional";
+import { eligibleParcelSql } from './eligibility';
+import type { SurveyInformation, InstitutionalRef, PersonCandidate, PersonSearchResult } from "../../domain/institutional";
 import { HttpError } from "../security";
 import { institutionalRead, type InstitutionalRead, type Reader } from "./pool";
 import { mapInstitutionalParcel, parcelRef, text } from "./mapping";
@@ -38,7 +39,7 @@ export class InstitutionalRepository {
   async imageParcel(padCod:string) {
     if(!/^[1-9]\d{0,18}$/.test(padCod)||BigInt(padCod)>9223372036854775807n)throw validation();
     return this.read(async r=>{
-      const rows=await r.query('SELECT PadCod,PADRON,LOCALIDAD FROM AGM_CIU_PADRONES WHERE PadCod = ? LIMIT 2',[padCod]);
+      const rows=await r.query(`SELECT p.PadCod,p.PADRON,p.LOCALIDAD FROM AGM_CIU_PADRONES p WHERE p.PadCod = ? AND ${eligibleParcelSql} LIMIT 2`,[padCod]);
       if(rows.length!==1)throw new HttpError(rows.length?409:404,'NOT_FOUND','Padrón no encontrado.');
       return {padCod:String(rows[0].PadCod),locality:String(rows[0].LOCALIDAD),parcel:String(rows[0].PADRON)};
     });
@@ -47,7 +48,7 @@ export class InstitutionalRepository {
   async searchParcel(locality: string, parcel: string) {
     const params = [normalizeLocality(locality), parcelNumber(parcel)];
     return this.read(async r => bounded(await r.query(`SELECT ${columns} FROM AGM_CIU_PADRONES p
-      WHERE p.LOCALIDAD = ? AND p.PADRON = ? ORDER BY p.PadCod LIMIT 51`, params), 50).map(parcelRef));
+      WHERE ${eligibleParcelSql} AND p.LOCALIDAD = ? AND p.PADRON = ? ORDER BY p.PadCod LIMIT 51`, params), 50).map(parcelRef));
   }
   async searchPerson(kind: string, value: string, selectedPersonId?: string): Promise<PersonSearchResult> {
     const predicate = personPredicate(kind, value);
@@ -57,7 +58,7 @@ export class InstitutionalRepository {
         v.ID_PERSONA_CP, v.ConCod, v.RelCod, v.RelNom, v.PRIORIDAD_VINCULO,
         v.NOMBRE_CP, v.TIPO_DOCUMENTO, v.DOCUMENTO_NORMALIZADO
         FROM AGM_CIU_PADRONES p JOIN AGM_CIU_VINCULOS v ON v.PadCod = p.PadCod
-        WHERE ${predicate.sql} ORDER BY p.PadCod, v.ID_PERSONA_CP, v.ConCod LIMIT 501`, predicate.params), 500);
+        WHERE ${eligibleParcelSql} AND ${predicate.sql} ORDER BY p.PadCod, v.ID_PERSONA_CP, v.ConCod LIMIT 501`, predicate.params), 500);
       const people = new Map<string, { candidate: PersonCandidate; parcels: Map<string, InstitutionalRef> }>();
       let unidentifiedMatches = 0;
       for (const row of rows) {
@@ -93,7 +94,7 @@ export class InstitutionalRepository {
     if (padCod !== undefined) params.push(identifier(padCod));
     return this.read(async r => {
       const rows = await r.query(`SELECT ${columns} FROM AGM_CIU_PADRONES p
-        WHERE p.LOCALIDAD = ? AND p.PADRON = ?${padCod !== undefined ? " AND p.PadCod = ?" : ""}
+        WHERE ${eligibleParcelSql} AND p.LOCALIDAD = ? AND p.PADRON = ?${padCod !== undefined ? " AND p.PadCod = ?" : ""}
         ORDER BY p.PadCod LIMIT 2`, params);
       if (!rows.length) throw new HttpError(404, "NOT_FOUND", "Padrón no encontrado.");
       if (rows.length > 1) throw new HttpError(409, "AMBIGUOUS_PARCEL", "Seleccioná el padrón por su identificador institucional.");
@@ -110,6 +111,34 @@ export class InstitutionalRepository {
     const media = ids.length ? bounded(await r.query(`SELECT ID_CONTACTO, ID_PERSONA_CP, TIPO_MEDIO, ID_MEDIO_CP, VALOR_CONTACTO
       FROM AGM_CIU_CONTACTOS WHERE ID_PERSONA_CP IN (${ids.map(() => "?").join(",")})
       ORDER BY ID_PERSONA_CP, TIPO_MEDIO, ID_CONTACTO LIMIT 10001`, ids), 10000) : [];
-    return mapInstitutionalParcel(parcel, links, media);
+    // The parcel has already passed locality, identity and EN_CATASTRO checks.
+    // Fetch only the four survey columns; never join by the display parcel number.
+    let survey: SurveyInformation;
+    try {
+      const rows = await r.query(`SELECT CAST(n.FECHA_RELEVAMIENTO AS CHAR) AS surveyDate,
+        CAST(n.SUP_DETECTADA_M2 AS CHAR) AS detectedArea,
+        CAST(n.DIFERENCIA_CALCULADA_M2 AS CHAR) AS difference,
+        n.ESTADO_RELEVAMIENTO AS surveyState
+        FROM AGM_LOTES_NOTIFICACION n
+        WHERE n.PadCod = ? LIMIT 1`, [String(parcel.PadCod)]);
+      const row = rows[0];
+      const decimal = (value: unknown): string | null => {
+        if (value == null) return null;
+        if (typeof value !== "string" || !/^-?\d{1,13}\.\d{2}$/.test(value)) throw new Error("Invalid survey decimal");
+        return value;
+      };
+      const date = row?.surveyDate == null ? null : String(row.surveyDate);
+      if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Invalid survey date");
+      const state = row?.surveyState == null ? null : String(row.surveyState);
+      if (state !== null && !["SIN_RELEVAR", "RELEVADO_CON_DIFERENCIA", "RELEVADO_DIFERENCIA_NEGATIVA", "RELEVADO_SIN_DIFERENCIA", "PENDIENTE_VALIDACION"].includes(state)) {
+        console.warn("institutional_survey_unknown_state");
+      }
+      survey = row ? { status: "available", date, detectedArea: decimal(row.detectedArea), difference: decimal(row.difference), state } : { status: "absent" };
+    } catch {
+      // Do not expose SQL, identifiers, credentials or institutional values.
+      console.warn("institutional_survey_read_unavailable");
+      survey = { status: "unavailable" };
+    }
+    return { ...mapInstitutionalParcel(parcel, links, media), survey };
   }
 }

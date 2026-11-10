@@ -46,3 +46,14 @@ Thumbs.db
 /Backend/sql/package-7.1/README.md
 /Backend/sql/package-7.1/ENTREGA.md
 /Backend/sql/package-7.1/SHA256SUMS.txt
+
+# Proposed minimum delivery: retain these files locally only.
+/Backend/sql/
+/README.md
+
+# Audit fixtures and operational SQL remain physically local, outside the runtime delivery.
+**/*.test.cjs
+/Backend/server/sftp-images/*.isolated.cjs
+/Backend/server/sftp-images/HISTORICAL-INDEX.md
+/Backend/server/rate-limiting/standalone/README.md
+/Backend/server/rate-limiting/standalone/sql/

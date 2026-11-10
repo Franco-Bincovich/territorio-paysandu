@@ -2,6 +2,8 @@ import { checkOrigin, HttpError, jsonBody, required } from "../security";
 import { createMariaAuth, sessionCookie } from "./auth";
 import { routes, routeTemplate, observeRequest } from "../observability";
 import { requestLimits, LimitError, type RequestLimits } from '../request-limits';
+import { ImageAdmissionError } from '../image-admission';
+import { admittedImageResponse } from '../image-response';
 
 type MariaAuth = Awaited<ReturnType<typeof createMariaAuth>>;
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
@@ -9,7 +11,7 @@ export function authError(error: unknown) {
   const known = error instanceof HttpError;
   return Response.json({ error: { code: known ? error.code : "AUTH_UNAVAILABLE",
     message: known ? error.message : "El acceso no está disponible temporalmente." } },
-  { status: known ? error.status : 503, headers: {...headers,...(error instanceof LimitError?{'Retry-After':String(error.retryAfter)}:{})} });
+  { status: known ? error.status : 503, headers: {...headers,...(error instanceof LimitError||error instanceof ImageAdmissionError?{'Retry-After':String(error.retryAfter)}:{})} });
 }
 function tokenFrom(request: Request) {
   const parts = (request.headers.get("cookie") ?? "").split(";")
@@ -79,7 +81,13 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
       }
       if (institutional) {
         const read = await institutional(request, segments);
-        if (read) return read;
+        if (read) {
+          if (image && process.env.IMAGE_PROVIDER==='filesystem' && read.status===200) {
+            const completed=release;release=()=>{};
+            return admittedImageResponse(read,completed,request.signal);
+          }
+          return read;
+        }
       }
       // The MariaDB identity is retained for future data adapters; never grant a
       // Supabase client/service key to it or fall back to old Supabase cookies.

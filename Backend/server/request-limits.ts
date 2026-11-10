@@ -2,6 +2,8 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
 import { readFileSync } from 'node:fs';
 import { HttpError } from './security';
+import { StandaloneQuotaStore } from './rate-limiting/standalone';
+import { ImageAdmission, imageInteger } from './image-admission';
 
 export type Rule={key:string;capacity:number;period:number;cost:number};
 export interface QuotaStore { consume(rules:Rule[]):Promise<number> }
@@ -66,7 +68,14 @@ const rule=(key:string,capacity:number,period=60000,cost=1):Rule=>({key,capacity
 export class RequestLimits {
   private activeAuth=0;private activeApi=0;
   private logoutQuota=new MemoryQuotaStore();
-  constructor(private store:QuotaStore,private env:NodeJS.ProcessEnv=process.env){}
+  private imageAdmission?:ImageAdmission;
+  constructor(private store:QuotaStore,private env:NodeJS.ProcessEnv=process.env){
+    if(env.IMAGE_PROVIDER==='filesystem')this.imageAdmission=new ImageAdmission(
+      imageInteger(env,'IMAGES_HTTP_CONCURRENCY',6,1,6),imageInteger(env,'IMAGES_QUEUE_LIMIT',40,0,100),
+      imageInteger(env,'IMAGES_QUEUE_TIMEOUT_MS',10000,100,15000),()=>this.activeApi<12,
+      ()=>{this.activeApi++;},()=>{this.activeApi--;},
+      env.IMAGES_METRICS==='true'?waitMs=>console.info(JSON.stringify({event:'image_admission',waitMs:Math.round(waitMs),activeApi:this.activeApi})):undefined);
+  }
   private source(request:Request){
     if(this.env.NODE_ENV!=='production')return 'local'; // Never trust client forwarding headers in development.
     const secret=this.env.SECURITY_PROXY_SECRET??'',provided=request.headers.get('x-tp-proxy-token')??'',ip=request.headers.get('x-tp-client-ip')??'';
@@ -79,9 +88,14 @@ export class RequestLimits {
     const path=segments.join('/');
     // Logout must remain available if the quota coordinator is unavailable.
     const auth=path==='auth/login'||path==='auth/password',source=this.source(request);
-    if((auth?this.activeAuth:this.activeApi)>=(auth?2:12))throw new LimitError(2);
-    if(auth)this.activeAuth++;else this.activeApi++;
-    let released=false;const release=()=>{if(released)return;released=true;if(auth)this.activeAuth--;else this.activeApi--;};
+    const queuedImage=!!this.imageAdmission&&(path==='parcel-images'||segments.length===2&&segments[0]==='parcel-image');
+    let imageRelease:(()=>void)|undefined;
+    if(queuedImage)imageRelease=await this.imageAdmission!.acquire(request.signal);
+    else {
+      if((auth?this.activeAuth:this.activeApi)>=(auth?2:12))throw new LimitError(2);
+      if(auth)this.activeAuth++;else this.activeApi++;
+    }
+    let released=false;const release=()=>{if(released)return;released=true;if(imageRelease)imageRelease();else if(auth)this.activeAuth--;else{this.activeApi--;this.imageAdmission?.wake();}};
     try{
       if(path==='auth/logout'){const retry=await this.logoutQuota.consume([rule('logout',120)]);if(retry)throw new LimitError(retry);}
       else await this.take(auth?[rule('auth:global',30),rule('auth:hour',300,3600000),rule('auth:source:'+source,10)]:[rule('api:global',600),rule('api:source:'+source,180)]);
@@ -97,5 +111,16 @@ export class RequestLimits {
     await this.take(rules);
   }
 }
-let shared:RequestLimits|undefined;
-export function requestLimits(){return shared??=new RequestLimits(process.env.NODE_ENV==='production'||process.env.SECURITY_REDIS_HOST?new RedisQuotaStore():new MemoryQuotaStore());}
+// Capture process configuration once, independent of request headers/body.
+const startupEnvironment={...process.env};
+const sharedState=globalThis as typeof globalThis & { __tpRequestLimitsV1?:RequestLimits };
+export function configuredQuotaStore(env:NodeJS.ProcessEnv=process.env):QuotaStore {
+  const provider=env.SECURITY_RATE_LIMIT_PROVIDER;
+  if(provider==='standalone'){
+    if(env.NODE_ENV==='production'&&(env.AUTH_PROVIDER!=='mariadb'||env.MARIADB_ENABLED!=='true'))throw unavailable();
+    return new StandaloneQuotaStore();
+  }
+  if(provider!==undefined&&provider!=='redis')throw unavailable();
+  return provider==='redis'||env.NODE_ENV==='production'||env.SECURITY_REDIS_HOST?new RedisQuotaStore(env):new MemoryQuotaStore();
+}
+export function requestLimits(){return sharedState.__tpRequestLimitsV1??=new RequestLimits(configuredQuotaStore(startupEnvironment),startupEnvironment);}

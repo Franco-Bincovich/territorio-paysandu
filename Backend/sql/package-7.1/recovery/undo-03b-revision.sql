@@ -1,2 +1,0 @@
-USE auxiliares;
-DROP TABLE FB_MODELO_REVISION;

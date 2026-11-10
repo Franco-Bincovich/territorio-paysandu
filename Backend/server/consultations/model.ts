@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { HttpError } from "../security";
+import { personalAddressErrors, normalizeAddressPlace } from '../../domain/personal-address';
 
 export type Actor = { verified: true; userId: string; role: "collaborator"; enabled: boolean; mustChangePassword: boolean; expiresAt: number };
 export type Address = Partial<Record<"CALLE" | "NUMERO" | "BARRIO" | "LOCALIDAD" | "DEPARTAMENTO" | "CODIGO_POSTAL" | "PH" | "BLOCK" | "DEPTO" | "PUERTA" | "DOMICILIO_COMPLETO" | "REFERENCIA" | "SECTOR" | "MANZANA" | "LOTE", string>>;
@@ -49,9 +50,15 @@ export function parseInput(value: unknown): Input {
   let address: Address|null=null;
   if(v.address!==undefined && v.address!==null) {
     const raw=object(v.address); keys(raw,Object.keys(addressLimits));
-    address=Object.fromEntries(Object.keys(addressLimits).filter(k=>Object.hasOwn(raw,k) && (typeof raw[k]!=="string" || (raw[k] as string).trim()))
+    address=Object.fromEntries(Object.keys(addressLimits).filter(k=>Object.hasOwn(raw,k) && raw[k]!=null && (typeof raw[k]!=="string" || (raw[k] as string).trim()))
       .map(k=>[k,string(raw[k],addressLimits[k as keyof Address])]));
     if(!Object.keys(address).length) address=null;
+    else {
+      if(Object.keys(personalAddressErrors(address)).length)throw invalid();
+      address.LOCALIDAD=normalizeAddressPlace(address.LOCALIDAD!);
+      address.DEPARTAMENTO='PAYSANDU';
+      address=Object.fromEntries(Object.keys(addressLimits).filter(k=>Object.hasOwn(address!,k)).map(k=>[k,address![k as keyof Address]]));
+    }
   }
   const description=string(v.description,10000); if(Array.from(description).length<20)throw invalid();
   if(!["GENERAL","RECLAMO","FALTA_DOCUMENTACION","DECLARACION_METROS"].includes(String(v.type)))throw invalid();

@@ -10,7 +10,7 @@ async function localHandler() {
       const [{ createMariaAuth }, { MariaAuthStore }, { createMariaHttp }] = await Promise.all([
         import("./mariadb/auth"), import("./mariadb/store"), import("./mariadb/http"),
       ]);
-      const images = process.env.IMAGE_PROVIDER==='sftp' ? new (await import('./sftp-images/provider')).SftpImages() : undefined;
+      const images = (await import('./image-provider')).configuredInstitutionalImages();
       const institutional = process.env.INSTITUTIONAL_ENABLED === "true"
         ? (await import("./institutional/http")).createInstitutionalHttp(undefined,images) : undefined;
       const consultations = institutional ? await (async () => {

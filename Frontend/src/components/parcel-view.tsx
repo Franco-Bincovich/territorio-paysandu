@@ -1,9 +1,11 @@
 "use client";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { HistoryView, type HistoryReturnState } from "./territory-app";
-import type { Parcel, ParcelImage } from "./contracts";
+import { isInstitutionalImage, type Parcel, type ParcelImage } from "./contracts";
+import { SurveyCard } from "./survey-card";
 import { InstitutionalPeople } from "./institutional-people";
-import { useSftpCatalogue,useSftpMedia } from './use-sftp-images';
+import {parcelImageIdentity,type ParcelImageCache} from './parcel-image-cache';
+import { useSftpCatalogue,useSftpMedia,useParcelImageCache } from './use-sftp-images';
 export type ParcelTab = "record" | "images" | "contacts" | "consultations";
 const parcelTabs: { key: ParcelTab; label: string }[] = [
   { key: "record", label: "Datos catastrales" },
@@ -13,6 +15,7 @@ const parcelTabs: { key: ParcelTab; label: string }[] = [
 ];
 export function ParcelView({
   parcel,
+  selectedImageCache,
   onCreate,
   onDetail,
   onBack,
@@ -23,6 +26,7 @@ export function ParcelView({
   onHistoryRestored,
 }: {
   parcel: Parcel;
+  selectedImageCache?:ParcelImageCache;
   onCreate: () => void;
   onDetail: (id: string) => Promise<void>;
   onBack: () => void;
@@ -32,6 +36,7 @@ export function ParcelView({
   onHistoryRemember?: (state: HistoryReturnState) => void;
   onHistoryRestored?: () => void;
 }) {
+  const imageCache=useParcelImageCache(parcelImageIdentity(parcel),selectedImageCache);
   const [tab, setTab] = useState<ParcelTab>(initialTab);
   const recordContact = Object.entries(parcel.fields ?? {}).filter(([label]) =>
     /^(Titular|Documento|Teléfono|Correo|Vínculo)/.test(label),
@@ -107,14 +112,12 @@ export function ParcelView({
             tabIndex={0}
           >
             {tab === "record" && (
+              <>
               <section className="panel">
                 <div className="panel-head">
                   <h2>Información catastral</h2>
                   <span className="badge">Solo lectura</span>
                 </div>
-                {parcel.provenance && (
-                  <p className="notice">{parcel.provenance}</p>
-                )}
                 <dl className="data-grid">
                   <div>
                     <dt>Localidad</dt>
@@ -128,50 +131,16 @@ export function ParcelView({
                     <dt>Domicilio</dt>
                     <dd>{parcel.address}</dd>
                   </div>
-                  {(parcel.source === "institutional" ? [] : [
-                    {
-                      label: "Superficie de terreno",
-                      original: "Terreno (texto original)",
-                      value: parcel.originalLandArea,
-                    },
-                    {
-                      label: "Superficie construida",
-                      original: "Construida (texto original)",
-                      value: parcel.originalBuiltArea,
-                    },
-                    {
-                      label: "Superficie detectada",
-                      original: "Detectada (texto original)",
-                      value: parcel.detectedBuiltArea,
-                    },
-                  ])
-                    .filter(
-                      ({ original }) => !(original in (parcel.fields ?? {})),
-                    )
-                    .map(({ label, value }) => (
-                      <div key={label}>
-                        <dt>{label.replace(/ \(prototipo\)$/i, "")}</dt>
-                        <dd>
-                          {value == null
-                            ? "No disponible"
-                            : `${value.toLocaleString("es-UY")} m²`}
-                        </dd>
-                      </div>
-                    ))}
-                  {Object.entries(parcel.fields ?? {})
-                    .filter(
-                      ([label]) => !/^(Teléfono|Correo|Vínculo)/.test(label),
-                    )
-                    .map(([label, value]) => (
-                      <div key={label}>
-                        <dt>{label.replace(/ \(prototipo\)$/i, "")}</dt>
-                        <dd>{value}</dd>
-                      </div>
-                    ))}
+                  {['Departamento','Estado','Área predio Catastro (m²)','Área edificada Catastro (m²)','Calle'].map(label => {
+                    const field=label==='Estado'?'Estado · código PadEstado':label;
+                    return <div key={label}><dt>{label}</dt><dd>{parcel.fields?.[field] ?? 'No informado'}</dd></div>;
+                  })}
                 </dl>
               </section>
+              {parcel.source === "institutional" && <SurveyCard survey={parcel.survey} />}
+              </>
             )}
-            {tab === "images" && <ImageViewer images={parcel.images} padCod={parcel.padCod} />}
+            {tab === "images" && <ImageViewer images={parcel.images} padCod={parcel.padCod} imageCache={imageCache} />}
             {tab === "contacts" && (
               <section className="panel">
                 <div className="panel-head">
@@ -288,7 +257,7 @@ function trapViewerFocus(event: KeyboardEvent<HTMLDialogElement>) {
     first.focus();
   }
 }
-export function ImageViewer({ images:initialImages,padCod }: { images: ParcelImage[];padCod?:string }) {
+export function ImageViewer({ images:initialImages,padCod,imageCache }: { images: ParcelImage[];padCod?:string;imageCache?:import('./parcel-image-cache').ParcelImageCache }) {
   const [index, setIndex] = useState(0),
     [zoom, setZoom] = useState(1),
     [failed, setFailed] = useState(""),
@@ -296,7 +265,9 @@ export function ImageViewer({ images:initialImages,padCod }: { images: ParcelIma
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const images=useSftpCatalogue(initialImages,padCod,retry);
+  const ownCache=useParcelImageCache(JSON.stringify([padCod]));
+  const cache=imageCache??ownCache;
+  const images=useSftpCatalogue(initialImages,padCod,retry,cache);
   function resetView() {
     setZoom(1);
     stage.current?.scrollTo(0, 0);
@@ -310,16 +281,16 @@ export function ImageViewer({ images:initialImages,padCod }: { images: ParcelIma
       },
   );
   const image = slots[index];
-  const media=useSftpMedia(image,retry);
-  const mediaUrl=image.provider==='sftp'?media.url:image.url;
+  const media=useSftpMedia(image,retry,cache);
+  const mediaUrl=isInstitutionalImage(image)?media.url:image.url;
   const title = index === 0 ? "Imagen histórica" : "Imagen de relevamiento";
   function next() {
     setIndex((i) => 1 - i);
     resetView();
   }
-  const available = Boolean(mediaUrl) && failed !== image.url;
+  const available = Boolean(mediaUrl) && failed !== mediaUrl;
   const pdf=media.type==='application/pdf';
-  const unavailable=media.error??(image.provider==='sftp'&&image.url&&!failed?'Cargando imagen…':image.unavailableReason??"La imagen no está disponible en este momento.");
+  const unavailable=media.error??(mediaUrl&&failed===mediaUrl?'No se pudo visualizar la imagen.':undefined)??(isInstitutionalImage(image)&&image.url&&failed!==mediaUrl?'Cargando imagen…':image.unavailableReason??"La imagen no está disponible en este momento.");
   return (
     <section className="panel">
       <div className="panel-head">
@@ -329,10 +300,10 @@ export function ImageViewer({ images:initialImages,padCod }: { images: ParcelIma
       <div className="image-preview">
         {available && pdf ? <iframe title={title} src={mediaUrl+'#toolbar=0'} sandbox="" style={{width:'100%',height:'100%',border:0}}/> : available ? (
           <img
-            key={`${image.url}-${retry}`}
+            key={`${mediaUrl}-${retry}`}
             src={mediaUrl ?? undefined}
             alt={title}
-            onError={() => setFailed(image.url ?? "")}
+            onError={() => {cache.invalidate(image.kind,mediaUrl??undefined);setFailed(mediaUrl ?? "");}}
           />
         ) : (
           <div className="empty">
@@ -340,7 +311,7 @@ export function ImageViewer({ images:initialImages,padCod }: { images: ParcelIma
             <p>
               {unavailable}
             </p>
-            {(image.url||image.provider==='sftp') && (
+            {(image.url||isInstitutionalImage(image)) && (
               <button
                 className="btn"
                 type="button"
@@ -420,10 +391,10 @@ export function ImageViewer({ images:initialImages,padCod }: { images: ParcelIma
           {available && pdf ? <iframe title={title} src={mediaUrl+'#toolbar=0'} sandbox="" style={{width:'100%',height:'100%',minHeight:'50vh',border:0}}/> : available ? (
             <div className="viewer-canvas" style={{ width: `${zoom * 100}%`, height: `${zoom * 100}%` }}>
               <img
-                key={`${image.url}-${retry}`}
+                key={`${mediaUrl}-${retry}`}
                 src={mediaUrl ?? undefined}
                 alt={title}
-                onError={() => setFailed(image.url ?? "")}
+                onError={() => {cache.invalidate(image.kind,mediaUrl??undefined);setFailed(mediaUrl ?? "");}}
               />
             </div>
           ) : (

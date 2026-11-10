@@ -20,8 +20,13 @@ export type PersonCandidate = { personId: string; name: string; documentType: st
 export type PersonSearchResult = { results: InstitutionalRef[]; people: PersonCandidate[];
   requiresDisambiguation: boolean; selectedPersonId: string | null; unidentifiedMatches: number };
 export type InstitutionalParcel = InstitutionalRef & {
+  survey?: SurveyInformation;
   fields: Record<string, string>; provenance: string;
   originalLandArea: number | null; originalBuiltArea: number | null; detectedBuiltArea: null;
   institutionalPeople: InstitutionalPerson[]; contacts: []; images: [];
   readOnly: true; synthetic: false;
 };
+
+export type SurveyInformation =
+  | { status: "available"; date: string | null; detectedArea: string | null; difference: string | null; state: string | null }
+  | { status: "absent" | "unavailable" };

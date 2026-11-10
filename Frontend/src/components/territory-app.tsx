@@ -1,4 +1,7 @@
 "use client";
+import "./consultation-history.css";
+import { CollaboratorMenu } from "./collaborator-menu";
+import { AuditSnapshot } from "./audit-snapshot";
 import {
   useCallback,
   useEffect,
@@ -8,6 +11,7 @@ import {
   type FormEvent,
 } from "react";
 import { ConsultationForm } from "./consultation-form";
+import {ParcelImageCache,parcelImageIdentity} from './parcel-image-cache';
 import { ParcelView, type ParcelTab } from "./parcel-view";
 import { ParcelClassificationNotice } from "./parcel-classification-notice";
 import { ParcelSearchResults } from "./parcel-search-results";
@@ -36,6 +40,8 @@ export type HistoryReturnState = {
 const message = (e: unknown) =>
   e instanceof Error ? e.message : "No se pudo completar la operación.";
 export function TerritoryApp() {
+  const selectedImages=useRef<ParcelImageCache|null>(null);
+  useEffect(()=>()=>selectedImages.current?.dispose(),[]);
   const [session, setSession] = useState<Session | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
@@ -45,7 +51,6 @@ export function TerritoryApp() {
   const [parcel, setParcel] = useState<Parcel | null>(null),
     [detail, setDetail] = useState<Consultation | null>(null),
     [busy, setBusy] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationToggle = useRef<HTMLButtonElement>(null);
   const [notice, setNotice] = useState("");
@@ -77,6 +82,7 @@ export function TerritoryApp() {
   const [loggingOut, setLoggingOut] = useState(false);
   const clearSession = useCallback(
     (text: string) => {
+      selectedImages.current?.dispose();selectedImages.current=null;
       navigationRequests.cancel();
       authRequests.cancel();
       globalHistoryReturn.current = null;
@@ -84,7 +90,6 @@ export function TerritoryApp() {
       setRestoreHistory(null);
       setSession(null);
       setNavigationOpen(false);
-      setProfileOpen(false);
       setParcel(null);
       setDetail(null);
       setScreen("search");
@@ -102,7 +107,7 @@ export function TerritoryApp() {
     next: typeof screen,
     restore: "global" | "parcel" | null = null,
   ) {
-    setProfileOpen(false);
+    selectedImages.current?.dispose();selectedImages.current=null;
     setNavigationOpen(false);
     setRestoreHistory(restore);
     navigationRequests.cancel();
@@ -119,6 +124,7 @@ export function TerritoryApp() {
       if (!operation.isCurrent()) return;
       lastActivity.current = Date.now();
       navigationRequests.cancel();
+      selectedImages.current?.dispose();selectedImages.current=null;
       setParcel(null);
       setDetail(null);
       setScreen("search");
@@ -177,6 +183,12 @@ export function TerritoryApp() {
     tab: "record" | "consultations" = "record",
     restore = false,
   ) {
+    selectedImages.current?.dispose();
+    const images=ref.padCod&&session?.institutional?new ParcelImageCache(parcelImageIdentity(ref)):null;
+    selectedImages.current=images;
+    // Selected reference only. The authenticated image endpoint independently
+    // rechecks institutional eligibility; preparation never blocks the record.
+    if(images&&ref.padCod)void images.preload(ref.padCod).catch(()=>{});
     const operation = navigationRequests.begin();
     setBusy(true);
     setError("");
@@ -190,13 +202,14 @@ export function TerritoryApp() {
         result.consultationsRead = capability.read;
         result.readOnly = !capability.write;
       }
-      if (!operation.isCurrent()) return;
+      if (!operation.isCurrent()){images?.dispose();return;}
       setRestoreHistory(restore ? "parcel" : null);
       if (!restore) parcelHistoryReturn.current = null;
       setParcel(result);
       setParcelTab(tab);
       setScreen("parcel");
     } catch (e) {
+      images?.dispose();if(selectedImages.current===images)selectedImages.current=null;
       if (operation.isCurrent() && !isAbort(e)) setError(message(e));
     } finally {
       if (operation.isCurrent()) setBusy(false);
@@ -214,6 +227,7 @@ export function TerritoryApp() {
       if (!operation.isCurrent()) return;
       setDetail(result);
       setDetailOrigin(screen === "parcel" ? "parcel" : "history");
+      selectedImages.current?.dispose();selectedImages.current=null;
       setScreen("detail");
     } catch (e) {
       if (operation.isCurrent() && !isAbort(e)) setError(message(e));
@@ -344,43 +358,6 @@ export function TerritoryApp() {
             ☷ <span>Historial de consultas</span>
           </button>
         </nav>
-        <div className="side-bottom">
-          <div className="profile">
-            <div className="avatar" aria-hidden="true">
-              {session.user.username.slice(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <button
-                type="button"
-                className="btn small"
-                aria-expanded={profileOpen}
-                aria-controls="profile-options"
-                onClick={() => setProfileOpen(!profileOpen)}
-              >
-                {session.user.username}
-              </button>
-              <small>Colaborador</small>
-            </div>
-          </div>
-          {profileOpen && (
-            <div id="profile-options">
-              <button
-                type="button"
-                className="btn small"
-                onClick={() => navigate("settings")}
-              >
-                Configuración
-              </button>
-            </div>
-          )}
-          <button
-            className="btn small logout"
-            disabled={loggingOut}
-            onClick={logout}
-          >
-            Cerrar sesión
-          </button>
-        </div>
       </aside>
       <div className="main-wrap">
         <header className="topbar">
@@ -412,6 +389,7 @@ export function TerritoryApp() {
               Datos sintéticos
             </span>
           )}
+          <CollaboratorMenu key={screen} username={session.user.username} loggingOut={loggingOut} onLogout={logout} onSettings={() => navigate("settings")}/>
         </header>
         <main id="main" className="content" tabIndex={-1}>
           {session.synthetic && (
@@ -438,6 +416,7 @@ export function TerritoryApp() {
             <ParcelView
               key={parcel.padCod ?? `${parcel.locality}/${parcel.parcel}`}
               parcel={parcel}
+              selectedImageCache={selectedImages.current??undefined}
               initialTab={parcelTab}
               historyReturnState={
                 restoreHistory === "parcel" ? parcelHistoryReturn.current : null
@@ -481,7 +460,7 @@ export function TerritoryApp() {
             </section>
           )}{" "}
           {screen === "detail" && detail && (
-            <section className="panel">
+            <section className="panel consultation-detail">
               <button
                 className="back"
                 onClick={() => {
@@ -499,7 +478,7 @@ export function TerritoryApp() {
               </p>
               <h1>{detail.type}</h1>
               <p className="muted">
-                Consulta {detail.id} · Registrada el (UTC) {historyDate(detail.createdAt)} · {detail.creatorUsername ?? detail.creatorUserId}
+                Consulta {detail.id} · Registrada el <time dateTime={detail.createdAt}>{historyDate(detail.createdAt)}</time> · {detail.creatorUsername ?? detail.creatorUserId}
               </p>
               <ConsultationForm
                 key={`${detail.id}-${detail.version}`}
@@ -514,12 +493,14 @@ export function TerritoryApp() {
                 onSaved={setDetail}
               />
               {detail.isHistorical && <p className="notice">Esta consulta es histórica. Las correcciones se conservan en su presentación y no reemplazan los contactos ni el domicilio personal vigentes.</p>}
-              {detail.history && <section className="form-stack" aria-label="Historial de modificaciones">
+              {detail.history && <section className="form-stack consultation-versions" aria-label="Historial de modificaciones">
                 <h2>Historial de modificaciones</h2>
-                {detail.history.map(h => <details key={h.version}>
-                  <summary>Versión {h.version} · {historyDate(h.at)} · {h.operation==='CREACION'?'Registro':'Corrección'} · {h.byUsername??h.by}</summary>
-                  <p className="muted">Datos declarados en esta versión</p>
-                  <AuditSnapshot value={h.after}/>
+                {detail.history.map(h => <details className="audit-version" key={h.version}>
+                  <summary><strong>Versión {h.version}</strong><time dateTime={h.at}>{historyDate(h.at)}</time><span>{h.operation==='CREACION'?'Registro':'Corrección'}</span><span>{h.byUsername??h.by}</span></summary>
+                  <div className="audit-comparison">
+                    <section><h3>Datos anteriores</h3>{h.before ? <AuditSnapshot value={h.before} comparison={h.after}/> : <p className="muted">Esta es la primera versión registrada.</p>}</section>
+                    <section><h3>Datos de esta versión</h3><AuditSnapshot value={h.after} comparison={h.before??undefined}/></section>
+                  </div>
                 </details>)}
                 {detail.historyPagination?.nextBeforeVersion&&<button className="btn" type="button" disabled={busy} onClick={()=>void loadOlderHistory()}>Ver versiones anteriores</button>}
               </section>}
@@ -529,12 +510,6 @@ export function TerritoryApp() {
       </div>
     </div>
   );
-}
-function AuditSnapshot({value}:{value:unknown}) {
-  const row=(value??{}) as Record<string,unknown>;
-  const labels:Record<string,string>={nombre_completo:'Nombre',tipo_documento:'Tipo de documento',documento:'Documento',relacion_declarada:'Vínculo declarado',descripcion:'Descripción',tipo_consulta:'Tipo de consulta',domicilio_declarado_json:'Domicilio personal'};
-  for(let i=1;i<=5;i++){labels[`telefono_${i}`]=`Teléfono ${i}`;labels[`tipo_telefono_${i}`]=`Tipo de teléfono ${i}`;labels[`mail_${i}`]=`Correo ${i}`;}
-  return <dl>{Object.entries(labels).filter(([key])=>row[key]!=null).map(([key,label])=><div key={key}><dt>{label}</dt><dd>{typeof row[key]==='object'?Object.values(row[key] as Record<string,unknown>).map(String).join(', '):String(row[key])}</dd></div>)}</dl>;
 }
 function Brand() {
   return (
@@ -982,7 +957,7 @@ export function HistoryView({
     void onDetail(id);
   }
   return (
-    <section className="panel">
+    <section className="panel consultation-history">
       <div className="intro">
         <div>
           <p className="eyebrow">Registro compartido</p>
@@ -990,7 +965,7 @@ export function HistoryView({
         </div>
       </div>
       <form
-        className="filter-grid"
+        className="filter-grid consultation-filters"
         onSubmit={(e) => {
           e.preventDefault();
           const q = new URLSearchParams();
@@ -1034,7 +1009,7 @@ export function HistoryView({
           </select>
         </label>
         <label className="field">
-          Desde (UTC)
+          Desde
           <input
             name="from"
             type="date"
@@ -1042,7 +1017,7 @@ export function HistoryView({
           />
         </label>
         <label className="field">
-          Hasta (UTC)
+          Hasta
           <input
             name="to"
             type="date"
@@ -1066,30 +1041,30 @@ export function HistoryView({
               aria-label="Listado de consultas"
               tabIndex={0}
             >
-              <table>
+              <table role="table">
                 <thead>
                   <tr>
-                    <th>Fecha (UTC)</th>
-                    <th>Localidad / Padrón</th>
-                    <th>Tipo</th>
-                    <th>Persona</th>
-                    <th>Creador</th>
-                    <th>Detalle</th>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Localidad / Padrón</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Persona</th>
+                    <th scope="col">Creador</th>
+                    <th scope="col">Detalle</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.items.map((c) => (
                     <tr key={c.id}>
-                      <td>{historyDate(c.createdAt)}</td>
-                      <td>
+                      <td data-label="Fecha"><time dateTime={c.createdAt}>{historyDate(c.createdAt)}</time></td>
+                      <td data-label="Localidad / Padrón">
                         {c.locality} / {c.parcel}
                       </td>
-                      <td>{c.type}</td>
-                      <td>{c.person.name}</td>
-                      <td>{c.creatorUsername??c.creatorUserId}</td>
-                      <td>
+                      <td data-label="Tipo">{c.type}</td>
+                      <td data-label="Persona">{c.person.name}</td>
+                      <td data-label="Creador">{c.creatorUsername??c.creatorUserId}</td>
+                      <td data-label="Detalle">
                         <button
-                          className="link"
+                          className="btn small history-open"
                           data-consultation-id={c.id}
                           onClick={() => detailFromHistory(c.id)}
                         >

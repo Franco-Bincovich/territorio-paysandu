@@ -8,13 +8,15 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, MAX_CONTACT_ENTRIES } from "@backend/domain";
+import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, MAX_CONTACT_ENTRIES, personalAddressFields, personalLocalities, retiredAddressFields, normalizeAddressPlace, personalAddressErrors } from "@backend/domain";
 import { useRequestScope } from "./use-request-scope";
 import { OptionalDomicileSection } from "./optional-domicile-section";
 import { isAbort } from "./request-scope";
 import { request, type Consultation, type ParcelRef } from "./contracts";
 import {
   fieldLabel,
+  formPersonalAddress,
+  addressFieldErrors,
   validateConsultationFields,
   type FieldErrors,
 } from "./consultation-validation";
@@ -45,7 +47,7 @@ export function ConsultationForm({
   const submitting = useRef(false);
   const sentPayload = useRef('');
   const [writeAvailable,setWriteAvailable] = useState(!parcel.padCod);
-  const [formValid,setFormValid] = useState(Boolean(initial));
+  const [formValid,setFormValid] = useState(Boolean(initial) && !Object.keys(personalAddressErrors(initial?.address)).length);
   const maxContacts=parcel.padCod?5:MAX_CONTACT_ENTRIES;
   useEffect(() => {
     if (!parcel.padCod) return;
@@ -98,7 +100,8 @@ export function ConsultationForm({
       phoneTypes,
       emails,
     };
-    const errors = validateConsultationFields(draft,maxContacts);
+    const address=parcel.padCod?formPersonalAddress(form):null;
+    const errors = {...validateConsultationFields(draft,maxContacts),...addressFieldErrors(address)};
     if(parcel.padCod) phones.forEach((p,i)=>{if(p.trim().length>30)errors[`phone-${i}`]='Ingresá hasta 30 caracteres.';});
     setFieldErrors(errors);
     if (Object.keys(errors).length) {
@@ -110,7 +113,7 @@ export function ConsultationForm({
     setBusy(true);
     requestId.current ??= crypto.randomUUID();
     const input = {
-      ...(parcel.padCod ? { padCod:parcel.padCod, address:Object.fromEntries(addressFields.map(([key])=>[key,String(form.get(`address-${key}`)??'').trim()]).filter(([,v])=>v)) } : {}),
+      ...(parcel.padCod ? { padCod:parcel.padCod, address } : {}),
       locality: parcel.locality,
       parcel: parcel.parcel,
       type: draft.type,
@@ -161,7 +164,7 @@ export function ConsultationForm({
     <form className="form-stack consultation-form" onSubmit={submit} noValidate onChange={event=>{
       const form=new FormData(event.currentTarget);
       const draft={name:String(form.get('name')??''),relationship:String(form.get('relationship')??''),documentType:String(form.get('documentType')??''),document:String(form.get('document')??''),type:String(form.get('type')??''),description:String(form.get('description')??''),phones:form.getAll('phone').map(String),phoneTypes:form.getAll('phoneType').map(String),emails:form.getAll('email').map(String)};
-      setFormValid(!Object.keys(validateConsultationFields(draft,maxContacts)).length && (!parcel.padCod || draft.phones.every(p=>p.trim().length<=30)));
+      setFormValid(!Object.keys({...validateConsultationFields(draft,maxContacts),...(parcel.padCod?addressFieldErrors(formPersonalAddress(form)): {})}).length && (!parcel.padCod || draft.phones.every(p=>p.trim().length<=30)));
     }}>
       {(Object.keys(fieldErrors).length > 0 || error) && (
         <section
@@ -278,12 +281,25 @@ export function ConsultationForm({
           errors={fieldErrors}
           idPrefix={idPrefix}
         />
-        <OptionalDomicileSection>{parcel.padCod && <div className="pair">
-          {addressFields.map(([key,label,max])=><label className="field" key={key}>{label}
-            <input name={`address-${key}`} maxLength={max} defaultValue={initial?.address?.[key]??''}/>
-          </label>)}
-          <p className="muted">Domicilio de la persona; puede ser distinto al del inmueble.</p>
-        </div>}</OptionalDomicileSection>
+        <OptionalDomicileSection>{parcel.padCod && <>
+          <p className="muted">Domicilio de la persona; puede ser distinto al del inmueble. Si lo informás, completá Calle, Puerta y Localidad.</p>
+          <div className="pair personal-address-grid">
+          {personalAddressFields.map(([key,label,max])=><div className="field" key={key}>
+            <label htmlFor={idPrefix+'-address-'+key}>{label}{['CALLE','PUERTA','LOCALIDAD'].includes(key)?' *':''}</label>
+            {key==='LOCALIDAD'?<select {...attrs('address-'+key)} name={'address-'+key} defaultValue={normalizeAddressPlace(initial?.address?.LOCALIDAD??'')}>
+              <option value="">Seleccioná la localidad</option>
+              {personalLocalities.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}
+            </select>:key==='DEPARTAMENTO'?<input {...attrs('address-'+key)} value="Paysandú" readOnly aria-readonly="true"/>:
+              <input {...attrs('address-'+key)} name={'address-'+key} maxLength={max} defaultValue={initial?.address?.[key]??''}/>}
+            {fieldErrors['address-'+key]&&<span className="field-error" id={idPrefix+'-address-'+key+'-error'}>{fieldErrors['address-'+key]}</span>}
+          </div>)}
+          </div>
+          {initial?.address && retiredAddressFields.some(k=>initial.address?.[k])&&<section className="legacy-address" aria-label="Datos de domicilio conservados">
+            <h4>Datos originales del domicilio · Solo lectura</h4>
+            <dl className="data-grid">{retiredAddressFields.filter(k=>initial.address?.[k]).map(k=><div key={k}><dt>{legacyAddressLabels[k]}</dt><dd>{initial.address?.[k]}</dd></div>)}</dl>
+            <p className="muted">Se conservan para trazabilidad. La numeración actual se informa en Puerta; no se convierte automáticamente el Número original.</p>
+          </section>}
+        </>}</OptionalDomicileSection>
       </fieldset>
       <fieldset disabled={blocked || busy}>
         <legend>Datos de la consulta</legend>
@@ -346,12 +362,7 @@ export function ConsultationForm({
     </form>
   );
 }
-const addressFields = [
-  ['CALLE','Calle',250],['NUMERO','Número',50],['BARRIO','Barrio',250],['LOCALIDAD','Localidad',250],
-  ['DEPARTAMENTO','Departamento',150],['CODIGO_POSTAL','Código postal',50],['PH','PH',50],['BLOCK','Block',50],
-  ['DEPTO','Apartamento',50],['PUERTA','Puerta',50],['DOMICILIO_COMPLETO','Domicilio completo',1000],
-  ['REFERENCIA','Referencia',150],['SECTOR','Sector',50],['MANZANA','Manzana',50],['LOTE','Lote',50],
-] as const;
+const legacyAddressLabels:Record<string,string>={NUMERO:'Número original',BARRIO:'Barrio original',PH:'PH original',DOMICILIO_COMPLETO:'Domicilio completo original',REFERENCIA:'Referencia original',SECTOR:'Sector original'};
 function Field({
   fieldKey,
   idPrefix,

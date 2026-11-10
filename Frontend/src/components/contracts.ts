@@ -1,4 +1,4 @@
-import type { InstitutionalPerson, InstitutionalRef } from "@backend/domain/institutional";
+import type { InstitutionalPerson, InstitutionalRef, SurveyInformation } from "@backend/domain/institutional";
 export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
   user: { id: string; username: string } | null;
@@ -20,7 +20,7 @@ export type Person = {
 };
 export type Contact = Person & { id: string };
 export type ParcelImage = {
-  provider?: 'sftp';
+  provider?: 'sftp' | 'filesystem';
   mediaType?: string;
   unavailableCode?:string;
   kind: "historical" | "survey";
@@ -29,7 +29,9 @@ export type ParcelImage = {
   metadata?: Record<string, string>;
   unavailableReason?: string;
 };
+export const isInstitutionalImage = (image: ParcelImage) => image.provider === 'sftp' || image.provider === 'filesystem';
 export type Parcel = ParcelRef & {
+  survey?: SurveyInformation;
   fields?: Record<string, string>;
   provenance?: string;
   originalLandArea?: number | null;

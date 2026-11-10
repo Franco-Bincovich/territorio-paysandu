@@ -1,11 +1,12 @@
+import {imageReference} from '../sftp-images/metrics';
 import { queryKeys } from "../filters";
 import { HttpError, required } from "../security";
 import { InstitutionalRepository } from "./repository";
-import type { SftpImages } from '../sftp-images/provider';
+import type { InstitutionalImages } from '../image-provider';
 import { imagePadCod, kindValue } from '../sftp-images/config';
 
 /** Invoked only AFTER the existing MariaDB session/role/password guard succeeds. */
-export function createInstitutionalHttp(repository = new InstitutionalRepository(),images?:SftpImages) {
+export function createInstitutionalHttp(repository = new InstitutionalRepository(),images?:InstitutionalImages) {
   return async (request: Request, segments: string[]): Promise<Response | null> => {
     const url = new URL(request.url);
     const result = (body: unknown) => Response.json(body, { headers: {
@@ -14,14 +15,14 @@ export function createInstitutionalHttp(repository = new InstitutionalRepository
       throw new HttpError(403, "WRITES_DISABLED", "El guardado de consultas todavía no está habilitado.");
     if(images && segments.join('/')==='parcel-images') {
       queryKeys(url.searchParams,['padCod']);
-      const ref=await repository.imageParcel(imagePadCod(url.searchParams.get('padCod')));
+      const ref=await imageReference(process.env.SFTP_IMAGES_METRICS==='true',()=>repository.imageParcel(imagePadCod(url.searchParams.get('padCod'))));
       return result({images:await images.catalogue(ref)});
     }
     if(images && segments.length===2 && segments[0]==='parcel-image') {
       kindValue(segments[1]);queryKeys(url.searchParams,['padCod','v']);
       if(url.searchParams.has('v')&&!/^[0-9a-f]{16}$/.test(url.searchParams.get('v')??''))throw new HttpError(400,'VALIDATION','Referencia inválida.');
-      const ref=await repository.imageParcel(imagePadCod(url.searchParams.get('padCod')));
-      return images.download(segments[1],ref);
+      const ref=await imageReference(process.env.SFTP_IMAGES_METRICS==='true',()=>repository.imageParcel(imagePadCod(url.searchParams.get('padCod'))));
+      return images.download(segments[1],ref,request.signal);
     }
     if (segments.join("/") === "search") {
       if (url.searchParams.has("kind")) {

@@ -1,5 +1,6 @@
 import { HttpError } from "../security";
 import { randomUUID } from "node:crypto";
+import { retiredAddressFields } from '../../domain/personal-address';
 import { addressLimits, authorize, checkEvidence, fingerprint, id, invalid, parseInput, type Actor, type Evidence, type Input, type Verify } from "./model";
 
 // Explicit injection only. No production pool import, route, feature flag or login changes.
@@ -147,6 +148,10 @@ export class ConsultationRepository {
       if(old.USUARIO_CREADOR_ID!==actor.userId)throw invalid("FORBIDDEN",403);
       if(Number(old.VERSION)!==expectedVersion)throw invalid("VERSION_CONFLICT",409);
       if(String(old.PADCOD)!==input.parcel.padCod || old.PADRON!==input.parcel.parcel || old.LOCALIDAD_PADRON!==input.parcel.locality)throw invalid("IMMUTABLE_PARCEL",409);
+      // Retired fields are read-only on the web. Preserve their exact original values
+      // when correcting an address; never reinterpret NUMERO as PUERTA.
+      const previous=typeof old.DOMICILIO_DECLARADO_JSON==='string'?JSON.parse(old.DOMICILIO_DECLARADO_JSON):old.DOMICILIO_DECLARADO_JSON;
+      if(input.address && previous)for(const key of retiredAddressFields)if(typeof previous[key]==='string')input.address[key]=previous[key];
       const contact=(await c.query("SELECT * FROM FB_CONTACTOS WHERE ID_PERSONA = ? FOR UPDATE",[personId]))[0];
       const row=this.values(input,evidence,personId,actor,Number(contact?.VERSION??0),current);
       const updated=await c.query(`UPDATE FB_CIU_CONSULTAS_WEB SET ${Object.keys(row).map(k=>`${k} = ?`).join(",")} WHERE ID_CONSULTA = ? AND VERSION = ? AND USUARIO_CREADOR_ID = ?`,[...Object.values(row),queryId,expectedVersion,actor.userId]);

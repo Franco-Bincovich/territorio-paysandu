@@ -37,10 +37,9 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, 
             {people.map(person => <li key={person.personId}>
               <button type="button" className="padron-card" onClick={() => void onChoosePerson?.(person.personId)}>
                 <span className="search-result-content"><strong>{person.name}</strong>
-                  <span>ID institucional de persona: {person.personId}</span>
                   <span>{person.documentType ?? "Tipo no informado"}: {person.document ?? "Documento no informado"}</span>
                   <span>{person.parcelCount} padrones vinculados</span>
-                </span><span aria-hidden="true">→</span>
+                </span><span className="search-result-open" aria-hidden="true">→</span>
               </button>
             </li>)}
           </ul>
@@ -63,7 +62,7 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, 
                 return (
                   <li key={group.key}>
                     <button type="button" className="padron-card" onClick={() => void onOpen(parcel)}>
-                      <span className="search-result-content">
+                      <span className={`search-result-content${parcel.matchedPeople?.length?' has-people':''}`}>
                         <span className="search-result-title">
                           <span className="search-result-label">Padrón</span>{" "}
                           <span className="search-result-value">{parcel.parcel}</span>
@@ -81,16 +80,15 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, 
                           </span>
                         </span>
                         {group.records.length > 1 && <span className="muted">{group.records.length} coincidencias para este padrón</span>}
-                        {parcel.padCod && <span className="muted">PadCod: {parcel.padCod}</span>}
-                        {parcel.matchedPeople?.map((person, index) => (
+                        {!!parcel.matchedPeople?.length && <span className="search-result-people">{parcel.matchedPeople.map((person, index) => (
                           <span className="search-result-details" key={`${person.personId ?? "unresolved"}-${index}`}>
                             <span>{person.name}</span>
                             {person.document && <span>{person.documentType ?? "Tipo sin informar"}: {person.document}</span>}
                             {person.links?.map((link, i) => <span key={`${link.conCod}-${i}`}>Vínculo: {link.relationship}</span>)}
                           </span>
-                        ))}
+                        ))}</span>}
                       </span>
-                      <span aria-hidden="true">→</span>
+                      <span className="search-result-open" aria-hidden="true">→</span>
                     </button>
                   </li>
                 );

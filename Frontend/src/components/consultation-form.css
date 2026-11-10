@@ -1,4 +1,18 @@
 /* Package 2: keep repeated fields usable when the phone-type placeholder is present. */
+.panel .consultation-form {
+  width: 100%;
+  max-width: 1100px;
+  margin: 24px auto 0;
+  min-width: 0;
+}
+.consultation-form .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.consultation-form .field { min-width: 0; }
+.consultation-form .personal-address-grid { align-items: start; }
+.consultation-form .legacy-address { min-width: 0; overflow-wrap: anywhere; }
+.consultation-form input[readonly] { background: var(--wash); }
+@media (max-width: 700px) {
+  .consultation-form .pair { grid-template-columns: minmax(0, 1fr); }
+}
 .consultation-form .repeat-field {
   flex-wrap: wrap;
 }

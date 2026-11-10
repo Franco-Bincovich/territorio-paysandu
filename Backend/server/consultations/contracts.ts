@@ -1,10 +1,12 @@
 import { id, invalid } from './model';
+import { retiredAddressFields } from '../../domain/personal-address';
 export const typeCodes:Record<string,string>={'General':'GENERAL','Reclamo':'RECLAMO','Falta de documentación':'FALTA_DOCUMENTACION','Declaracion voluntaria de metros':'DECLARACION_METROS'};
 export const typeLabels=Object.fromEntries(Object.entries(typeCodes).map(([a,b])=>[b,a]));
 const json=(v:any)=>typeof v==='string'?JSON.parse(v):v;
 export function webInput(body:Record<string,any>) {
   const allowed=['idempotencyKey','version','padCod','locality','parcel','person','type','description','address'];
   if(Object.keys(body).some(k=>!allowed.includes(k)))throw invalid();
+  if(body.address && typeof body.address==='object' && retiredAddressFields.some(k=>Object.hasOwn(body.address,k)))throw invalid();
   const p=body.person;
   if(!p || typeof p!=='object' || Array.isArray(p) || Object.keys(p).some(k=>!['name','documentType','document','relationship','phones','phoneTypes','emails','localPersonId'].includes(k)))throw invalid();
   if(!Array.isArray(p.phones)||!Array.isArray(p.phoneTypes)||p.phones.length!==p.phoneTypes.length)throw invalid();
