@@ -340,6 +340,7 @@ export function ImageViewer({ images:initialImages,padCod,imageCache }: { images
         </button>
       </div>
       <p className="meta">Fuente: {image.source}</p>
+      <p className="meta">Fecha de la imagen: {image.kind === "survey" ? "Actual" : Number.isInteger(image.historicalYear) && image.historicalYear! > 0 && image.historicalYear! <= 9999 ? image.historicalYear : "Sin datos"}</p>
       {image.kind === "survey" &&
       Object.keys(image.metadata ?? {}).length > 0 ? (
         <dl className="data-grid">

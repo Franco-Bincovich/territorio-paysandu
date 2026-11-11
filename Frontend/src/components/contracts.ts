@@ -26,6 +26,7 @@ export type ParcelImage = {
   kind: "historical" | "survey";
   url?: string | null;
   source: string;
+  historicalYear?: number;
   metadata?: Record<string, string>;
   unavailableReason?: string;
 };

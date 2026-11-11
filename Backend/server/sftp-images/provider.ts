@@ -72,7 +72,7 @@ export class SftpImages {
     try{return await this.reader.read(async(r,max)=>{
       const results=[];
       for(const kind of ['historical','survey'] as const){try{if(kind==='historical'&&historicalError)throw historicalError;const file=kind==='historical'?historical!:await this.reference(r,kind,ref);const {stat}=await r.file(file.directory,file.filename,max).catch(error=>{throw indexedFileError(kind,error);});const version=createHash('sha256').update(`${file.filename}:${stat.size}:${stat.mtime}`).digest('hex').slice(0,16);
-        results.push({kind,provider:this.provider,source:'Archivo institucional',mediaType:file.type,url:`/api/parcel-image/${kind}?padCod=${padCod}&v=${version}`});}
+        results.push({kind,provider:this.provider,source:'Archivo institucional',historicalYear:kind==='historical'?historical?.year:undefined,mediaType:file.type,url:`/api/parcel-image/${kind}?padCod=${padCod}&v=${version}`});}
         catch(error){results.push(unavailable(kind,error));}}
       return results;
     },'catalogue');}catch(error){return [unavailable('historical',historicalError??error),unavailable('survey',error)];}
