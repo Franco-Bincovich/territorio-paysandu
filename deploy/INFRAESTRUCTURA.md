@@ -1,4 +1,4 @@
-# Territorio Paysandú V1.0: operación institucional
+# Territorio Paysandú V1.3: operación institucional
 
 La entrega es una imagen Linux con frontend, backend y seguridad standalone. Se
 ejecuta un contenedor de aplicación, sin Redis. MariaDB propia, MariaDB institucional,
@@ -7,15 +7,15 @@ imagen validada; no necesita compilar ni instalar herramientas de desarrollo.
 
 ## Cargar y comprobar la entrega
 
-1. Verificar el SHA-256 del archivo `.tar` contra `SHA256SUMS.txt` recibido por el
-   canal de entrega aprobado: `sha256sum -c SHA256SUMS.txt`.
-2. Cargar esa imagen con `docker load -i territorio-paysandu-v1.0.tar`.
-3. Comparar `docker image inspect territorio-paysandu:v1.0-candidato --format '{{.Id}}'`
-   con el identificador registrado en `release.json`. Usar esa misma imagen;
+1. Verificar el SHA-256 del archivo `.tar` contra `territorio-paysandu-v1.3.0.tar.sha256` recibido por el
+   canal de entrega aprobado: `sha256sum -c territorio-paysandu-v1.3.0.tar.sha256`.
+2. Cargar esa imagen con `docker load -i territorio-paysandu-v1.3.0.tar`.
+3. Comparar `docker image inspect territorio-paysandu:1.3.0 --format '{{.Id}}'`
+   con el identificador registrado en `image-metadata-v1.3.0.json`. Usar esa misma imagen;
    recompilar produciría otro artefacto que requiere validación.
-4. La revisión candidata se identifica por el árbol Git staged y el manifiesto de
-   fuentes. El SHA base de HEAD no es el SHA de un commit nuevo. Después de autorizar
-   commit/push, hay que repetir la validación desde el commit remoto de `Docker`.
+4. La imagen V1.3 se construye desde el commit publicado identificado por el tag
+   `v1.3.0` en `feat/paysandu-administracion-expedientes`. Consultar
+   `RELEASE-V1.3.md` y el README de entrega para trazabilidad, instalación y reversión.
 
 ## Configuración externa y arranque
 
@@ -41,7 +41,7 @@ debe ser confiable y publicarse sin archivos parciales. Consultar `IMAGES.md` pa
 los controles de symlinks, submontajes, tamaños y límites.
 
 ```sh
-export APP_IMAGE=territorio-paysandu:v1.0-candidato
+export APP_IMAGE=territorio-paysandu:1.3.0
 export RUNTIME_ENV_FILE=/RUTA_PRIVADA/runtime.env
 export TLS_CA_DIRECTORY=/RUTA_REAL/ca-publicas
 export IMAGES_SURVEY_HOST_DIRECTORY=/RUTA_REAL/ACTUALES
@@ -61,6 +61,9 @@ No hay fallback automático. Cambiar variables o montajes requiere recrear el co
 `docker restart` conserva su configuración anterior.
 
 ## HTTPS y acceso
+
+Preparación de puerto 80 (sin despliegue): ver `nginx.conf.example` (guía de release: `RELEASE-V1.3.md`). El 80 redirige al HTTPS canónico; no sirve login
+por HTTP. Completar dominio, certificados válidos e include privado antes de `nginx -t`.
 
 El proxy HTTPS existente es el único punto de entrada. La aplicación publica
 `127.0.0.1:3000` y exige el origen configurado. El proxy debe quitar los encabezados

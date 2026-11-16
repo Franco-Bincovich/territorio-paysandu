@@ -24,11 +24,19 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \
     PORT=3000
-RUN groupadd --system --gid 1001 nextjs \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libreoffice-writer fonts-liberation fonts-dejavu-core util-linux python3 libseccomp2 poppler-utils \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 1001 nextjs \
     && useradd --system --uid 1001 --gid nextjs --no-create-home nextjs
 COPY --from=builder --chown=nextjs:nextjs /app/Frontend/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/Frontend/.next/static ./Frontend/.next/static
 COPY --from=builder --chown=nextjs:nextjs /app/Frontend/public ./Frontend/public
+COPY --chown=root:root Backend/server/expedientes/converter-sandbox.py /usr/local/lib/territorio/converter-sandbox.py
+ARG SOURCE_TREE=unrecorded
+ARG RELEASE_VERSION=1.3.0
+LABEL org.opencontainers.image.revision=$SOURCE_TREE \
+      org.opencontainers.image.version=$RELEASE_VERSION
 USER nextjs
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \

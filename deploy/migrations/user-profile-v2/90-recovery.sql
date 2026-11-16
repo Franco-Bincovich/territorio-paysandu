@@ -1,0 +1,8 @@
+-- STOP: DDL cannot be undone by ROLLBACK. No automated destructive rollback.
+-- Before reopen: restore the reviewed pre-migration backup in a separate database,
+-- compare identities, credentials, sessions and audit counts, then DBA-managed restore.
+-- After reopen/new accounts: do NOT reinstate username uniqueness or drop profiles.
+-- New and deleted accounts may share display names. Prefer forward repair preserving
+-- IDs and references. Restore requires reconciliation of every post-backup write.
+-- Remove a stranded migration procedure only after inspecting partial DDL:
+-- DROP PROCEDURE auxiliares.TP_PROFILE_V2_MIGRATE;

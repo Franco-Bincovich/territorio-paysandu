@@ -1,3 +1,5 @@
+import {usernameKey} from '../../../shared/user-profile';
+import { isRole } from '../authorization';
 import { createHash, randomUUID } from "node:crypto";
 import type { Pool, PoolConnection } from "mariadb";
 import { accountBucket, HttpError } from "../security";
@@ -7,11 +9,11 @@ import { mariaPool } from "./pool";
 type Row = Record<string, any>;
 const unavailable = () => new HttpError(503, "AUTH_UNAVAILABLE", "El acceso no está disponible temporalmente.");
 const userSelect = `SELECT u.USER_ID, u.USERNAME, u.ROLE, u.ENABLED,
-  u.MUST_CHANGE_PASSWORD, c.PASSWORD_HASH FROM FB_USUARIOS u
-  JOIN FB_USUARIOS_CREDENCIALES c ON c.USER_ID = u.USER_ID`;
+  u.MUST_CHANGE_PASSWORD, u.DELETED_AT, c.PASSWORD_HASH FROM FB_USUARIOS u
+  STRAIGHT_JOIN FB_USUARIOS_CREDENCIALES c ON c.USER_ID = u.USER_ID`;
 const userFrom = (row: Row): AuthUser => ({ id: row.USER_ID, username: row.USERNAME,
   role: row.ROLE, enabled: Number(row.ENABLED) === 1,
-  mustChangePassword: Number(row.MUST_CHANGE_PASSWORD) === 1, passwordHash: row.PASSWORD_HASH });
+  mustChangePassword: Number(row.MUST_CHANGE_PASSWORD) === 1, deletedAt: row.DELETED_AT == null ? null : String(row.DELETED_AT), passwordHash: row.PASSWORD_HASH });
 
 /** Real SQL adapter for the confirmed schema. No DDL, no Supabase access.
  * Named locks require a single MariaDB primary, not load-balanced connections
@@ -69,8 +71,8 @@ export class MariaAuthStore implements AuthStore {
   }
   async findUser(username: string) {
     return this.connection(async c => {
-      // Binary comparison avoids accent-insensitive aliases bypassing account limits.
-      const rows = await c.query(`${userSelect} WHERE BINARY u.USERNAME = BINARY ?`, [username]);
+      // Canonical UTF-8 key shares normalization with account quotas and administration.
+      const rows = await c.query(`${userSelect} WHERE u.USERNAME_KEY = ? AND u.DELETED_AT IS NULL`, [Buffer.from(usernameKey(username))]);
       return rows[0] ? userFrom(rows[0]) : null;
     });
   }
@@ -78,7 +80,7 @@ export class MariaAuthStore implements AuthStore {
     return this.transaction(async c => {
       const rows = await c.query(`${userSelect} WHERE u.USER_ID = ? FOR UPDATE`, [session.userId]);
       const user = rows[0] && userFrom(rows[0]);
-      if (!user || !user.enabled || user.role !== "collaborator" || user.passwordHash !== expectedHash) return false;
+      if (!user || !user.enabled || user.deletedAt != null || !isRole(user.role) || user.passwordHash !== expectedHash) return false;
       if (!attemptId) return false;
       const attempts = await c.query(`SELECT ID_INTENTO FROM FB_LOGIN_INTENTOS
         WHERE ID_INTENTO = ? AND IDENTIFICADOR_HASH = ? AND EXITOSO = 0
@@ -97,7 +99,7 @@ export class MariaAuthStore implements AuthStore {
   async sessionWithUser(hash: string) {
     return this.connection(async c => {
       const rows = await c.query(`SELECT u.USER_ID, u.USERNAME, u.ROLE, u.ENABLED,
-        u.MUST_CHANGE_PASSWORD, c.PASSWORD_HASH, s.TOKEN_HASH,
+        u.MUST_CHANGE_PASSWORD, u.DELETED_AT, c.PASSWORD_HASH, s.TOKEN_HASH,
         UNIX_TIMESTAMP(s.EXPIRES_AT) * 1000 AS expires_ms
         FROM FB_USUARIOS_SESIONES s JOIN FB_USUARIOS u ON u.USER_ID = s.USER_ID
         JOIN FB_USUARIOS_CREDENCIALES c ON c.USER_ID = u.USER_ID
@@ -105,7 +107,7 @@ export class MariaAuthStore implements AuthStore {
         AND s.LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6))`, [hash]);
       if (!rows.length) return null;
       const user = userFrom(rows[0]);
-      if (user.enabled && user.role === "collaborator") {
+      if (user.enabled && user.deletedAt == null && isRole(user.role)) {
         const result = await c.query(`UPDATE FB_USUARIOS_SESIONES SET LAST_ACTIVITY_AT = UTC_TIMESTAMP(6)
           WHERE TOKEN_HASH = ? AND REVOKED_AT IS NULL AND EXPIRES_AT > UTC_TIMESTAMP(6)
           AND LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6))`, [hash]);
@@ -126,7 +128,7 @@ export class MariaAuthStore implements AuthStore {
       // Consistent lock order: user+credential, then sessions. Serializes login/change.
       const rows = await c.query(`${userSelect} WHERE u.USER_ID = ? FOR UPDATE`, [owner[0].USER_ID]);
       const user = rows[0] && userFrom(rows[0]);
-      if (!user || !user.enabled || user.role !== "collaborator" || user.passwordHash !== expectedHash) return false;
+      if (!user || !user.enabled || user.deletedAt != null || !isRole(user.role) || user.passwordHash !== expectedHash) return false;
       const active = await c.query(`SELECT SESSION_ID FROM FB_USUARIOS_SESIONES
         WHERE TOKEN_HASH = ? AND REVOKED_AT IS NULL AND EXPIRES_AT > UTC_TIMESTAMP(6)
         AND LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6)) FOR UPDATE`, [hash]);
@@ -134,7 +136,7 @@ export class MariaAuthStore implements AuthStore {
       await c.query(`UPDATE FB_USUARIOS_CREDENCIALES SET PASSWORD_HASH = ?,
         PASSWORD_UPDATED_AT = UTC_TIMESTAMP(6) WHERE USER_ID = ?`, [nextHash, user.id]);
       await c.query(`UPDATE FB_USUARIOS SET MUST_CHANGE_PASSWORD = 0,
-        PASSWORD_CHANGED_AT = UTC_TIMESTAMP(6) WHERE USER_ID = ?`, [user.id]);
+        PASSWORD_CHANGED_AT = UTC_TIMESTAMP(6), ADMIN_REVISION = ADMIN_REVISION + 1 WHERE USER_ID = ?`, [user.id]);
       await c.query(`UPDATE FB_USUARIOS_SESIONES SET REVOKED_AT = UTC_TIMESTAMP(6)
         WHERE USER_ID = ? AND REVOKED_AT IS NULL`, [user.id]);
       return true;
@@ -146,10 +148,10 @@ export class MariaAuthStore implements AuthStore {
     const id = randomUUID();
     await this.transaction(async c => {
       await c.query(`INSERT INTO FB_USUARIOS
-        (USER_ID, USERNAME, ROLE, ENABLED, MUST_CHANGE_PASSWORD) VALUES (?, ?, 'collaborator', 1, 1)`, [id, user.username]);
+        (USER_ID, USERNAME, USERNAME_KEY, ROLE, ENABLED, MUST_CHANGE_PASSWORD) VALUES (?, ?, ?, 'atencion_publico', 1, 1)`, [id, user.username, Buffer.from(usernameKey(user.username))]);
       await c.query(`INSERT INTO FB_USUARIOS_CREDENCIALES
         (USER_ID, PASSWORD_HASH, CREATED_AT) VALUES (?, ?, UTC_TIMESTAMP(6))`, [id, user.passwordHash]);
     });
-    return { id, username: user.username, role: "collaborator" as const };
+    return { id, username: user.username, role: "atencion_publico" as const };
   }
 }

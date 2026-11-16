@@ -15,7 +15,7 @@ Thumbs.db
 
 # Local work, evidence and generated Next declarations (never delete locally).
 /Docs/
-/tests/
+/tests/*
 /Frontend/AGENTS.md
 /Frontend/next-env.d.ts
 *.zip
@@ -57,3 +57,111 @@ Thumbs.db
 /Backend/server/sftp-images/HISTORICAL-INDEX.md
 /Backend/server/rate-limiting/standalone/README.md
 /Backend/server/rate-limiting/standalone/sql/
+
+# Reproducible isolated tests for phases 2 and 3; legacy local QA stays ignored.
+!/tests/register-ts.cjs
+!/tests/phases23-integration.test.cjs
+!/tests/phases23-frontend.cjs
+!/tests/expedientes.cjs
+!/tests/admin.test.cjs
+!/tests/admin-consultations.test.cjs
+
+# Administrative MariaDB integration and portable role validation.
+!/tests/roles.test.cjs
+!/tests/migrations-static.test.cjs
+!/tests/admin-mariadb.test.cjs
+!/tests/admin-mariadb.integration.cjs
+!/tests/fixtures/
+/tests/fixtures/*
+!/tests/fixtures/admin-mariadb.sql
+!/scripts/test-admin-mariadb.cjs
+
+!/tests/mariadb-auth.test.cjs
+!/tests/mariadb-adapters.test.cjs
+
+!/tests/password-policy.test.cjs
+
+!/tests/qa-security.test.cjs
+!/tests/consultations-metadata.test.cjs
+
+!/scripts/dev.cjs
+!/tests/dev-launcher.test.cjs
+
+!/tests/ux-expedientes.test.cjs
+/qa/ux/.bundle*
+
+# Synthetic QA credentials and generated delivery artifacts never enter source control.
+/qa/**/.runtime/
+/delivery/
+!/tests/expedientes-institutional.test.cjs
+!/tests/docx-fixture.cjs
+!/tests/expedientes-conversion.test.cjs
+!/scripts/delivery-manifest.cjs
+!/scripts/package-docker-delivery.cjs
+!/scripts/package-delivery-source.cjs
+
+# Release 1.3: preserve maintained regression tests, not local browser recordings.
+!/tests/*.test.cjs
+!/tests/sftp-fixture.cjs
+!/Backend/server/sftp-images/historical-index.test.cjs
+!/Backend/server/rate-limiting/standalone/standalone.test.cjs
+
+# Reviewed SQL contracts needed for installation/recovery; never database dumps.
+!/Backend/sql/
+/Backend/sql/*
+!/Backend/sql/package-7.1/
+/Backend/sql/package-7.1/*
+!/Backend/sql/package-7.1/steps/
+!/Backend/sql/package-7.1/steps/*.sql
+!/Backend/sql/package-7.1/recovery/
+!/Backend/sql/package-7.1/recovery/*.sql
+!/Backend/sql/package-7.1/00-maintenance.sql
+!/Backend/sql/package-7.1/01-preflight.sql
+!/Backend/sql/package-7.1/1*.sql
+!/Backend/sql/package-7.1/20-TRG_FB_CONSULTA_CONTACTO_EDICION.sql
+!/Backend/sql/package-7.1/30-verify.sql
+!/Backend/sql/package-7.1/31-mark-reviewed.sql
+!/Backend/sql/package-7.1/32-release-maintenance.sql
+!/Backend/sql/package-7.1/33-final-verify.sql
+!/Backend/sql/package-7.1/baseline-triggers-restore.sql
+!/Backend/sql/package-7.1/README.md
+!/Backend/sql/package-7.1/ENTREGA.md
+!/Backend/server/rate-limiting/standalone/sql/
+!/Backend/server/rate-limiting/standalone/sql/*.sql
+
+# Keep only self-contained Docker regression harnesses from the local QA history.
+/qa/**
+!/qa/expedientes-qa-final/
+/qa/expedientes-qa-final/*
+!/qa/expedientes-qa-final/linux-tests.cjs
+!/qa/expedientes-qa-final/docker-conversion.cjs
+!/qa/expedientes-qa-final/negative-container.cjs
+/qa/**/.runtime/
+
+# Historical working reports remain local; current deployment docs/migrations stay.
+/deploy/ADMINISTRACION-MARIADB-INTEGRACION.md
+/deploy/ADMINISTRADOR-DISENO.md
+/deploy/CREDENCIALES-QA.md
+/deploy/ETAPA-1.md
+/deploy/FASES-2-3-IMPLEMENTACION.md
+/deploy/ROLES-EXPEDIENTES-ENTREGA.md
+/deploy/VALIDACION-ETAPA-1.md
+/deploy/mariadb-auth-inspect.sql
+
+# Exported images, conversion artifacts and backup dumps must never enter Git.
+*.tar
+*.tar.gz
+*.tgz
+*.sql.gz
+*.dump
+*.dmp
+tp-docx-*/
+
+# Current release installation entry point (historical local README was archived).
+!/README.md
+
+# Superseded one-off release packagers depend on local historical manifests.
+/scripts/delivery-manifest.cjs
+/scripts/package-delivery-source.cjs
+/scripts/package-docker-delivery.cjs
+/Backend/sql/package-7.1/ENTREGA.md

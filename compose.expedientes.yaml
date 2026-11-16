@@ -1,0 +1,13 @@
+# Optional local read-only documentary mount; omit this overlay until the host directory exists.
+services:
+  app:
+    environment:
+      EXPEDIENTES_PROVIDER: filesystem
+      EXPEDIENTES_DIRECTORY: /data/expedientes
+    volumes:
+      - type: bind
+        source: ${EXPEDIENTES_HOST_DIRECTORY:?Definir directorio documental aprobado}
+        target: /data/expedientes
+        read_only: true
+        bind:
+          create_host_path: false

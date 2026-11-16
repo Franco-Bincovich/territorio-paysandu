@@ -1,3 +1,4 @@
+import { requireEditConsultation, parseRole } from '../authorization';
 import { HttpError } from "../security";
 import { randomUUID } from "node:crypto";
 import { retiredAddressFields } from '../../domain/personal-address';
@@ -14,6 +15,16 @@ export type Receipt = { id:string; personId:string; padCod:string; version:numbe
 const unavailable=()=>new HttpError(503,"CONSULTATION_UNAVAILABLE","No se pudo guardar la consulta.");
 export class ConsultationRepository {
   constructor(private pool:Pool, private verify:Verify, private now=Date.now) {}
+  private async revalidate(c:Connection,actor:Actor):Promise<Actor> {
+    // HTTP supplies the hash derived by authentication. Recheck under the same
+    // transaction as the write so revocation cannot race past authorization.
+    if(!actor.sessionHash)throw invalid("UNAUTHENTICATED",401);
+    const users=await c.query("SELECT USER_ID, ROLE, ENABLED, MUST_CHANGE_PASSWORD FROM FB_USUARIOS WHERE USER_ID = ? FOR UPDATE",[actor.userId]);
+    const sessions=await c.query("SELECT TOKEN_HASH FROM FB_USUARIOS_SESIONES WHERE USER_ID = ? AND TOKEN_HASH = ? AND REVOKED_AT IS NULL AND EXPIRES_AT > UTC_TIMESTAMP(6) AND LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6)) FOR UPDATE",[actor.userId,actor.sessionHash]);
+    if(!users[0]||!sessions.length)throw invalid("UNAUTHENTICATED",401);
+    const current={...actor,role:parseRole(users[0].ROLE),enabled:Number(users[0].ENABLED)===1,mustChangePassword:Number(users[0].MUST_CHANGE_PASSWORD)===1};
+    authorize(current,this.now());return current;
+  }
   private async verification(input:Input) {
     try { const evidence=await this.verify(input); checkEvidence(input,evidence,this.now()); return evidence; }
     catch(error){if(error instanceof HttpError)throw error;throw unavailable();}
@@ -30,14 +41,15 @@ export class ConsultationRepository {
     }
   }
   private async transactionOnce<T>(operation:(c:Connection)=>Promise<T>):Promise<T> {
-    let c:Connection|undefined;
+    let c:Connection|undefined,committing=false;
     try {
       c=await this.pool.getConnection(); await c.query("SET time_zone = '+00:00'"); await c.beginTransaction();
       const installed=await c.query("SELECT REVISION FROM FB_MODELO_REVISION WHERE MODELO = ?",["consultas"]);
       if(installed[0]?.REVISION!=="7.1")throw unavailable();
-      const result=await operation(c); await c.commit(); return result;
+      const result=await operation(c); committing=true; await c.commit(); return result;
     } catch(error) {
-      if(c)try{await c.rollback();}catch{c.destroy();}
+      if(c)try{await c.rollback();}catch{c.destroy();throw unavailable();}
+      if(committing)throw unavailable();
       if(error instanceof HttpError)throw error;
       if((error as {errno?:number}).errno===1062)throw invalid("IDENTITY_CONFLICT",409);
       if([1020,1213,1205].includes((error as {errno?:number}).errno??0))throw invalid("RETRY_TRANSACTION",409);
@@ -100,7 +112,7 @@ export class ConsultationRepository {
     authorize(actor,this.now()); const input=parseInput(value);
     const evidence=await this.verification(input);
     return this.transaction(async c=>{
-      authorize(actor,this.now());
+      actor=await this.revalidate(c,actor);
       checkEvidence(input,evidence,this.now());
       const reservation=randomUUID();
       // Upsert takes an exclusive lock; duplicate INSERT + SELECT FOR UPDATE can
@@ -131,12 +143,12 @@ export class ConsultationRepository {
     if(!Number.isSafeInteger(expectedVersion)||expectedVersion<1)throw invalid();
     const input=parseInput(value), evidence=await this.verification(input);
     return this.transaction(async c=>{
-      authorize(actor,this.now());
+      actor=await this.revalidate(c,actor);
       checkEvidence(input,evidence,this.now());
       // Establish immutable owner first; lock order matches create: person -> query -> current records.
       const reference=(await c.query("SELECT ID_PERSONA, USUARIO_CREADOR_ID FROM FB_CIU_CONSULTAS_WEB WHERE ID_CONSULTA = ?",[queryId]))[0];
       if(!reference)throw invalid("NOT_FOUND",404);
-      if(reference.USUARIO_CREADOR_ID!==actor.userId)throw invalid("FORBIDDEN",403);
+      requireEditConsultation(actor,reference.USUARIO_CREADOR_ID,this.now());
       const lockedPerson=(await c.query("SELECT ID_PERSONA FROM FB_PERSONAS WHERE ID_PERSONA = ? FOR UPDATE",[String(reference.ID_PERSONA)]))[0];
       if(!lockedPerson)throw invalid("IDENTITY_CONFLICT",409);
       const latest=(await c.query("SELECT ID_CONSULTA FROM FB_CIU_CONSULTAS_WEB WHERE ID_PERSONA = ? ORDER BY ID_CONSULTA DESC LIMIT 1 FOR UPDATE",[String(reference.ID_PERSONA)]))[0];
@@ -145,7 +157,7 @@ export class ConsultationRepository {
       const personId=await this.person(c,editInput,evidence,current);
       if(personId!==String(reference.ID_PERSONA))throw invalid("IDENTITY_CONFLICT",409);
       const old=(await c.query("SELECT * FROM FB_CIU_CONSULTAS_WEB WHERE ID_CONSULTA = ? FOR UPDATE",[queryId]))[0];
-      if(old.USUARIO_CREADOR_ID!==actor.userId)throw invalid("FORBIDDEN",403);
+      requireEditConsultation(actor,old.USUARIO_CREADOR_ID,this.now());
       if(Number(old.VERSION)!==expectedVersion)throw invalid("VERSION_CONFLICT",409);
       if(String(old.PADCOD)!==input.parcel.padCod || old.PADRON!==input.parcel.parcel || old.LOCALIDAD_PADRON!==input.parcel.locality)throw invalid("IMMUTABLE_PARCEL",409);
       // Retired fields are read-only on the web. Preserve their exact original values
@@ -154,7 +166,7 @@ export class ConsultationRepository {
       if(input.address && previous)for(const key of retiredAddressFields)if(typeof previous[key]==='string')input.address[key]=previous[key];
       const contact=(await c.query("SELECT * FROM FB_CONTACTOS WHERE ID_PERSONA = ? FOR UPDATE",[personId]))[0];
       const row=this.values(input,evidence,personId,actor,Number(contact?.VERSION??0),current);
-      const updated=await c.query(`UPDATE FB_CIU_CONSULTAS_WEB SET ${Object.keys(row).map(k=>`${k} = ?`).join(",")} WHERE ID_CONSULTA = ? AND VERSION = ? AND USUARIO_CREADOR_ID = ?`,[...Object.values(row),queryId,expectedVersion,actor.userId]);
+      const updated=await c.query(`UPDATE FB_CIU_CONSULTAS_WEB SET ${Object.keys(row).map(k=>`${k} = ?`).join(",")} WHERE ID_CONSULTA = ? AND VERSION = ? AND USUARIO_CREADOR_ID = ?`,[...Object.values(row),queryId,expectedVersion,old.USUARIO_CREADOR_ID]);
       if(!updated.affectedRows)throw invalid("VERSION_CONFLICT",409);
       await c.query("UPDATE FB_VINCULOS_DECLARADOS SET ID_PERSONA_CP = ?, CONCOD = ?, REL_COD = ?, RELACION_DECLARADA = ?, VERIFICACION_CP_JSON = ? WHERE ID_CONSULTA = ? AND ID_PERSONA = ? AND PADCOD = ?",
         [evidence.personId??null,evidence.conCod??null,input.relationship.code,input.relationship.text,JSON.stringify(evidence),queryId,personId,input.parcel.padCod]);

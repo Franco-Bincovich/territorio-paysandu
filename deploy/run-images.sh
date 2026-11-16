@@ -12,7 +12,7 @@ set -- docker run -d --name territorio-paysandu --init --restart unless-stopped 
   --log-opt max-size=10m --log-opt max-file=3 \
   --env-file "$RUNTIME_ENV_FILE" -e SECURITY_RATE_LIMIT_PROVIDER=standalone \
   --mount "type=bind,src=$TLS_CA_DIRECTORY,dst=/run/territorio-ca,readonly" \
-  --tmpfs /tmp:rw,noexec,nosuid,size=64m,uid=1001,gid=1001,mode=0700 \
+  --tmpfs /tmp:rw,noexec,nosuid,size=256m,uid=1001,gid=1001,mode=0700 \
   --tmpfs /app/Frontend/.next/cache:rw,nosuid,size=128m,uid=1001,gid=1001,mode=0700
 case "$provider" in
   filesystem)
@@ -33,4 +33,8 @@ case "$provider" in
     ;;
   *) echo 'Expected provider: filesystem or sftp' >&2; exit 2 ;;
 esac
+if [ -n "${EXPEDIENTES_HOST_DIRECTORY:-}" ]; then
+  set -- "$@" -e EXPEDIENTES_PROVIDER=filesystem -e EXPEDIENTES_DIRECTORY=/data/expedientes \
+    --mount "type=bind,src=$EXPEDIENTES_HOST_DIRECTORY,dst=/data/expedientes,readonly"
+fi
 exec "$@" "$APP_IMAGE"

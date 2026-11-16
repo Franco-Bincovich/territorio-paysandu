@@ -1,12 +1,16 @@
 "use client";
+import {ExpedientesView} from "./expedientes-view";
 import "./consultation-history.css";
+import {PasswordField,PasswordRequirements} from "./password-fields";
+import {PASSWORD_MIN_LENGTH,passwordIssues,passwordPolicyMessage} from "../../../shared/password-policy";
+import { AdministrationView } from "./administration-view";
+import {hasCapability} from "../../../shared/permissions";
 import { CollaboratorMenu } from "./collaborator-menu";
 import { AuditSnapshot } from "./audit-snapshot";
 import {
   useCallback,
   useEffect,
   useRef,
-  useId,
   useState,
   type FormEvent,
 } from "react";
@@ -46,7 +50,7 @@ export function TerritoryApp() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   const [screen, setScreen] = useState<
-    "search" | "parcel" | "history" | "create" | "detail" | "settings"
+    "search" | "parcel" | "history" | "create" | "detail" | "settings" | "administration" | "expedientes"
   >("search");
   const [parcel, setParcel] = useState<Parcel | null>(null),
     [detail, setDetail] = useState<Consultation | null>(null),
@@ -302,7 +306,7 @@ export function TerritoryApp() {
             Para habilitar las funciones, reemplazá la contraseña inicial por
             una contraseña personal.
           </p>
-          <AuthForm changePassword onSuccess={loadSession} />
+          <AuthForm changePassword provider={session.user?.provider} onSuccess={loadSession} />
           <button className="btn" onClick={logout} disabled={loggingOut}>
             Cerrar sesión
           </button>
@@ -347,7 +351,7 @@ export function TerritoryApp() {
               navigate("search");
             }}
           >
-            ⌕ <span>Buscar padrón</span>
+            <svg className="module-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span>Buscar padrón</span>
           </button>
           <button
             className={screen === "history" ? "active" : ""}
@@ -355,8 +359,10 @@ export function TerritoryApp() {
               navigate("history");
             }}
           >
-            ☷ <span>Historial de consultas</span>
+            <svg className="module-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Historial de consultas</span>
           </button>
+        {hasCapability(session.user.role, "expedientes.read") && <button className={`module-nav-item${screen === "expedientes" ? " active" : ""}`} onClick={() => navigate("expedientes")}><svg className="module-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path d="M3 9h18"/></svg><span>Expedientes</span></button>}
+        {hasCapability(session.user.role, "users.manage") && <button className={`module-nav-item${screen === "administration" ? " active" : ""}`} onClick={() => navigate("administration")}><svg className="module-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3"/></svg><span>Administración</span></button>}
         </nav>
       </aside>
       <div className="main-wrap">
@@ -374,7 +380,7 @@ export function TerritoryApp() {
           <span className="crumb">
             Territorio <span>/</span>{" "}
             <b>
-              {screen === "settings"
+              {screen === "expedientes" ? "Expedientes" : screen === "administration" ? "Administración" : screen === "settings"
                 ? "Configuración"
                 : screen === "search"
                   ? "Búsqueda"
@@ -389,7 +395,7 @@ export function TerritoryApp() {
               Datos sintéticos
             </span>
           )}
-          <CollaboratorMenu key={screen} username={session.user.username} loggingOut={loggingOut} onLogout={logout} onSettings={() => navigate("settings")}/>
+          <CollaboratorMenu key={screen} username={session.user.username} role={session.user.role} loggingOut={loggingOut} onLogout={logout} onSettings={() => navigate("settings")}/>
         </header>
         <main id="main" className="content" tabIndex={-1}>
           {session.synthetic && (
@@ -400,12 +406,15 @@ export function TerritoryApp() {
           )}
           {error && <ErrorBox text={error} />}{" "}
           {busy && <p role="status">Cargando…</p>}
+          {screen === "expedientes" && hasCapability(session.user.role, "expedientes.read") && <section className="panel"><h1>Expedientes</h1><ExpedientesView role={session.user.role}/></section>}
+          {screen === "administration" && hasCapability(session.user.role, "users.manage") && <AdministrationView onRequiresLogin={() => clearSession("Los cambios requieren iniciar sesión nuevamente.")}/>}
           {screen === "settings" && (
             <section className="panel auth-card">
               <h1>Configuración</h1>
               <h2>Cambiar contraseña</h2>
               <AuthForm
                 changePassword
+                provider={session.user.provider}
                 onSuccess={loadSession}
                 disabled={loggingOut}
               />
@@ -489,7 +498,7 @@ export function TerritoryApp() {
                   address: "",
                 }}
                 initial={detail}
-                readOnly={detail.creatorUserId !== session.user.id}
+                readOnly={!(detail.canEdit ?? (session.user.provider !== "mariadb" && detail.creatorUserId === session.user.id))}
                 onSaved={setDetail}
               />
               {detail.isHistorical && <p className="notice">Esta consulta es histórica. Las correcciones se conservan en su presentación y no reemplazan los contactos ni el domicilio personal vigentes.</p>}
@@ -537,74 +546,21 @@ export function ErrorBox({ text }: { text: string }) {
     </p>
   );
 }
-function PasswordField({
-  label,
-  name,
-  minLength,
-  autoComplete,
-  disabled,
-}: {
-  label: string;
-  name: string;
-  minLength?: number;
-  autoComplete: string;
-  disabled: boolean;
-}) {
-  const id = useId();
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <div className="password-control">
-        <input
-          id={id}
-          name={name}
-          type={visible ? "text" : "password"}
-          minLength={minLength}
-          required
-          autoComplete={autoComplete}
-          disabled={disabled}
-          spellCheck={false}
-          autoCapitalize="none"
-        />
-        <button
-          type="button"
-          className="btn small"
-          aria-label={`${visible ? "Ocultar" : "Mostrar"} ${label.toLowerCase()}`}
-          aria-controls={id}
-          aria-pressed={visible}
-          disabled={disabled}
-          onClick={() => setVisible(!visible)}
-        >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
-            <circle cx="12" cy="12" r="3" />
-            {visible && <path d="m3 3 18 18" />}
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}
-function AuthForm({
+export function AuthForm({
   changePassword = false,
+  provider,
   onSuccess,
   disabled = false,
 }: {
   changePassword?: boolean;
+  provider?: string;
   onSuccess: () => Promise<void>;
   disabled?: boolean;
 }) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [password,setPassword]=useState(""),[confirmation,setConfirmation]=useState(""),[currentPassword,setCurrentPassword]=useState("");
+  const maria=provider==="mariadb";
   const requests = useRequestScope();
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -613,9 +569,9 @@ function AuthForm({
     const formElement = e.currentTarget;
     const f = new FormData(e.currentTarget);
     setError("");
-    if (changePassword && f.get("password") !== f.get("confirm")) {
-      setError("Las contraseñas no coinciden.");
-      return;
+    if(changePassword){
+      const issues=passwordIssues(password,confirmation,maria?currentPassword:undefined);
+      if(issues.length){setError(passwordPolicyMessage(issues[0]));return;}
     }
     setBusy(true);
     try {
@@ -624,12 +580,12 @@ function AuthForm({
         signal: operation.signal,
         body: JSON.stringify(
           changePassword
-            ? { password: f.get("password") }
+            ? (maria?{currentPassword,password,confirmPassword:confirmation}:{password})
             : { username: f.get("username"), password: f.get("password") },
         ),
       });
       if (!operation.isCurrent()) return;
-      formElement.reset();
+      formElement.reset();setPassword("");setConfirmation("");setCurrentPassword("");
       await onSuccess();
     } catch (e) {
       if (operation.isCurrent() && !isAbort(e)) setError(message(e));
@@ -651,25 +607,30 @@ function AuthForm({
           />
         </label>
       )}
+      {changePassword&&maria&&<PasswordField label="Contraseña actual" name="currentPassword" autoComplete="current-password" disabled={busy||disabled} value={currentPassword} onChange={setCurrentPassword}/>}
       <PasswordField
+        value={password} onChange={setPassword}
+        describedBy={changePassword?"password-requirements":undefined}
         label={changePassword ? "Nueva contraseña" : "Contraseña"}
         name="password"
-        minLength={changePassword ? 12 : undefined}
+        minLength={changePassword ? PASSWORD_MIN_LENGTH : undefined}
         autoComplete={changePassword ? "new-password" : "current-password"}
         disabled={busy || disabled}
       />
+      {changePassword&&<PasswordRequirements id="password-requirements" password={password} confirmation={confirmation} current={maria?currentPassword:undefined}/>}
       {changePassword && (
         <PasswordField
+          value={confirmation} onChange={setConfirmation}
           label="Repetir nueva contraseña"
-          name="confirm"
-          minLength={12}
+          name="confirmPassword"
+          minLength={PASSWORD_MIN_LENGTH}
           autoComplete="new-password"
           disabled={busy || disabled}
         />
       )}
       {changePassword && (
         <p className="muted">
-          Usá al menos 12 caracteres. No reutilices la contraseña inicial.
+          Al guardar, se cerrarán las sesiones anteriores y deberás volver a ingresar.
         </p>
       )}
       {error && <ErrorBox text={error} />}

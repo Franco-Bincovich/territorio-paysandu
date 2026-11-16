@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${APP_IMAGE:-territorio-paysandu:7.2}
+    image: ${APP_IMAGE:?Indique el tag versionado de la imagen entregada}
     build:
       context: .
       dockerfile: Dockerfile
@@ -15,7 +15,8 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: "3000"
       NEXT_TELEMETRY_DISABLED: "1"
-    # Only a same-host HTTPS reverse proxy should expose the application.
+    # Same-host HTTPS proxy: deploy/nginx.conf.example exposes 80 -> 443.
+    # Keep loopback binding; mapping public 80:3000 bypasses required TLS.
     ports:
       - "127.0.0.1:3000:3000"
     read_only: true
@@ -24,7 +25,7 @@ services:
     mem_limit: 1g
     pids_limit: 128
     tmpfs:
-      - /tmp:rw,noexec,nosuid,size=64m
+      - /tmp:rw,noexec,nosuid,size=256m
       - /app/Frontend/.next/cache:rw,nosuid,size=128m,uid=1001,gid=1001,mode=0700
     cap_drop:
       - ALL

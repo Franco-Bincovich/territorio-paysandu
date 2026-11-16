@@ -1,3 +1,4 @@
+import { canEditConsultation } from '../authorization';
 import type { Pool } from './repository';
 import { authorize, id, invalid, type Actor } from './model';
 import { historyFilters, queryKeys } from '../filters';
@@ -32,7 +33,7 @@ export class ConsultationReads {
       if(!rows.length)throw invalid('NOT_FOUND',404);
       const history=await c.query('SELECT h.VERSION,h.TIPO_OPERACION,h.USUARIO_MODIFICADOR_ID,h.FECHA_MODIFICACION,h.DATOS_ANTERIORES,h.DATOS_NUEVOS,u.USERNAME FROM FB_CONSULTAS_HISTORIAL h LEFT JOIN FB_USUARIOS u ON u.USER_ID=h.USUARIO_MODIFICADOR_ID WHERE h.ID_CONSULTA = ?'+(cursor?' AND h.VERSION < ?':'')+' ORDER BY h.VERSION DESC LIMIT ?',[queryId,...(cursor?[cursor]:[]),pageSize+1]);
       const page=history.slice(0,pageSize);
-      return {...view(rows[0]),isHistorical:!!Number(rows[0].IS_HISTORICAL),historyPagination:{pageSize,nextBeforeVersion:history.length>pageSize?String(page[page.length-1].VERSION):null},history:page.map((h:any)=>({version:Number(h.VERSION),operation:h.TIPO_OPERACION,by:h.USUARIO_MODIFICADOR_ID,byUsername:h.USERNAME??h.USUARIO_MODIFICADOR_ID,at:h.FECHA_MODIFICACION instanceof Date?h.FECHA_MODIFICACION.toISOString():String(h.FECHA_MODIFICACION),before:historySnapshot(h.DATOS_ANTERIORES),after:historySnapshot(h.DATOS_NUEVOS)}))};
+      return {...view(rows[0]),canEdit:canEditConsultation(actor,rows[0].USUARIO_CREADOR_ID),isHistorical:!!Number(rows[0].IS_HISTORICAL),historyPagination:{pageSize,nextBeforeVersion:history.length>pageSize?String(page[page.length-1].VERSION):null},history:page.map((h:any)=>({version:Number(h.VERSION),operation:h.TIPO_OPERACION,by:h.USUARIO_MODIFICADOR_ID,byUsername:h.USERNAME??h.USUARIO_MODIFICADOR_ID,at:h.FECHA_MODIFICACION instanceof Date?h.FECHA_MODIFICACION.toISOString():String(h.FECHA_MODIFICACION),before:historySnapshot(h.DATOS_ANTERIORES),after:historySnapshot(h.DATOS_NUEVOS)}))};
     } finally {try{await c.rollback();}finally{await c.release();}}
   }
   async list(query:URLSearchParams,actor:Actor) {
@@ -50,7 +51,7 @@ export class ConsultationReads {
       await c.query('START TRANSACTION READ ONLY');
       const count=await c.query('SELECT COUNT(*) AS n FROM FB_CIU_CONSULTAS_WEB q'+where,params);
       const rows=await c.query('SELECT q.*,u.USERNAME AS CREATOR_USERNAME FROM FB_CIU_CONSULTAS_WEB q LEFT JOIN FB_USUARIOS u ON u.USER_ID=q.USUARIO_CREADOR_ID'+where+' ORDER BY q.ID_CONSULTA DESC LIMIT ? OFFSET ?',[...params,f.pageSize,f.start]);
-      return {items:rows.map(view),total:Number(count[0].n),page:f.page,pageSize:f.pageSize};
+      return {items:rows.map((row:any)=>({...view(row),canEdit:canEditConsultation(actor,row.USUARIO_CREADOR_ID)})),total:Number(count[0].n),page:f.page,pageSize:f.pageSize};
     }finally{try{await c.rollback();}finally{await c.release();}}
   }
 }

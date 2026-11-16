@@ -1,15 +1,18 @@
 {
   "name": "territorio-paysandu",
-  "version": "0.1.0",
-  "description": "Territorio Paysandú v1 — desarrollo sintético, no liberado",
+  "version": "1.3.0",
+  "description": "Territorio Paysandú v1.3.0",
   "scripts": {
-    "dev": "next dev Frontend --hostname 127.0.0.1",
+    "test:phases23": "node --test tests/admin.test.cjs tests/admin-consultations.test.cjs tests/roles.test.cjs tests/expedientes.cjs tests/phases23-frontend.cjs tests/phases23-integration.test.cjs",
+    "dev": "node scripts/dev.cjs",
     "dev:mariadb": "node scripts/dev-mariadb.cjs",
     "consultations:check": "node scripts/check-consultations.cjs",
     "images:check": "node scripts/check-sftp-images.cjs",
     "build": "next build Frontend",
     "start": "next start Frontend --hostname 127.0.0.1",
-    "typecheck": "tsc --noEmit -p Frontend/tsconfig.json"
+    "typecheck": "tsc --noEmit -p Frontend/tsconfig.json",
+    "test:isolated": "node --test tests/*.test.cjs tests/expedientes.cjs tests/phases23-frontend.cjs",
+    "test:admin:mariadb": "node scripts/test-admin-mariadb.cjs"
   },
   "keywords": [],
   "author": "",

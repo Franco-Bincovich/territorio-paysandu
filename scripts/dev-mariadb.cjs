@@ -11,7 +11,7 @@ function configuration() {
   const env = { ...process.env };
   for (const key of ['AUTH_PROVIDER', 'MARIADB_AUTH_TEST_ENABLED', 'APP_ORIGIN', 'DATA_MODE',
     'MARIADB_HOST', 'MARIADB_PORT', 'MARIADB_DATABASE', 'MARIADB_USER', 'MARIADB_PASSWORD',
-    'MARIADB_TLS', 'MARIADB_TLS_CA_FILE', 'CONSULTATIONS_WRITE_ENABLED']) {
+    'MARIADB_TLS', 'MARIADB_TLS_CA_FILE', 'CONSULTATIONS_WRITE_ENABLED', 'ADMINISTRATION_ENABLED']) {
     if (Object.hasOwn(local, key)) env[key] = local[key];
   }
   const institutionalPath = path.join(root, 'Backend/server/institutional/.env.local');

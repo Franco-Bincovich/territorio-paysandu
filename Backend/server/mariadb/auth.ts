@@ -1,3 +1,6 @@
+import {usernameKey} from '../../../shared/user-profile';
+import {passwordIssues,passwordPolicyMessage,PASSWORD_MAX_LENGTH} from '../../../shared/password-policy';
+import { isRole, parseRole } from '../authorization';
 import { createHash, randomBytes } from "node:crypto";
 import * as argon2 from "argon2";
 import { accountBucket, HttpError, required } from "../security";
@@ -5,6 +8,8 @@ import { accountBucket, HttpError, required } from "../security";
 export type AuthUser = {
   id: string; username: string; enabled: boolean; role: string;
   passwordHash: string; mustChangePassword: boolean;
+  /** Optional until the administrative persistence adapter is integrated. */
+  deletedAt?: string | null;
 };
 export type Session = {
   tokenHash: string; userId: string; expiresAt: number; revoked: boolean;
@@ -42,16 +47,16 @@ export async function createMariaAuth(store: AuthStore, now = Date.now) {
     const found = await store.sessionWithUser(tokenHash(token));
     if (!found || found.session.revoked || found.session.expiresAt <= now() ||
       found.session.userId !== found.user.id) throw expired();
-    if (!found.user.enabled || found.user.role !== "collaborator")
+    if (!found.user.enabled || found.user.deletedAt != null || !isRole(found.user.role))
       throw new HttpError(403, "FORBIDDEN", "No tenés acceso a esta aplicación.");
     if (found.user.mustChangePassword && !allowPasswordChange)
       throw new HttpError(403, "PASSWORD_CHANGE_REQUIRED", "Cambiá tu contraseña para continuar.");
-    return { ...found.user, sessionExpiresAt: found.session.expiresAt };
+    return { ...found.user, role: parseRole(found.user.role), sessionHash: tokenHash(token), sessionExpiresAt: found.session.expiresAt };
   }
   return {
     identify,
     async login(username: string, password: string) {
-      username = required(username, 100).normalize("NFKC").trim().toLowerCase();
+      username = usernameKey(required(username, 100));
       required(password, 1024);
       const timestamp = now();
       const attempt = await store.reserveAttempt(accountBucket(username), timestamp, 5, 15 * 60_000);
@@ -60,22 +65,26 @@ export async function createMariaAuth(store: AuthStore, now = Date.now) {
       const user = await store.findUser(username);
       const candidate = user?.passwordHash.startsWith("$argon2id$") ? user.passwordHash : dummy;
       const valid = await argon2.verify(candidate, password);
-      if (!user || candidate === dummy || !valid || !user.enabled || user.role !== "collaborator") throw invalid();
+      if (!user || candidate === dummy || !valid || !user.enabled || user.deletedAt != null || !isRole(user.role)) throw invalid();
       const token = randomBytes(32).toString("base64url");
       const session: Session = { tokenHash: tokenHash(token), userId: user.id,
         expiresAt: timestamp + 8 * 60 * 60_000, revoked: false };
       if (!await store.issueSession(session, user.passwordHash, typeof attempt === "string" ? attempt : undefined)) throw invalid();
       return { token, expiresAt: session.expiresAt,
-        user: { id: user.id, username: user.username }, mustChangePassword: user.mustChangePassword };
+        user: { id: user.id, username: user.username, role: parseRole(user.role) }, mustChangePassword: user.mustChangePassword };
     },
     async logout(token: string | undefined) {
       if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) await store.revokeSession(tokenHash(token));
     },
-    async changePassword(token: string, password: string) {
+    async changePassword(token: string, currentPassword: string, password: string, confirmPassword: string) {
       const user = await identify(token, true);
-      required(password, 1024);
-      if (password.length < 12 || await argon2.verify(user.passwordHash, password))
-        throw new HttpError(400, "PASSWORD_WEAK", "Usá una contraseña nueva de al menos 12 caracteres.");
+      required(currentPassword, PASSWORD_MAX_LENGTH);
+      if(typeof password!=='string'||typeof confirmPassword!=='string')throw new HttpError(400,'VALIDATION','Completá la nueva contraseña y su confirmación.');
+      const issues=passwordIssues(password,confirmPassword,currentPassword);
+      if(issues.length)throw new HttpError(400,issues[0],passwordPolicyMessage(issues[0]));
+      if(!await store.reserveAttempt(accountBucket(user.username),now(),5,15*60_000))throw new HttpError(429,'RATE_LIMIT','Demasiados intentos. Esperá unos minutos.');
+      if(!await argon2.verify(user.passwordHash,currentPassword))throw new HttpError(400,'CURRENT_PASSWORD_INVALID','La contraseña actual no es correcta.');
+      if(await argon2.verify(user.passwordHash,password))throw new HttpError(400,'PASSWORD_UNCHANGED',passwordPolicyMessage('PASSWORD_UNCHANGED'));
       if (!await store.changePassword(tokenHash(token), user.passwordHash, await hashPassword(password), now())) throw expired();
       // Require a fresh login; no pre-change session survives.
     },

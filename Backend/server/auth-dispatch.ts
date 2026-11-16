@@ -2,6 +2,7 @@ import { handle as supabaseHandle } from "./handler";
 import { requestedAuthProvider } from "./mariadb/provider";
 import { authError } from "./mariadb/http";
 import { observeRequest,routeTemplate } from './observability';
+import { HttpError } from './security';
 
 let mariaHandler: Promise<ReturnType<typeof import("./mariadb/http").createMariaHttp>> | undefined;
 async function localHandler() {
@@ -20,7 +21,11 @@ async function localHandler() {
         const pool=mariaPool();
         return createConsultationHttp(new ConsultationRepository(pool,institutionalVerifier(institutionalRead)),new ConsultationReads(pool),()=>requireCompatibility(pool));
       })() : undefined;
-      return createMariaHttp(await createMariaAuth(new MariaAuthStore()), process.env.APP_ORIGIN ?? "http://127.0.0.1:3000", institutional, consultations);
+      const [{ configuredAdminHttp }, { configuredExpedientesHttp }] = await Promise.all([
+        import('./admin/http'), import('./expedientes/http'),
+      ]);
+      return createMariaHttp(await createMariaAuth(new MariaAuthStore()), process.env.APP_ORIGIN ?? "http://127.0.0.1:3000", institutional, consultations,
+        undefined, configuredAdminHttp(), configuredExpedientesHttp());
     })().catch(error => { mariaHandler = undefined; throw error; });
   }
   return mariaHandler;
@@ -33,5 +38,13 @@ export async function mariaResponse(request: Request, segments: string[]): Promi
   } catch (error) { return observeRequest(routeTemplate(segments),async()=>authError(error)); }
 }
 export async function dispatch(request: Request, segments: string[]) {
-  return await mariaResponse(request, segments) ?? supabaseHandle(request, segments);
+  const maria = await mariaResponse(request, segments);
+  if (maria) return maria;
+  // New capabilities have no legacy-provider adapter; never route a PadCod
+  // document request into the legacy locality/parcel resolver.
+  if (segments[0] === 'admin' || segments[0] === 'expedientes' ||
+    segments.length === 3 && segments[0] === 'parcels' && segments[2] === 'expedientes')
+    return observeRequest(routeTemplate(segments), async () => authError(
+      new HttpError(403, 'FORBIDDEN', 'Esta funcionalidad requiere el proveedor institucional habilitado.')));
+  return supabaseHandle(request, segments);
 }

@@ -1,0 +1,4 @@
+-- REVIEW ONLY. Stop standalone, switch configuration to redis and verify Redis
+-- before removing the table. Preserve rows for a reversible provider switch.
+-- Destructive removal is optional and requires separate explicit approval:
+-- DROP TABLE auxiliares.FB_SECURITY_STANDALONE_V1;

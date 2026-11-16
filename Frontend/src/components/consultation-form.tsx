@@ -12,7 +12,7 @@ import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, MAX_CONTACT_ENTRIES, pe
 import { useRequestScope } from "./use-request-scope";
 import { OptionalDomicileSection } from "./optional-domicile-section";
 import { isAbort } from "./request-scope";
-import { request, type Consultation, type ParcelRef } from "./contracts";
+import { request, RequestError, type Consultation, type ParcelRef } from "./contracts";
 import {
   fieldLabel,
   formPersonalAddress,
@@ -47,6 +47,7 @@ export function ConsultationForm({
   const submitting = useRef(false);
   const sentPayload = useRef('');
   const [writeAvailable,setWriteAvailable] = useState(!parcel.padCod);
+  const [writeRejected,setWriteRejected] = useState(false);
   const [formValid,setFormValid] = useState(Boolean(initial) && !Object.keys(personalAddressErrors(initial?.address)).length);
   const maxContacts=parcel.padCod?5:MAX_CONTACT_ENTRIES;
   useEffect(() => {
@@ -57,7 +58,7 @@ export function ConsultationForm({
       .catch(()=>{if(!controller.signal.aborted)setWriteAvailable(false);});
     return ()=>controller.abort();
   },[parcel.padCod]);
-  const blocked=readOnly || !writeAvailable;
+  const blocked=readOnly || !writeAvailable || writeRejected;
   const idPrefix = useId();
   const [documentType, setDocumentType] = useState(initial?.person.documentType ?? "CI");
   const [phoneTypes, setPhoneTypes] = useState<string[]>(
@@ -153,6 +154,13 @@ export function ConsultationForm({
     } catch (e) {
       if (operation.isCurrent() && !isAbort(e)) {
         setError(e instanceof Error ? e.message : "No se pudo guardar.");
+        if (e instanceof RequestError && e.code === "VERSION_CONFLICT") {
+          setWriteRejected(true);
+          setError("La consulta cambió mientras la editabas. Conservá tus correcciones y volvé a abrirla desde el historial para revisar la versión actual.");
+        } else if (e instanceof RequestError && e.status === 403) {
+          setWriteRejected(true);
+          setError("No tenés autorización para guardar esta consulta. Volvé al historial o iniciá sesión nuevamente.");
+        }
         setValidationAttempt((n) => n + 1);
       }
     } finally {
@@ -345,7 +353,7 @@ export function ConsultationForm({
       )}
       {readOnly && (
         <p className="notice">
-          Solo el colaborador que creó esta consulta puede editarla.
+          No tenés permiso para editar esta consulta.
         </p>
       )}
       {notice && <p role="status">{notice}</p>}

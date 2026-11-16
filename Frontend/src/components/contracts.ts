@@ -1,7 +1,8 @@
+import type {Role} from '../../../shared/permissions';
 import type { InstitutionalPerson, InstitutionalRef, SurveyInformation } from "@backend/domain/institutional";
 export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
-  user: { id: string; username: string } | null;
+  user: { id: string; username: string; role?: Role; provider?: string } | null;
   mustChangePassword: boolean;
   synthetic: boolean;
   institutional?: boolean;
@@ -45,6 +46,7 @@ export type Parcel = ParcelRef & {
   institutionalPeople?: InstitutionalPerson[];
 };
 export type Consultation = {
+  canEdit?: boolean;
   padCod?: string;
   address?: Record<string,string> | null;
   creatorUsername?: string;
@@ -71,6 +73,7 @@ export class RequestError extends Error {
   constructor(
     message: string,
     public status: number,
+    public code?: string,
   ) {
     super(message);
   }
@@ -99,6 +102,7 @@ export async function request<T>(url: string, init?: RequestInit): Promise<T> {
         : data?.error?.message ||
             "No se pudo completar la operación. Intentá nuevamente.",
       response.status,
+      data?.error?.code,
     );
   return data as T;
 }

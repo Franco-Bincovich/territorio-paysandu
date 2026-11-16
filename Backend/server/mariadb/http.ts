@@ -4,6 +4,7 @@ import { routes, routeTemplate, observeRequest } from "../observability";
 import { requestLimits, LimitError, type RequestLimits } from '../request-limits';
 import { ImageAdmissionError } from '../image-admission';
 import { admittedImageResponse } from '../image-response';
+import { requireCapability } from '../authorization';
 
 type MariaAuth = Awaited<ReturnType<typeof createMariaAuth>>;
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
@@ -22,7 +23,9 @@ function tokenFrom(request: Request) {
 export function createMariaHttp(auth: MariaAuth, origin: string,
   institutional?: (request: Request, segments: string[]) => Promise<Response | null>,
   consultations?: (request: Request, segments: string[], actor: import('../consultations/model').Actor) => Promise<Response | null>,
-  limits:RequestLimits=requestLimits()) {
+  limits:RequestLimits=requestLimits(),
+  administration?: import('../admin/http').AdminHandler,
+  expedientes?: (request: Request, segments: string[], actor: import('../consultations/model').Actor) => Promise<Response | null>) {
   return async (request: Request, segments: string[]) => observeRequest(routeTemplate(segments),async()=>{
     let release=()=>{};
     try {
@@ -65,18 +68,37 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
         const changing=await auth.identify(token,true);
         await limits.user(changing.id,request,segments);
         const body = await jsonBody(request);
-        if (Object.keys(body).some(k => k !== "password"))
+        if (Object.keys(body).some(k => !["currentPassword","password","confirmPassword"].includes(k)))
           throw new HttpError(400, "VALIDATION", "Campo no permitido.");
-        await auth.changePassword(token ?? "", required(body.password, 1024));
+        await auth.changePassword(token ?? "", required(body.currentPassword, 1024), required(body.password, 1024), required(body.confirmPassword, 1024));
         return result({ ok: true, requiresLogin: true }, sessionCookie("", origin, 0));
       }
       const user = await auth.identify(token, path === "session");
       await limits.user(user.id,request,segments);
       const identity = { id: user.id, username: user.username, role: user.role, provider: "mariadb" };
       if (path === "session") return result({ user: identity, mustChangePassword: user.mustChangePassword, synthetic: !institutional, institutional: !!institutional });
+      const actor: import('../consultations/model').Actor = { verified: true, userId: user.id,
+        role: user.role, enabled: user.enabled, mustChangePassword: user.mustChangePassword,
+        expiresAt: user.sessionExpiresAt, sessionHash: user.sessionHash };
+      // Authorization precedes adapter availability and uses the authenticated
+      // session exclusively; request headers/body never supply the principal.
+      if (segments[0] === 'admin') {
+        try { requireCapability(actor, segments[1] === 'audit' ? 'audit.read' : 'users.manage'); }
+        catch(error) { await administration?.denied?.(request,segments,actor,error); throw error; }
+      }
+      if (segments[0] === 'expedientes') {
+        const capability = path === 'expedientes/generar' ? 'expedientes.generate'
+          : segments[2] === 'exportar' ? 'expedientes.export'
+          : segments[2] === 'descarga' ? 'expedientes.download' : 'expedientes.read';
+        requireCapability(actor, capability);
+      }
+      if (segments[0] === 'parcels' && segments[2] === 'expedientes') requireCapability(actor, 'expedientes.read');
+      for (const handler of [administration, expedientes]) {
+        const response = await handler?.(request, segments, actor);
+        if (response) return response;
+      }
       if (consultations) {
-        const response = await consultations(request, segments, { verified: true, userId: user.id,
-          role: 'collaborator', enabled: user.enabled, mustChangePassword: user.mustChangePassword, expiresAt: user.sessionExpiresAt });
+        const response = await consultations(request, segments, actor);
         if (response) return response;
       }
       if (institutional) {

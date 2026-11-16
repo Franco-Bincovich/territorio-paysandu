@@ -26,3 +26,6 @@ Backend/server/mariadb/test-user.ts
 **/*.p12
 **/known_hosts
 **/*.pdf
+
+!shared/
+!shared/**
