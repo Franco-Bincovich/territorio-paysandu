@@ -9,6 +9,7 @@ import {
   useId,
   useState,
   type FormEvent,
+  type RefObject,
 } from "react";
 import { ConsultationForm } from "./consultation-form";
 import {ParcelImageCache,parcelImageIdentity} from './parcel-image-cache';
@@ -53,6 +54,7 @@ export function TerritoryApp() {
     [busy, setBusy] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationToggle = useRef<HTMLButtonElement>(null);
+  const topbarRef = useRef<HTMLElement>(null);
   const [notice, setNotice] = useState("");
   useEffect(() => {
     if (navigationOpen)
@@ -360,7 +362,7 @@ export function TerritoryApp() {
         </nav>
       </aside>
       <div className="main-wrap">
-        <header className="topbar">
+        <header className="topbar" ref={topbarRef}>
           <button
             ref={navigationToggle}
             type="button"
@@ -411,7 +413,7 @@ export function TerritoryApp() {
               />
             </section>
           )}
-          {screen === "search" && <SearchView onOpen={openParcel} institutional={session.institutional} />}{" "}
+          {screen === "search" && <SearchView onOpen={openParcel} institutional={session.institutional} topbarRef={topbarRef} />}{" "}
           {screen === "parcel" && parcel && (
             <ParcelView
               key={parcel.padCod ?? `${parcel.locality}/${parcel.parcel}`}
@@ -683,7 +685,11 @@ function AuthForm({
     </form>
   );
 }
-function SearchView({ onOpen, institutional }: { onOpen: (p: ParcelRef) => Promise<void>; institutional?: boolean }) {
+function SearchView({ onOpen, institutional, topbarRef }: {
+  onOpen: (p: ParcelRef) => Promise<void>;
+  institutional?: boolean;
+  topbarRef: RefObject<HTMLElement | null>;
+}) {
   const [people, setPeople] = useState<import("./contracts").PersonCandidate[]>([]);
   const [ambiguity, setAmbiguity] = useState(false);
   const [unidentified, setUnidentified] = useState(0);
@@ -695,10 +701,25 @@ function SearchView({ onOpen, institutional }: { onOpen: (p: ParcelRef) => Promi
   const [classificationNoticeOpen, setClassificationNoticeOpen] = useState(false);
   const [nameSearch, setNameSearch] = useState(false);
   const searchSubmitter = useRef<HTMLElement | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const pendingResultScroll = useRef<(() => boolean) | null>(null);
+  useEffect(() => {
+    const heading = headingRef.current;
+    if (busy || error || classificationNoticeOpen || !results?.length || !heading || !pendingResultScroll.current?.()) return;
+
+    pendingResultScroll.current = null;
+    const headerHeight = topbarRef.current?.getBoundingClientRect().height ?? 0;
+    const top = window.scrollY + heading.getBoundingClientRect().top - headerHeight - 12;
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+    });
+  }, [busy, classificationNoticeOpen, error, results, topbarRef]);
   async function search(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const submitter = (e.nativeEvent as SubmitEvent).submitter;
     const operation = requests.begin();
+    pendingResultScroll.current = null;
     setBusy(true);
     setError("");
     setResults(null);
@@ -710,6 +731,7 @@ function SearchView({ onOpen, institutional }: { onOpen: (p: ParcelRef) => Promi
     );
     setNameSearch(query.get("kind") === "name");
     lastPersonQuery.current = query.has("kind") ? new URLSearchParams(query) : null;
+    const parcelSearch = query.has("locality") && query.has("parcel") && !query.has("kind");
     try {
       const result = await request<{ results: ParcelSearchResult[]; people?: import("./contracts").PersonCandidate[];
         requiresDisambiguation?: boolean; unidentifiedMatches?: number }>(
@@ -720,7 +742,10 @@ function SearchView({ onOpen, institutional }: { onOpen: (p: ParcelRef) => Promi
         setResults(result.results);
         setPeople(result.people ?? []); setAmbiguity(result.requiresDisambiguation ?? false);
         setUnidentified(result.unidentifiedMatches ?? 0);
-        if (!query.has("kind") && result.results.some((record) => requiresClassificationNotice(record.classification))) {
+        if (parcelSearch && result.results.length && !result.requiresDisambiguation) {
+          pendingResultScroll.current = operation.isCurrent;
+        }
+        if (parcelSearch && result.results.some((record) => requiresClassificationNotice(record.classification))) {
           searchSubmitter.current = submitter instanceof HTMLElement ? submitter : null;
           setClassificationNoticeOpen(true);
         }
@@ -841,7 +866,7 @@ function SearchView({ onOpen, institutional }: { onOpen: (p: ParcelRef) => Promi
       </div>
       <ParcelClassificationNotice open={classificationNoticeOpen}
         onDismiss={() => setClassificationNoticeOpen(false)} returnFocus={searchSubmitter.current} />
-      <ParcelSearchResults results={results} busy={busy} error={error}
+      <ParcelSearchResults results={results} busy={busy} error={error} headingRef={headingRef}
         nameSearch={nameSearch} onOpen={onOpen} people={people}
         requiresDisambiguation={ambiguity} unidentifiedMatches={unidentified} onChoosePerson={choosePerson} />
     </>

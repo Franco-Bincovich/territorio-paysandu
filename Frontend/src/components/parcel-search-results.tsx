@@ -1,16 +1,17 @@
 "use client";
-import { useId, useMemo } from "react";
+import { useId, useMemo, type RefObject } from "react";
 import type { ParcelRef, PersonCandidate } from "./contracts";
 import { groupParcelResults } from "./parcel-result-groups";
 import "./package-4-visual.css";
 
-export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, people = [],
+export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, headingRef, people = [],
   requiresDisambiguation = false, unidentifiedMatches = 0, onChoosePerson }: {
   results: readonly ParcelRef[] | null;
   busy: boolean;
   error: string;
   nameSearch: boolean;
   onOpen: (parcel: ParcelRef) => Promise<void>;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
   people?: readonly PersonCandidate[];
   requiresDisambiguation?: boolean;
   unidentifiedMatches?: number;
@@ -21,7 +22,7 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, 
   if (!busy && !error && results === null) return null;
   return (
     <section className="panel results search-results" aria-labelledby={headingId}>
-      <h2 id={headingId}>Resultados de búsqueda</h2>
+      <h2 id={headingId} ref={headingRef}>Resultados de búsqueda</h2>
       {busy ? (
         <p role="status" className="search-results-status">Buscando…</p>
       ) : error ? (

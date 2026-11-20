@@ -26,7 +26,7 @@ export function ParcelClassificationNotice({ open, onDismiss, returnFocus }: {
       }}
       onClose={() => {
         onDismiss();
-        if (returnFocus?.isConnected) returnFocus.focus();
+        if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
       }}>
       <h2 id={titleId}>Información del padrón</h2>
       <p id={messageId}>Este tipo de padrón aún no ha sido relevado.</p>
