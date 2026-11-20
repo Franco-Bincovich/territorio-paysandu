@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { HistoryView, type HistoryReturnState } from "./territory-app";
 import { isInstitutionalImage, type Parcel, type ParcelImage } from "./contracts";
 import { SurveyCard } from "./survey-card";
@@ -265,10 +265,39 @@ export function ImageViewer({ images:initialImages,padCod,imageCache }: { images
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const stage = useRef<HTMLDivElement>(null);
+  const mousePan = useRef<{ id: number; x: number; y: number } | null>(null);
   const ownCache=useParcelImageCache(JSON.stringify([padCod]));
   const cache=imageCache??ownCache;
   const images=useSftpCatalogue(initialImages,padCod,retry,cache);
+  function stopPan(pointerId = mousePan.current?.id) {
+    if (!mousePan.current || mousePan.current.id !== pointerId) return;
+    mousePan.current = null;
+    const viewport = stage.current;
+    if (pointerId !== undefined && viewport?.hasPointerCapture(pointerId)) {
+      viewport.releasePointerCapture(pointerId);
+    }
+  }
+  function startPan(event: PointerEvent<HTMLImageElement>) {
+    const viewport = stage.current;
+    if (!viewport || zoom <= 1 || event.pointerType !== "mouse" || event.button !== 0) return;
+    event.preventDefault();
+    viewport.focus({ preventScroll: true });
+    viewport.setPointerCapture(event.pointerId);
+    mousePan.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  }
+  function movePan(event: PointerEvent<HTMLDivElement>) {
+    const pan = mousePan.current;
+    if (pan?.id !== event.pointerId) return;
+    if ((event.buttons & 1) === 0) {
+      stopPan(event.pointerId);
+      return;
+    }
+    event.currentTarget.scrollBy(pan.x - event.clientX, pan.y - event.clientY);
+    pan.x = event.clientX;
+    pan.y = event.clientY;
+  }
   function resetView() {
+    stopPan();
     setZoom(1);
     stage.current?.scrollTo(0, 0);
   }
@@ -369,6 +398,7 @@ export function ImageViewer({ images:initialImages,padCod,imageCache }: { images
         ref={dialog}
         className="viewer-dialog"
         onClose={() => {
+          stopPan();
           if (opener.current && !opener.current.disabled)
             opener.current.focus();
           else document.getElementById("main")?.focus();
@@ -385,6 +415,11 @@ export function ImageViewer({ images:initialImages,padCod,imageCache }: { images
         <div
           ref={stage}
           className="viewer-stage"
+          style={available && !pdf ? { overscrollBehavior: "contain" } : undefined}
+          onPointerMove={movePan}
+          onPointerUp={(event) => stopPan(event.pointerId)}
+          onPointerCancel={(event) => stopPan(event.pointerId)}
+          onLostPointerCapture={(event) => stopPan(event.pointerId)}
           tabIndex={0}
           role="region"
           aria-label="Imagen ampliada; usá las flechas para desplazar"
@@ -395,7 +430,14 @@ export function ImageViewer({ images:initialImages,padCod,imageCache }: { images
                 key={`${mediaUrl}-${retry}`}
                 src={mediaUrl ?? undefined}
                 alt={title}
-                onError={() => {cache.invalidate(image.kind,mediaUrl??undefined);setFailed(mediaUrl ?? "");}}
+                draggable={false}
+                style={zoom > 1 ? { cursor: "grab" } : undefined}
+                onPointerDown={startPan}
+                onError={() => {
+                  stopPan();
+                  cache.invalidate(image.kind, mediaUrl ?? undefined);
+                  setFailed(mediaUrl ?? "");
+                }}
               />
             </div>
           ) : (
@@ -408,7 +450,10 @@ export function ImageViewer({ images:initialImages,padCod,imageCache }: { images
           </button>
           <button
             className="btn"
-            onClick={() => setZoom((z) => Math.max(1, z - 0.25))}
+            onClick={() => {
+              if (zoom === 1.25 && !pdf) resetView();
+              else setZoom((z) => Math.max(1, z - 0.25));
+            }}
             disabled={zoom <= 1}
             aria-label="Alejar"
           >
