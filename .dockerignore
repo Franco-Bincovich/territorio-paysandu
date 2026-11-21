@@ -13,6 +13,8 @@
 !Frontend/public/**
 !Frontend/next.config.ts
 !Frontend/tsconfig.json
+!shared/
+!shared/**
 Frontend/.next
 **/node_modules
 **/.env*

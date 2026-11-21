@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { usernameKey } from "../../shared/user-profile";
 
 export class HttpError extends Error {
   constructor(
@@ -18,7 +19,7 @@ export function checkOrigin(request: Request, appOrigin: string) {
 }
 export function accountBucket(username: string) {
   return createHash("sha256")
-    .update(username.normalize("NFKC").trim().toLowerCase())
+    .update(usernameKey(username))
     .digest("hex");
 }
 export async function jsonBody(

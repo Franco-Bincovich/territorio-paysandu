@@ -48,6 +48,7 @@ export function TerritoryApp() {
   const [session, setSession] = useState<Session | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
+  const canAccessConsultations = (session?.user?.role ?? "collaborator") === "collaborator";
   const [screen, setScreen] = useState<
     "search" | "parcel" | "history" | "create" | "detail" | "settings" | "notificationLots"
   >("search");
@@ -217,7 +218,7 @@ export function TerritoryApp() {
       const checkConsultations = () =>
         request<{ read: boolean; write: boolean }>("/api/consultations/capabilities", { signal: operation.signal })
           .catch(() => ({ read: false, write: false }));
-      const capability = session?.institutional ? checkConsultations() : undefined;
+      const capability = session?.institutional && canAccessConsultations ? checkConsultations() : undefined;
       const result = await record;
       if (!operation.isCurrent()){images?.dispose();return;}
       const institutional = result.source === "institutional";
@@ -226,11 +227,11 @@ export function TerritoryApp() {
         parcelHistoryReturn.current = null;
         window.scrollTo({ top: 0, behavior: "instant" });
       }
-      setCheckingParcelConsultations(institutional);
+      setCheckingParcelConsultations(institutional && canAccessConsultations);
       setParcel(institutional ? { ...result, consultationsRead: false, readOnly: true } : result);
       setParcelTab(tab);
       setScreen("parcel");
-      if (institutional) {
+      if (institutional && canAccessConsultations) {
         void (capability ?? checkConsultations()).then(({ read, write }) => {
           if (!operation.isCurrent()) return;
           setParcel({ ...result, consultationsRead: read, readOnly: !write });
@@ -391,14 +392,14 @@ export function TerritoryApp() {
           >
             ⌕ <span>Buscar padrón</span>
           </button>
-          <button
-            className={screen === "history" ? "active" : ""}
-            onClick={() => {
-              navigate("history");
-            }}
-          >
-            ☷ <span>Historial de consultas</span>
-          </button>
+          {canAccessConsultations && (
+            <button
+              className={screen === "history" ? "active" : ""}
+              onClick={() => navigate("history")}
+            >
+              ☷ <span>Historial de consultas</span>
+            </button>
+          )}
           {session.notificationLots?.consult && (
             <button
               className={screen === "notificationLots" ? "active" : ""}
@@ -441,7 +442,7 @@ export function TerritoryApp() {
               Datos sintéticos
             </span>
           )}
-          <CollaboratorMenu key={screen} username={session.user.username} loggingOut={loggingOut} onLogout={logout} onSettings={() => navigate("settings")}/>
+          <CollaboratorMenu key={screen} username={session.user.username} role={session.user.role} loggingOut={loggingOut} onLogout={logout} onSettings={() => navigate("settings")}/>
         </header>
         <main id="main" className="content" tabIndex={-1}>
           {session.synthetic && (
@@ -485,7 +486,7 @@ export function TerritoryApp() {
               onBack={() => navigate("search")}
             />
           )}{" "}
-          {screen === "history" && (
+          {screen === "history" && canAccessConsultations && (
             <HistoryView
               onDetail={openDetail}
               returnState={
@@ -495,7 +496,7 @@ export function TerritoryApp() {
               onRestored={finishHistoryRestore}
             />
           )}{" "}
-          {screen === "create" && parcel && (
+          {screen === "create" && parcel && canAccessConsultations && (
             <section className="panel">
               <button className="back" onClick={() => navigate("parcel")}>
                 ← Volver a la ficha
@@ -515,7 +516,7 @@ export function TerritoryApp() {
               />
             </section>
           )}{" "}
-          {screen === "detail" && detail && (
+          {screen === "detail" && detail && canAccessConsultations && (
             <section className="panel consultation-detail">
               <button
                 className="back"

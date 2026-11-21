@@ -3,6 +3,8 @@ import type { Pool, PoolConnection } from "mariadb";
 import { accountBucket, HttpError } from "../security";
 import type { AuthStore, AuthUser, Session } from "./auth";
 import { mariaPool } from "./pool";
+import { isRole } from "../../../shared/permissions";
+import { usernameKey } from "../../../shared/user-profile";
 
 type Row = Record<string, any>;
 const unavailable = () => new HttpError(503, "AUTH_UNAVAILABLE", "El acceso no está disponible temporalmente.");
@@ -69,16 +71,18 @@ export class MariaAuthStore implements AuthStore {
   }
   async findUser(username: string) {
     return this.connection(async c => {
-      // Binary comparison avoids accent-insensitive aliases bypassing account limits.
-      const rows = await c.query(`${userSelect} WHERE BINARY u.USERNAME = BINARY ?`, [username]);
-      return rows[0] ? userFrom(rows[0]) : null;
+      const key = usernameKey(username);
+      const rows = await c.query(`${userSelect} WHERE u.USERNAME_KEY = ? AND u.DELETED_AT IS NULL LIMIT 2`,
+        [Buffer.from(key)]);
+      if (rows.length !== 1 || usernameKey(rows[0].USERNAME) !== key) return null;
+      return userFrom(rows[0]);
     });
   }
   async issueSession(session: Session, expectedHash: string, attemptId?: string) {
     return this.transaction(async c => {
-      const rows = await c.query(`${userSelect} WHERE u.USER_ID = ? FOR UPDATE`, [session.userId]);
+      const rows = await c.query(`${userSelect} WHERE u.USER_ID = ? AND u.DELETED_AT IS NULL FOR UPDATE`, [session.userId]);
       const user = rows[0] && userFrom(rows[0]);
-      if (!user || !user.enabled || user.role !== "collaborator" || user.passwordHash !== expectedHash) return false;
+      if (!user || !user.enabled || !isRole(user.role) || user.passwordHash !== expectedHash) return false;
       if (!attemptId) return false;
       const attempts = await c.query(`SELECT ID_INTENTO FROM FB_LOGIN_INTENTOS
         WHERE ID_INTENTO = ? AND IDENTIFICADOR_HASH = ? AND EXITOSO = 0
@@ -101,11 +105,11 @@ export class MariaAuthStore implements AuthStore {
         UNIX_TIMESTAMP(s.EXPIRES_AT) * 1000 AS expires_ms
         FROM FB_USUARIOS_SESIONES s JOIN FB_USUARIOS u ON u.USER_ID = s.USER_ID
         JOIN FB_USUARIOS_CREDENCIALES c ON c.USER_ID = u.USER_ID
-        WHERE s.TOKEN_HASH = ? AND s.REVOKED_AT IS NULL AND s.EXPIRES_AT > UTC_TIMESTAMP(6)
+        WHERE s.TOKEN_HASH = ? AND u.DELETED_AT IS NULL AND s.REVOKED_AT IS NULL AND s.EXPIRES_AT > UTC_TIMESTAMP(6)
         AND s.LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6))`, [hash]);
       if (!rows.length) return null;
       const user = userFrom(rows[0]);
-      if (user.enabled && user.role === "collaborator") {
+      if (user.enabled && isRole(user.role)) {
         const result = await c.query(`UPDATE FB_USUARIOS_SESIONES SET LAST_ACTIVITY_AT = UTC_TIMESTAMP(6)
           WHERE TOKEN_HASH = ? AND REVOKED_AT IS NULL AND EXPIRES_AT > UTC_TIMESTAMP(6)
           AND LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6))`, [hash]);
@@ -124,9 +128,9 @@ export class MariaAuthStore implements AuthStore {
       const owner = await c.query("SELECT USER_ID FROM FB_USUARIOS_SESIONES WHERE TOKEN_HASH = ?", [hash]);
       if (!owner.length) return false;
       // Consistent lock order: user+credential, then sessions. Serializes login/change.
-      const rows = await c.query(`${userSelect} WHERE u.USER_ID = ? FOR UPDATE`, [owner[0].USER_ID]);
+      const rows = await c.query(`${userSelect} WHERE u.USER_ID = ? AND u.DELETED_AT IS NULL FOR UPDATE`, [owner[0].USER_ID]);
       const user = rows[0] && userFrom(rows[0]);
-      if (!user || !user.enabled || user.role !== "collaborator" || user.passwordHash !== expectedHash) return false;
+      if (!user || !user.enabled || !isRole(user.role) || user.passwordHash !== expectedHash) return false;
       const active = await c.query(`SELECT SESSION_ID FROM FB_USUARIOS_SESIONES
         WHERE TOKEN_HASH = ? AND REVOKED_AT IS NULL AND EXPIRES_AT > UTC_TIMESTAMP(6)
         AND LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6)) FOR UPDATE`, [hash]);
@@ -146,7 +150,8 @@ export class MariaAuthStore implements AuthStore {
     const id = randomUUID();
     await this.transaction(async c => {
       await c.query(`INSERT INTO FB_USUARIOS
-        (USER_ID, USERNAME, ROLE, ENABLED, MUST_CHANGE_PASSWORD) VALUES (?, ?, 'collaborator', 1, 1)`, [id, user.username]);
+        (USER_ID, USERNAME, USERNAME_KEY, ROLE, ENABLED, MUST_CHANGE_PASSWORD)
+        VALUES (?, ?, ?, 'collaborator', 1, 1)`, [id, user.username, Buffer.from(usernameKey(user.username))]);
       await c.query(`INSERT INTO FB_USUARIOS_CREDENCIALES
         (USER_ID, PASSWORD_HASH, CREATED_AT) VALUES (?, ?, UTC_TIMESTAMP(6))`, [id, user.passwordHash]);
     });

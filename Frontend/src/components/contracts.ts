@@ -1,8 +1,9 @@
 import type { InstitutionalParcel, InstitutionalPerson, InstitutionalRef, SurveyInformation } from "@backend/domain/institutional";
 import type { NotificationLotCapabilities } from "@backend/domain/notification-lots";
+import type { Role } from "../../../shared/permissions";
 export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
-  user: { id: string; username: string } | null;
+  user: { id: string; username: string; role?: Role } | null;
   mustChangePassword: boolean;
   synthetic: boolean;
   institutional?: boolean;

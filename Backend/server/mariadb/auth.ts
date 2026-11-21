@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import * as argon2 from "argon2";
 import { accountBucket, HttpError, required } from "../security";
+import { isRole } from "../../../shared/permissions";
+import { usernameKey } from "../../../shared/user-profile";
 
 export type AuthUser = {
   id: string; username: string; enabled: boolean; role: string;
@@ -42,16 +44,18 @@ export async function createMariaAuth(store: AuthStore, now = Date.now) {
     const found = await store.sessionWithUser(tokenHash(token));
     if (!found || found.session.revoked || found.session.expiresAt <= now() ||
       found.session.userId !== found.user.id) throw expired();
-    if (!found.user.enabled || found.user.role !== "collaborator")
+    const { user } = found;
+    const { role } = user;
+    if (!user.enabled || !isRole(role))
       throw new HttpError(403, "FORBIDDEN", "No tenés acceso a esta aplicación.");
-    if (found.user.mustChangePassword && !allowPasswordChange)
+    if (user.mustChangePassword && !allowPasswordChange)
       throw new HttpError(403, "PASSWORD_CHANGE_REQUIRED", "Cambiá tu contraseña para continuar.");
-    return { ...found.user, sessionExpiresAt: found.session.expiresAt };
+    return { ...user, role, sessionExpiresAt: found.session.expiresAt };
   }
   return {
     identify,
     async login(username: string, password: string) {
-      username = required(username, 100).normalize("NFKC").trim().toLowerCase();
+      username = usernameKey(required(username, 100));
       required(password, 1024);
       const timestamp = now();
       const attempt = await store.reserveAttempt(accountBucket(username), timestamp, 5, 15 * 60_000);
@@ -60,13 +64,13 @@ export async function createMariaAuth(store: AuthStore, now = Date.now) {
       const user = await store.findUser(username);
       const candidate = user?.passwordHash.startsWith("$argon2id$") ? user.passwordHash : dummy;
       const valid = await argon2.verify(candidate, password);
-      if (!user || candidate === dummy || !valid || !user.enabled || user.role !== "collaborator") throw invalid();
+      if (!user || candidate === dummy || !valid || !user.enabled || !isRole(user.role)) throw invalid();
       const token = randomBytes(32).toString("base64url");
       const session: Session = { tokenHash: tokenHash(token), userId: user.id,
         expiresAt: timestamp + 8 * 60 * 60_000, revoked: false };
       if (!await store.issueSession(session, user.passwordHash, typeof attempt === "string" ? attempt : undefined)) throw invalid();
       return { token, expiresAt: session.expiresAt,
-        user: { id: user.id, username: user.username }, mustChangePassword: user.mustChangePassword };
+        user: { id: user.id, username: user.username, role: user.role }, mustChangePassword: user.mustChangePassword };
     },
     async logout(token: string | undefined) {
       if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) await store.revokeSession(tokenHash(token));

@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { HttpError } from "../security";
 import { personalAddressErrors, normalizeAddressPlace } from '../../domain/personal-address';
+import type { Role } from '../../../shared/permissions';
 
-export type Actor = { verified: true; userId: string; role: "collaborator"; enabled: boolean; mustChangePassword: boolean; expiresAt: number };
+export type Actor = { verified: true; userId: string; role: Role; enabled: boolean; mustChangePassword: boolean; expiresAt: number };
 export type Address = Partial<Record<"CALLE" | "NUMERO" | "BARRIO" | "LOCALIDAD" | "DEPARTAMENTO" | "CODIGO_POSTAL" | "PH" | "BLOCK" | "DEPTO" | "PUERTA" | "DOMICILIO_COMPLETO" | "REFERENCIA" | "SECTOR" | "MANZANA" | "LOTE", string>>;
 export const addressLimits = { CALLE:250, NUMERO:50, BARRIO:250, LOCALIDAD:250, DEPARTAMENTO:150, CODIGO_POSTAL:50, PH:50, BLOCK:50, DEPTO:50, PUERTA:50, DOMICILIO_COMPLETO:1000, REFERENCIA:150, SECTOR:50, MANZANA:50, LOTE:50 } as const;
 export type Input = {

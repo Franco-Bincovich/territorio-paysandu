@@ -85,7 +85,7 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
       }
       if (consultations) {
         const response = await consultations(request, segments, { verified: true, userId: user.id,
-          role: 'collaborator', enabled: user.enabled, mustChangePassword: user.mustChangePassword, expiresAt: user.sessionExpiresAt });
+          role: user.role, enabled: user.enabled, mustChangePassword: user.mustChangePassword, expiresAt: user.sessionExpiresAt });
         if (response) return response;
       }
       if (institutional) {
