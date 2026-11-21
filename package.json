@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Territorio Paysandú v1 — desarrollo sintético, no liberado",
   "scripts": {
-    "dev": "next dev Frontend --hostname 127.0.0.1",
+    "dev": "node scripts/dev-mariadb.cjs --auto",
     "dev:mariadb": "node scripts/dev-mariadb.cjs",
     "consultations:check": "node scripts/check-consultations.cjs",
     "images:check": "node scripts/check-sftp-images.cjs",

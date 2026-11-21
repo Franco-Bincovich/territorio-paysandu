@@ -2,19 +2,36 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { parseEnv } = require('node:util');
-const { spawn } = require('node:child_process');
+const { execFileSync, spawn } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
-function configuration() {
-  const local = parseEnv(fs.readFileSync(path.join(root, 'Backend/server/mariadb/.env.local'), 'utf8'));
+const mariaConfig = 'Backend/server/mariadb/.env.local';
+
+function configurationRoot() {
+  if (fs.existsSync(path.join(root, mariaConfig))) return root;
+  // Linked worktrees share the original checkout's private configuration files.
+  // Resolve that checkout through Git instead of copying files with credentials.
+  try {
+    const common = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'],
+      { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true }).trim();
+    if (common && fs.existsSync(path.join(path.dirname(common), mariaConfig))) return path.dirname(common);
+  } catch {
+    return undefined;
+  }
+}
+
+function configuration(configRoot = configurationRoot()) {
+  if (!configRoot) throw Error('Configuración local MariaDB incompleta.');
+  const local = parseEnv(fs.readFileSync(path.join(configRoot, mariaConfig), 'utf8'));
   // Do not import NODE_OPTIONS, NEXT_PUBLIC_* or unrelated providers from this file.
   const env = { ...process.env };
   for (const key of ['AUTH_PROVIDER', 'MARIADB_AUTH_TEST_ENABLED', 'APP_ORIGIN', 'DATA_MODE',
     'MARIADB_HOST', 'MARIADB_PORT', 'MARIADB_DATABASE', 'MARIADB_USER', 'MARIADB_PASSWORD',
-    'MARIADB_TLS', 'MARIADB_TLS_CA_FILE', 'CONSULTATIONS_WRITE_ENABLED']) {
+    'MARIADB_TLS', 'MARIADB_TLS_CA_FILE', 'CONSULTATIONS_WRITE_ENABLED',
+    'CONSULTATIONS_SCHEMA_METADATA_VIEW', 'ADMINISTRATION_ENABLED', 'ADMINISTRATION_WRITE_ENABLED']) {
     if (Object.hasOwn(local, key)) env[key] = local[key];
   }
-  const institutionalPath = path.join(root, 'Backend/server/institutional/.env.local');
+  const institutionalPath = path.join(configRoot, 'Backend/server/institutional/.env.local');
   if (fs.existsSync(institutionalPath)) {
     const source = parseEnv(fs.readFileSync(institutionalPath, 'utf8'));
     for (const key of ['INSTITUTIONAL_ENABLED', 'INSTITUTIONAL_HOST', 'INSTITUTIONAL_PORT',
@@ -33,14 +50,21 @@ function configuration() {
   if ((env.NODE_OPTIONS ?? '').includes('--env-file'))
     throw Error('Quitá --env-file de NODE_OPTIONS en esta terminal antes de iniciar.');
   env.NODE_ENV = 'development';
-  return require('./load-security-env.cjs').securityEnvironment(require('./load-sftp-env.cjs').sftpEnvironment(env));
+  const sftp = require('./load-sftp-env.cjs').sftpEnvironment(env, configRoot);
+  return require('./load-security-env.cjs').securityEnvironment(sftp, configRoot);
 }
 
 if (require.main === module) {
   try {
-    const child = spawn(process.execPath, [path.join(root, 'node_modules/next/dist/bin/next'),
-      'dev', 'Frontend', '--hostname', '127.0.0.1', '--port', '3105'],
-    { cwd: root, env: configuration(), stdio: 'inherit', windowsHide: true });
+    const configRoot = configurationRoot();
+    const maria = !!configRoot || !process.argv.includes('--auto');
+    const env = maria ? configuration(configRoot) : process.env;
+    const dependencies = path.join(root, 'node_modules');
+    const args = [path.join(dependencies, 'next/dist/bin/next'), 'dev', 'Frontend', '--hostname', '127.0.0.1'];
+    // Turbopack cannot resolve a dependency junction outside its worktree root.
+    if (fs.existsSync(dependencies) && fs.realpathSync(dependencies) !== dependencies) args.push('--webpack');
+    if (maria) args.push('--port', '3105');
+    const child = spawn(process.execPath, args, { cwd: root, env, stdio: 'inherit', windowsHide: true });
     child.on('error', () => { console.error('No se pudo iniciar Next local.'); process.exitCode = 1; });
     child.on('exit', code => { process.exitCode = code ?? 1; });
     process.on('SIGINT', () => child.kill('SIGINT'));
