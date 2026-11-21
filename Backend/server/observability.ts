@@ -9,6 +9,9 @@ export const routes = {
   "/api/parcel-images": ["GET"],
   "/api/parcel-image/{kind}": ["GET"],
   "/api/parcels/{locality}/{parcel}": ["GET"],
+  "/api/notification-lots": ["GET"],
+  "/api/notification-lots/{id}": ["GET"],
+  "/api/notification-lots/{id}/export": ["GET"],
   "/api/consultations": ["GET", "POST"],
   "/api/consultations/{id}": ["GET", "PATCH"],
 } as const;
@@ -31,6 +34,10 @@ export function routeTemplate(segments: readonly string[]): RouteTemplate {
     return "/api/consultations/{id}";
   if (segments.length === 2 && segments[0] === "parcel-image")
     return "/api/parcel-image/{kind}";
+  if (segments[0] === "notification-lots") {
+    if (segments.length === 2) return "/api/notification-lots/{id}";
+    if (segments.length === 3 && segments[2] === "export") return "/api/notification-lots/{id}/export";
+  }
   return "unmatched";
 }
 export const structuredLogger: RequestLogger = (event) => {

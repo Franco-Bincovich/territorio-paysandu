@@ -16,6 +16,7 @@ import {ParcelImageCache,parcelImageIdentity} from './parcel-image-cache';
 import { ParcelView, type ParcelTab } from "./parcel-view";
 import { ParcelClassificationNotice } from "./parcel-classification-notice";
 import { ParcelSearchResults } from "./parcel-search-results";
+import { NotificationLotsView } from "./notification-lots-view";
 import { requiresClassificationNotice, type ParcelSearchResult } from "./parcel-classification";
 import {
   request,
@@ -47,7 +48,7 @@ export function TerritoryApp() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   const [screen, setScreen] = useState<
-    "search" | "parcel" | "history" | "create" | "detail" | "settings"
+    "search" | "parcel" | "history" | "create" | "detail" | "settings" | "notificationLots"
   >("search");
   const [parcel, setParcel] = useState<Parcel | null>(null),
     [detail, setDetail] = useState<Consultation | null>(null),
@@ -359,6 +360,14 @@ export function TerritoryApp() {
           >
             ☷ <span>Historial de consultas</span>
           </button>
+          {session.notificationLots?.consult && (
+            <button
+              className={screen === "notificationLots" ? "active" : ""}
+              onClick={() => navigate("notificationLots")}
+            >
+              ▤ <span>Lotes</span>
+            </button>
+          )}
         </nav>
       </aside>
       <div className="main-wrap">
@@ -382,7 +391,9 @@ export function TerritoryApp() {
                   ? "Búsqueda"
                   : screen === "history"
                     ? "Consultas"
-                    : "Ficha territorial"}
+                    : screen === "notificationLots"
+                      ? "Lotes"
+                      : "Ficha territorial"}
             </b>
           </span>
           {session.synthetic && (
@@ -414,6 +425,9 @@ export function TerritoryApp() {
             </section>
           )}
           {screen === "search" && <SearchView onOpen={openParcel} institutional={session.institutional} topbarRef={topbarRef} />}{" "}
+          {screen === "notificationLots" && session.notificationLots?.consult && (
+            <NotificationLotsView canDownload={session.notificationLots.download} />
+          )}
           {screen === "parcel" && parcel && (
             <ParcelView
               key={parcel.padCod ?? `${parcel.locality}/${parcel.parcel}`}

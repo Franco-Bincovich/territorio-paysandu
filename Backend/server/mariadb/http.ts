@@ -4,6 +4,7 @@ import { routes, routeTemplate, observeRequest } from "../observability";
 import { requestLimits, LimitError, type RequestLimits } from '../request-limits';
 import { ImageAdmissionError } from '../image-admission';
 import { admittedImageResponse } from '../image-response';
+import type { NotificationLotsHttp } from "../notification-lots/http";
 
 type MariaAuth = Awaited<ReturnType<typeof createMariaAuth>>;
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
@@ -22,7 +23,8 @@ function tokenFrom(request: Request) {
 export function createMariaHttp(auth: MariaAuth, origin: string,
   institutional?: (request: Request, segments: string[]) => Promise<Response | null>,
   consultations?: (request: Request, segments: string[], actor: import('../consultations/model').Actor) => Promise<Response | null>,
-  limits:RequestLimits=requestLimits()) {
+  limits:RequestLimits=requestLimits(),
+  notificationLots?: NotificationLotsHttp) {
   return async (request: Request, segments: string[]) => observeRequest(routeTemplate(segments),async()=>{
     let release=()=>{};
     try {
@@ -73,7 +75,14 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
       const user = await auth.identify(token, path === "session");
       await limits.user(user.id,request,segments);
       const identity = { id: user.id, username: user.username, role: user.role, provider: "mariadb" };
-      if (path === "session") return result({ user: identity, mustChangePassword: user.mustChangePassword, synthetic: !institutional, institutional: !!institutional });
+      if (path === "session") return result({
+        user: identity, mustChangePassword: user.mustChangePassword, synthetic: !institutional, institutional: !!institutional,
+        ...(notificationLots && !user.mustChangePassword ? { notificationLots: notificationLots.capabilities(user.role) } : {}),
+      });
+      if (segments[0] === "notification-lots") {
+        if (!notificationLots) throw new HttpError(403, "NOTIFICATION_LOTS_FORBIDDEN", "Acceso a lotes no habilitado.");
+        return await notificationLots.handle(request, segments, user.role);
+      }
       if (consultations) {
         const response = await consultations(request, segments, { verified: true, userId: user.id,
           role: 'collaborator', enabled: user.enabled, mustChangePassword: user.mustChangePassword, expiresAt: user.sessionExpiresAt });

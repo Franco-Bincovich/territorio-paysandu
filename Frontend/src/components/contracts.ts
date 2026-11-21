@@ -1,10 +1,12 @@
 import type { InstitutionalPerson, InstitutionalRef, SurveyInformation } from "@backend/domain/institutional";
+import type { NotificationLotCapabilities } from "@backend/domain/notification-lots";
 export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
   user: { id: string; username: string } | null;
   mustChangePassword: boolean;
   synthetic: boolean;
   institutional?: boolean;
+  notificationLots?: NotificationLotCapabilities;
 };
 export type ParcelRef = { locality: string; parcel: string; address: string;
   padCod?: string; source?: string; matchedPeople?: InstitutionalRef["matchedPeople"] };
