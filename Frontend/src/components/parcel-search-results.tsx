@@ -22,7 +22,7 @@ export function ParcelSearchResults({ results, busy, error, nameSearch, onOpen, 
   if (!busy && !error && results === null) return null;
   return (
     <section className="panel results search-results" aria-labelledby={headingId}>
-      <h2 id={headingId} ref={headingRef}>Resultados de búsqueda</h2>
+      <h2 id={headingId} ref={headingRef}>{!busy && !error && requiresDisambiguation ? "Seleccioná una persona" : "Resultados de búsqueda"}</h2>
       {busy ? (
         <p role="status" className="search-results-status">Buscando…</p>
       ) : error ? (

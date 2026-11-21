@@ -799,6 +799,12 @@ td {
 .search-grid > p {
   grid-column: 1 / -1;
 }
+.municipal-search-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+}
+.search-form-error {
+  scroll-margin-top: 7rem;
+}
 .tabs {
   padding: 11px;
   gap: 4px;
@@ -869,11 +875,17 @@ td {
   .search-grid > button {
     grid-column: 1 / -1;
   }
+  .municipal-search-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .hero h1 {
     font-size: 25px;
   }
 }
 @media (max-width: 800px) {
+  .municipal-search-grid {
+    grid-template-columns: 1fr;
+  }
   .shell {
     grid-template-columns: 1fr;
   }

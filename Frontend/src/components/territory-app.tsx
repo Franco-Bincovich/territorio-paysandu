@@ -751,6 +751,10 @@ function SearchView({ onOpen, institutional, topbarRef }: {
   institutional?: boolean;
   topbarRef: RefObject<HTMLElement | null>;
 }) {
+  const [municipalCode, setMunicipalCode] = useState("");
+  const [locality, setLocality] = useState("");
+  const [parcelNumber, setParcelNumber] = useState("");
+  const [formError, setFormError] = useState<{ method: "parcel" | "person"; text: string } | null>(null);
   const [people, setPeople] = useState<import("./contracts").PersonCandidate[]>([]);
   const [ambiguity, setAmbiguity] = useState(false);
   const [unidentified, setUnidentified] = useState(0);
@@ -764,9 +768,16 @@ function SearchView({ onOpen, institutional, topbarRef }: {
   const searchSubmitter = useRef<HTMLElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const pendingResultScroll = useRef<(() => boolean) | null>(null);
+  const formErrorRef = useRef<HTMLParagraphElement>(null);
+  const errorId = useId();
+  const useMunicipalCode = institutional && !!municipalCode.trim();
+  const useLocality = !!(locality || parcelNumber.trim());
+  useEffect(() => {
+    if (formError) formErrorRef.current?.focus();
+  }, [formError]);
   useEffect(() => {
     const heading = headingRef.current;
-    if (busy || error || classificationNoticeOpen || !results?.length || !heading || !pendingResultScroll.current?.()) return;
+    if (busy || error || classificationNoticeOpen || results === null || !heading || !pendingResultScroll.current?.()) return;
 
     pendingResultScroll.current = null;
     const headerHeight = topbarRef.current?.getBoundingClientRect().height ?? 0;
@@ -776,23 +787,44 @@ function SearchView({ onOpen, institutional, topbarRef }: {
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
     });
   }, [busy, classificationNoticeOpen, error, results, topbarRef]);
-  async function search(e: FormEvent<HTMLFormElement>) {
+  function parcelQuery() {
+    const code = municipalCode.trim();
+    const number = parcelNumber.trim();
+    if (useMunicipalCode) {
+      if (!/^\d+$/.test(code) || Number(code) < 1 || Number(code) > 2147483647) {
+        throw new Error("Ingresá un código municipal entre 1 y 2147483647.");
+      }
+      return new URLSearchParams({ padCod: code });
+    }
+    if (!locality || !number) throw new Error("Seleccioná una localidad e ingresá el número de padrón.");
+    if (!/^\d{1,20}$/.test(number)) throw new Error("Ingresá un número de padrón de hasta 20 dígitos.");
+    return new URLSearchParams({ locality, parcel: number });
+  }
+  async function search(e: FormEvent<HTMLFormElement>, method: "parcel" | "person") {
     e.preventDefault();
     const submitter = (e.nativeEvent as SubmitEvent).submitter;
+    const data = new FormData(e.currentTarget);
     const operation = requests.begin();
     pendingResultScroll.current = null;
     setBusy(true);
     setError("");
+    setFormError(null);
     setResults(null);
     setPeople([]); setAmbiguity(false); setUnidentified(0);
     setClassificationNoticeOpen(false);
-    const query = new URLSearchParams();
-    new FormData(e.currentTarget).forEach((v, k) =>
-      query.set(k, String(v).trim()),
-    );
+    lastPersonQuery.current = null;
+    let query: URLSearchParams;
+    try {
+      const q = String(data.get("q") ?? "").trim();
+      if (method === "person" && !q) throw new Error("Ingresá el dato de la persona.");
+      query = method === "parcel" ? parcelQuery() : new URLSearchParams({ kind: String(data.get("kind")), q });
+    } catch (error) {
+      setFormError({ method, text: message(error) });
+      setBusy(false);
+      return;
+    }
     setNameSearch(query.get("kind") === "name");
-    lastPersonQuery.current = query.has("kind") ? new URLSearchParams(query) : null;
-    const parcelSearch = query.has("padCod") || (query.has("locality") && query.has("parcel") && !query.has("kind"));
+    if (method === "person") lastPersonQuery.current = query;
     try {
       const result = await request<{ results: ParcelSearchResult[]; people?: import("./contracts").PersonCandidate[];
         requiresDisambiguation?: boolean; unidentifiedMatches?: number }>(
@@ -803,16 +835,17 @@ function SearchView({ onOpen, institutional, topbarRef }: {
         setResults(result.results);
         setPeople(result.people ?? []); setAmbiguity(result.requiresDisambiguation ?? false);
         setUnidentified(result.unidentifiedMatches ?? 0);
-        if (parcelSearch && result.results.length && !result.requiresDisambiguation) {
-          pendingResultScroll.current = operation.isCurrent;
-        }
-        if (parcelSearch && result.results.some((record) => requiresClassificationNotice(record.classification))) {
+        pendingResultScroll.current = operation.isCurrent;
+        if (method === "parcel" && result.results.some((record) => requiresClassificationNotice(record.classification))) {
           searchSubmitter.current = submitter instanceof HTMLElement ? submitter : null;
           setClassificationNoticeOpen(true);
         }
       }
     } catch (e) {
-      if (operation.isCurrent() && !isAbort(e)) setError(message(e));
+      if (operation.isCurrent() && !isAbort(e)) {
+        if (e instanceof RequestError && e.status === 400) setFormError({ method, text: message(e) });
+        else setError(message(e));
+      }
     } finally {
       if (operation.isCurrent()) setBusy(false);
     }
@@ -822,12 +855,14 @@ function SearchView({ onOpen, institutional, topbarRef }: {
     const query = new URLSearchParams(lastPersonQuery.current);
     query.set("personId", personId);
     const operation = requests.begin();
+    pendingResultScroll.current = null;
     setBusy(true); setError(""); setResults(null);
     try {
       const result = await request<{ results: ParcelSearchResult[]; people: import("./contracts").PersonCandidate[];
         requiresDisambiguation: boolean; unidentifiedMatches: number }>(`/api/search?${query}`, { signal: operation.signal });
       if (!operation.isCurrent()) return;
       setResults(result.results); setPeople(result.people); setAmbiguity(result.requiresDisambiguation); setUnidentified(result.unidentifiedMatches);
+      pendingResultScroll.current = operation.isCurrent;
     } catch (e) { if (operation.isCurrent() && !isAbort(e)) setError(message(e)); }
     finally { if (operation.isCurrent()) setBusy(false); }
   }
@@ -860,7 +895,7 @@ function SearchView({ onOpen, institutional, topbarRef }: {
           <h1>El territorio, en un solo lugar.</h1>
           <p>
             {institutional
-              ? "Buscá por localidad y padrón, por PadCod o por los datos exactos de una persona."
+              ? "Buscá por código municipal, por localidad y padrón, o por los datos exactos de una persona."
               : "Buscá por localidad y padrón o por los datos exactos de una persona."}
           </p>
         </div>
@@ -869,31 +904,45 @@ function SearchView({ onOpen, institutional, topbarRef }: {
         <section className="panel">
           <div className="panel-head">
             <h2>
-              <span className="step">1</span>Por localidad y padrón
+              <span className="step">1</span>Por padrón
             </h2>
           </div>
-          <form className="search-grid" onSubmit={search}>
+          <form className={institutional ? "search-grid municipal-search-grid" : "search-grid"}
+            onSubmit={event => void search(event, "parcel")} noValidate>
+            {institutional && <label className="field">
+              Código municipal
+              <input name="padCod" inputMode="numeric" value={municipalCode}
+                onChange={event => { setMunicipalCode(event.target.value); setFormError(null); }}
+                disabled={useLocality} aria-describedby={formError?.method === "parcel" ? errorId : undefined} />
+            </label>}
             <label className="field">
               Localidad
-              <select name="locality" aria-label="Localidad" required defaultValue="Paysandú">
+              <select name="locality" value={locality} disabled={useMunicipalCode}
+                onChange={event => { setLocality(event.target.value); setFormError(null); }}
+                aria-describedby={formError?.method === "parcel" ? errorId : undefined}>
+                <option value="">Seleccioná una localidad</option>
                 <option value="Paysandú">Paysandú</option>
                 <option value="Paysandú Chacras">Paysandú Chacras</option>
               </select>
             </label>
             <label className="field">
-              Número de padrón
+              Padrón
               <input
                 name="parcel"
-                required
                 inputMode="numeric"
-                pattern="[0-9]+"
                 maxLength={20}
                 placeholder="Número de padrón"
+                value={parcelNumber}
+                disabled={useMunicipalCode}
+                onChange={event => { setParcelNumber(event.target.value); setFormError(null); }}
+                aria-describedby={formError?.method === "parcel" ? errorId : undefined}
               />
             </label>
             <button className="btn primary" disabled={busy}>
               Buscar padrón
             </button>
+            {formError?.method === "parcel" && <p className="error search-form-error" id={errorId} ref={formErrorRef}
+              role="alert" tabIndex={-1}>{formError.text}</p>}
           </form>
         </section>
         <section className="panel">
@@ -902,7 +951,7 @@ function SearchView({ onOpen, institutional, topbarRef }: {
               <span className="step">2</span>Por persona
             </h2>
           </div>
-          <form className="search-grid" onSubmit={search}>
+          <form className="search-grid" onSubmit={event => void search(event, "person")} onChange={() => setFormError(null)} noValidate>
             <label className="field">
               Buscar mediante
               <select name="kind">
@@ -918,30 +967,17 @@ function SearchView({ onOpen, institutional, topbarRef }: {
                 required
                 maxLength={200}
                 placeholder="Ingresá el dato completo"
+                aria-describedby={formError?.method === "person" ? errorId : undefined}
               />
             </label>
             <button className="btn primary" disabled={busy}>
               Buscar persona
             </button>
+            {formError?.method === "person" && <p className="error search-form-error" id={errorId} ref={formErrorRef}
+              role="alert" tabIndex={-1}>{formError.text}</p>}
             <p className="muted">Incluye todas las localidades.</p>
           </form>
         </section>
-        {institutional && (
-          <section className="panel">
-            <div className="panel-head">
-              <h2>Por PadCod</h2>
-            </div>
-            <form className="search-grid" onSubmit={search}>
-              <label className="field">
-                PadCod
-                <input name="padCod" required inputMode="numeric" pattern="[0-9]+" />
-              </label>
-              <button className="btn primary" disabled={busy}>
-                Buscar por PadCod
-              </button>
-            </form>
-          </section>
-        )}
       </div>
       <ParcelClassificationNotice open={classificationNoticeOpen}
         onDismiss={() => setClassificationNoticeOpen(false)} returnFocus={searchSubmitter.current} />
