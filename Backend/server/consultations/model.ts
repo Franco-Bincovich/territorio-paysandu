@@ -1,9 +1,9 @@
+import { requireAuthenticated, type Principal } from '../authorization';
 import { createHash } from "node:crypto";
 import { HttpError } from "../security";
 import { personalAddressErrors, normalizeAddressPlace } from '../../domain/personal-address';
-import type { Role } from '../../../shared/permissions';
 
-export type Actor = { verified: true; userId: string; role: Role; enabled: boolean; mustChangePassword: boolean; expiresAt: number };
+export type Actor = Principal;
 export type Address = Partial<Record<"CALLE" | "NUMERO" | "BARRIO" | "LOCALIDAD" | "DEPARTAMENTO" | "CODIGO_POSTAL" | "PH" | "BLOCK" | "DEPTO" | "PUERTA" | "DOMICILIO_COMPLETO" | "REFERENCIA" | "SECTOR" | "MANZANA" | "LOTE", string>>;
 export const addressLimits = { CALLE:250, NUMERO:50, BARRIO:250, LOCALIDAD:250, DEPARTAMENTO:150, CODIGO_POSTAL:50, PH:50, BLOCK:50, DEPTO:50, PUERTA:50, DOMICILIO_COMPLETO:1000, REFERENCIA:150, SECTOR:50, MANZANA:50, LOTE:50 } as const;
 export type Input = {
@@ -30,9 +30,8 @@ export const id = (v: unknown) => { const s=string(v,19); if (!/^[1-9]\d*$/.test
 export const normalizeDocument = (v: string) => v.trim().replace(/[-.\s]/gu, "").toUpperCase();
 export const uuid = (v: unknown) => { const s=string(v,36); if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) throw invalid(); return s.toLowerCase(); };
 export function authorize(actor: Actor, now: number) {
-  if (!actor || actor.verified!==true || !actor.userId || actor.expiresAt<=now || !Number.isFinite(actor.expiresAt)) throw invalid("UNAUTHENTICATED",401);
+  requireAuthenticated(actor,now);
   uuid(actor.userId);
-  if (!actor.enabled || actor.role!=="collaborator" || actor.mustChangePassword) throw invalid("FORBIDDEN",403);
 }
 export function parseInput(value: unknown): Input {
   const v=object(value); keys(v,["idempotencyKey","parcel","person","relationship","phones","emails","type","description","address"]);

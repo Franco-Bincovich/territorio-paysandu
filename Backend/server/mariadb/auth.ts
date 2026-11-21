@@ -41,7 +41,8 @@ export async function createMariaAuth(store: AuthStore, now = Date.now) {
   const dummy = await hashPassword(randomBytes(32).toString("base64url"));
   async function identify(token: string | undefined, allowPasswordChange = false) {
     if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) throw expired();
-    const found = await store.sessionWithUser(tokenHash(token));
+    const sessionHash = tokenHash(token);
+    const found = await store.sessionWithUser(sessionHash);
     if (!found || found.session.revoked || found.session.expiresAt <= now() ||
       found.session.userId !== found.user.id) throw expired();
     const { user } = found;
@@ -50,7 +51,7 @@ export async function createMariaAuth(store: AuthStore, now = Date.now) {
       throw new HttpError(403, "FORBIDDEN", "No tenés acceso a esta aplicación.");
     if (user.mustChangePassword && !allowPasswordChange)
       throw new HttpError(403, "PASSWORD_CHANGE_REQUIRED", "Cambiá tu contraseña para continuar.");
-    return { ...user, role, sessionExpiresAt: found.session.expiresAt };
+    return { ...user, role, sessionHash, sessionExpiresAt: found.session.expiresAt };
   }
   return {
     identify,

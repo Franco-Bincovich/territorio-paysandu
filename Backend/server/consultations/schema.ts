@@ -3,7 +3,7 @@ import type { Connection, Pool } from "./repository";
 import { HttpError } from "../security";
 
 export const businessTables = ['FB_PERSONAS','FB_CIU_CONSULTAS_WEB','FB_CONTACTOS','FB_CONTACTOS_HISTORIAL','FB_DOMICILIOS','FB_DOMICILIOS_HISTORIAL','FB_VINCULOS_DECLARADOS','FB_CONSULTAS_HISTORIAL','FB_CONSULTAS_IDEMPOTENCIA','FB_MODELO_REVISION'];
-export async function readSchema(c: Pick<Connection,'query'>) {
+export async function readSchema(c: Pick<Connection,'query'>, env:NodeJS.ProcessEnv=process.env) {
   const queries: Record<string,string> = {
     columns: 'SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,COLLATION_NAME,GENERATION_EXPRESSION FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME,ORDINAL_POSITION',
     indexes: 'SELECT TABLE_NAME,INDEX_NAME,NON_UNIQUE,SEQ_IN_INDEX,COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME,INDEX_NAME,SEQ_IN_INDEX',
@@ -14,6 +14,14 @@ export async function readSchema(c: Pick<Connection,'query'>) {
     triggers: 'SELECT TRIGGER_NAME,ACTION_TIMING,EVENT_MANIPULATION,EVENT_OBJECT_TABLE,ACTION_STATEMENT FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA=DATABASE() ORDER BY TRIGGER_NAME',
     engines: 'SELECT TABLE_NAME,ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME',
   };
+  // A DBA-owned, fixed projection exposes trigger definitions without granting
+  // runtime the TRIGGER privilege (which would also allow trigger modification).
+  // Missing/invalid view remains fail-closed; no metadata checks are bypassed.
+  if(env.CONSULTATIONS_SCHEMA_METADATA_VIEW==='true') {
+    queries.triggers='SELECT TRIGGER_NAME,ACTION_TIMING,EVENT_MANIPULATION,EVENT_OBJECT_TABLE,ACTION_STATEMENT FROM TP_CONSULTATION_TRIGGERS_V1 ORDER BY TRIGGER_NAME';
+    queries.constraints='SELECT TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_TYPE FROM TP_CONSULTATION_CONSTRAINTS_V1 ORDER BY TABLE_NAME,CONSTRAINT_NAME';
+    queries.references='SELECT TABLE_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME,UPDATE_RULE,DELETE_RULE FROM TP_CONSULTATION_REFERENCES_V1 ORDER BY TABLE_NAME,CONSTRAINT_NAME';
+  }
   const result: Record<string,unknown[]> = {};
   for (const [key, sql] of Object.entries(queries)) {
     const rows=await c.query(sql);

@@ -3,7 +3,7 @@ import type { NotificationLotCapabilities } from "@backend/domain/notification-l
 import type { Role } from "../../../shared/permissions";
 export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
-  user: { id: string; username: string; role?: Role } | null;
+  user: { id: string; username: string; role?: Role; provider?: "mariadb" } | null;
   mustChangePassword: boolean;
   synthetic: boolean;
   institutional?: boolean;
@@ -62,6 +62,7 @@ export type Consultation = {
   description: string;
   person: Person;
   creatorUserId: string;
+  canEdit?: boolean;
   createdAt: string;
   version: number;
 };
@@ -75,6 +76,7 @@ export class RequestError extends Error {
   constructor(
     message: string,
     public status: number,
+    public code?: string,
   ) {
     super(message);
   }
@@ -103,6 +105,7 @@ export async function request<T>(url: string, init?: RequestInit): Promise<T> {
         : data?.error?.message ||
             "No se pudo completar la operación. Intentá nuevamente.",
       response.status,
+      typeof data?.error?.code === "string" ? data.error.code : undefined,
     );
   return data as T;
 }

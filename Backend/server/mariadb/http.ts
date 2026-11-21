@@ -5,6 +5,9 @@ import { requestLimits, LimitError, type RequestLimits } from '../request-limits
 import { ImageAdmissionError } from '../image-admission';
 import { admittedImageResponse } from '../image-response';
 import type { NotificationLotsHttp } from "../notification-lots/http";
+import { requireCapability, type Principal } from "../authorization";
+import type { AdminHandler } from "../admin/http";
+import type { ExpedientesHandler } from "../expedientes/http";
 
 type MariaAuth = Awaited<ReturnType<typeof createMariaAuth>>;
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
@@ -24,7 +27,9 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
   institutional?: (request: Request, segments: string[]) => Promise<Response | null>,
   consultations?: (request: Request, segments: string[], actor: import('../consultations/model').Actor) => Promise<Response | null>,
   limits:RequestLimits=requestLimits(),
-  notificationLots?: NotificationLotsHttp) {
+  notificationLots?: NotificationLotsHttp,
+  administration?: AdminHandler,
+  expedientes?: ExpedientesHandler) {
   return async (request: Request, segments: string[]) => observeRequest(routeTemplate(segments),async()=>{
     let release=()=>{};
     try {
@@ -83,9 +88,26 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
         if (!notificationLots) throw new HttpError(403, "NOTIFICATION_LOTS_FORBIDDEN", "Acceso a lotes no habilitado.");
         return await notificationLots.handle(request, segments, user.role);
       }
+      const actor: Principal = { verified: true, userId: user.id, role: user.role, enabled: user.enabled,
+        mustChangePassword: user.mustChangePassword, expiresAt: user.sessionExpiresAt, sessionHash: user.sessionHash };
+      if (segments[0] === "admin") {
+        try { requireCapability(actor, segments[1] === "audit" ? "audit.read" : "users.manage"); }
+        catch (error) { await administration?.denied?.(request, segments, actor, error); throw error; }
+      }
+      if (segments[0] === "expedientes") {
+        const capability = path === "expedientes/generar" ? "expedientes.generate"
+          : segments[2] === "exportar" ? "expedientes.export"
+          : segments[2] === "descarga" ? "expedientes.download" : "expedientes.read";
+        requireCapability(actor, capability);
+      }
+      if (segments[0] === "parcels" && segments[2] === "expedientes")
+        requireCapability(actor, "expedientes.read");
+      for (const handler of [administration, expedientes]) {
+        const response = await handler?.(request, segments, actor);
+        if (response) return response;
+      }
       if (consultations) {
-        const response = await consultations(request, segments, { verified: true, userId: user.id,
-          role: user.role, enabled: user.enabled, mustChangePassword: user.mustChangePassword, expiresAt: user.sessionExpiresAt });
+        const response = await consultations(request, segments, actor);
         if (response) return response;
       }
       if (institutional) {

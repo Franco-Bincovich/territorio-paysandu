@@ -1,5 +1,10 @@
 "use client";
 import "./consultation-history.css";
+import "./platform-modules.css";
+import { AdministrationView } from "./administration-view";
+import { AdministrativeAuditView } from "./administrative-audit-view";
+import { ExpedientesView } from "./expedientes-view";
+import { hasCapability } from "../../../shared/permissions";
 import { CollaboratorMenu } from "./collaborator-menu";
 import { AuditSnapshot } from "./audit-snapshot";
 import {
@@ -48,9 +53,10 @@ export function TerritoryApp() {
   const [session, setSession] = useState<Session | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
-  const canAccessConsultations = (session?.user?.role ?? "collaborator") === "collaborator";
+  const role = session?.user?.role;
+  const canAccessConsultations = hasCapability(role ?? "collaborator", "consultations.read");
   const [screen, setScreen] = useState<
-    "search" | "parcel" | "history" | "create" | "detail" | "settings" | "notificationLots"
+    "search" | "parcel" | "history" | "create" | "detail" | "settings" | "notificationLots" | "administration" | "expedientes"
   >("search");
   const [parcel, setParcel] = useState<Parcel | null>(null),
     [detail, setDetail] = useState<Consultation | null>(null),
@@ -408,6 +414,16 @@ export function TerritoryApp() {
               ▤ <span>Lotes</span>
             </button>
           )}
+          {hasCapability(role, "expedientes.read") && (
+            <button className={screen === "expedientes" ? "active" : ""} onClick={() => navigate("expedientes")}>
+              ▱ <span>Expedientes</span>
+            </button>
+          )}
+          {hasCapability(role, "users.manage") && (
+            <button className={screen === "administration" ? "active" : ""} onClick={() => navigate("administration")}>
+              ⚙ <span>Administración</span>
+            </button>
+          )}
         </nav>
       </aside>
       <div className="main-wrap" inert={navigationOpen}>
@@ -425,7 +441,11 @@ export function TerritoryApp() {
           <span className="crumb">
             Territorio <span>/</span>{" "}
             <b>
-              {screen === "settings"
+              {screen === "administration"
+                ? "Administración"
+                : screen === "expedientes"
+                ? "Expedientes"
+                : screen === "settings"
                 ? "Configuración"
                 : screen === "search"
                   ? "Búsqueda"
@@ -453,6 +473,12 @@ export function TerritoryApp() {
           )}
           {error && <ErrorBox text={error} />}{" "}
           {busy && <p role="status">Cargando…</p>}
+          {screen === "administration" && hasCapability(role, "users.manage") && (
+            <AdministrationModule onRequiresLogin={() => clearSession("Los cambios requieren iniciar sesión nuevamente.")} />
+          )}
+          {screen === "expedientes" && hasCapability(role, "expedientes.read") && (
+            <section className="panel"><h1>Expedientes</h1><ExpedientesView role={role} /></section>
+          )}
           {screen === "settings" && (
             <section className="panel auth-card">
               <h1>Configuración</h1>
@@ -546,7 +572,7 @@ export function TerritoryApp() {
                   address: "",
                 }}
                 initial={detail}
-                readOnly={detail.creatorUserId !== session.user.id}
+                readOnly={!(detail.canEdit ?? (session.user.provider !== "mariadb" && detail.creatorUserId === session.user.id))}
                 onSaved={setDetail}
               />
               {detail.isHistorical && <p className="notice">Esta consulta es histórica. Las correcciones se conservan en su presentación y no reemplazan los contactos ni el domicilio personal vigentes.</p>}
@@ -987,6 +1013,19 @@ function SearchView({ onOpen, institutional, topbarRef }: {
     </>
   );
 }
+function AdministrationModule({ onRequiresLogin }: { onRequiresLogin: () => void }) {
+  const [audit, setAudit] = useState(false);
+  return <>
+    <div className="administration-navigation" role="group" aria-label="Secciones de Administración">
+      <button className="btn" aria-pressed={!audit} onClick={() => setAudit(false)}>Usuarios</button>
+      <button className="btn" aria-pressed={audit} onClick={() => setAudit(true)}>Auditoría</button>
+    </div>
+    {audit
+      ? <section className="panel"><AdministrativeAuditView /></section>
+      : <AdministrationView onRequiresLogin={onRequiresLogin} />}
+  </>;
+}
+
 export function HistoryView({
   onDetail,
   parcel,

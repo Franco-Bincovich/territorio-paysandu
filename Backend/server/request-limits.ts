@@ -87,7 +87,9 @@ export class RequestLimits {
   async enter(request:Request,segments:string[]){
     const path=segments.join('/');
     // Logout must remain available if the quota coordinator is unavailable.
-    const auth=path==='auth/login'||path==='auth/password',source=this.source(request);
+    const adminPassword=segments[0]==='admin'&&segments[1]==='users'&&request.method==='POST'&&
+      (segments.length===2||segments.length===4&&segments[3]==='reset-password');
+    const auth=path==='auth/login'||path==='auth/password'||adminPassword,source=this.source(request);
     const queuedImage=!!this.imageAdmission&&(path==='parcel-images'||segments.length===2&&segments[0]==='parcel-image');
     let imageRelease:(()=>void)|undefined;
     if(queuedImage)imageRelease=await this.imageAdmission!.acquire(request.signal);
@@ -104,9 +106,10 @@ export class RequestLimits {
     catch(e){release();throw e;}
   }
   async user(userId:string,request:Request,segments:string[]){
-    const category=segments[0]==='search'?'search':segments[0]==='parcel-image'?'download':segments[0]==='parcel-images'?'catalogue':segments[0]==='consultations'?(request.method==='GET'?'consultations':'write'):'read';
-    const key=digest(userId),capacity=category==='download'?20:category==='write'?10:60;
-    const rules=[rule('user:'+key+':minute',120),rule(category+':'+key,capacity),rule(category+':hour:'+key,category==='download'?100:category==='write'?60:300,3600000)];
+    const category=segments[0]==='admin'?(request.method==='POST'?'admin-password':(request.method==='PATCH'||request.method==='DELETE')?'admin-write':'admin-read'):
+      segments[0]==='expedientes'?(request.method==='POST'?'write':segments.length===1?'search':'download'):segments[0]==='search'?'search':segments[0]==='parcel-image'?'download':segments[0]==='parcel-images'?'catalogue':segments[0]==='consultations'?(request.method==='GET'?'consultations':'write'):'read';
+    const key=digest(userId),capacity=category==='admin-password'?3:category==='download'?20:category==='write'||category==='admin-write'?10:60;
+    const rules=[rule('user:'+key+':minute',120),rule(category+':'+key,capacity),rule(category+':hour:'+key,category==='admin-password'?10:category==='download'?100:category==='write'||category==='admin-write'?60:300,3600000)];
     if(category==='download')rules.push(rule('bytes:'+key,200*1024*1024,3600000,20*1024*1024)); // Reserve the maximum before SFTP; never unbounded reads/refunds on failure.
     await this.take(rules);
   }

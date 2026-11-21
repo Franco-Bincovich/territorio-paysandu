@@ -1,0 +1,57 @@
+/* New modules retain the original tokens with readable functional type. */
+:is(.admin-users-view, .admin-user-dialog, .expedientes-view) { font-size: 14px; }
+:is(.admin-users-view, .admin-user-dialog, .expedientes-view) :is(.btn, .btn.small, table, .pagination, .field label, input, select) { font-size: 14px; }
+:is(.admin-users-view, .admin-user-dialog, .expedientes-view) :is(small, .muted, .meta, .badge) { font-size: 13px; }
+:is(.admin-users-view, .expedientes-view) .panel-head { gap: 16px; flex-wrap: wrap; }
+.admin-users-table { min-width: 740px; }
+.administration-navigation { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.administration-navigation .btn[aria-pressed="true"] { color: var(--action); border-color: var(--action); }
+.admin-user-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-user-actions .btn { white-space: nowrap; }
+.expedientes-view > .notice { margin-block: 20px; }
+.expedientes-view .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 12px; }
+
+/* Native modal provides focus containment and an inert page backdrop. */
+.admin-user-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 24px 80px #0b23484d;
+}
+.admin-user-dialog::backdrop { background: #10213e99; }
+.admin-user-dialog h2 { font-size: 22px; line-height: 1.3; margin: 4px 52px 20px 0; }
+.admin-modal-close { float: right; position: sticky; top: 0; z-index: 1; min-width: 44px; }
+.profile-fields, .admin-form-section { display: grid; gap: 14px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.profile-fields legend, .admin-form-section legend { font-size: 16px; font-weight: 650; margin-bottom: 12px; }
+.admin-form-section + .admin-form-section, .admin-form-section + .profile-fields { border-top: 1px solid var(--border); padding-top: 20px; }
+.admin-modal-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px; }
+@media (max-width: 550px) {
+  .admin-user-dialog { padding: 20px; max-height: calc(100dvh - 24px); width: calc(100vw - 24px); border-radius: 18px; }
+  .admin-modal-actions .btn { flex: 1 1 140px; }
+  :is(.admin-users-view, .expedientes-view) .pagination { flex-wrap: wrap; }
+}
+
+/* Keep table content at the same readable scale as the original forms. */
+.admin-users-view .admin-users-table th,
+.admin-users-view .admin-users-table td { font-size: 14px; line-height: 1.5; }
+.admin-user-dialog .profile-fields { border: 0; margin: 0; padding: 0; min-width: 0; }
+.admin-user-dialog .profile-fields legend { padding: 0; margin-bottom: 16px; font-size: 16px; font-weight: 700; }
+
+.admin-user-dialog form > fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.expedientes-search { margin-block: 20px; grid-template-columns: repeat(2, minmax(140px, 1fr)) auto; align-items: end; }
+.expedientes-table { min-width: 760px; }
+.expediente-name { overflow-wrap: anywhere; max-width: 310px; }
+.expediente-preview { margin-top: 24px; }
+.expediente-preview h3 { overflow-wrap: anywhere; }
+.expediente-preview iframe { width: 100%; min-height: 65vh; border: 1px solid var(--border); border-radius: 12px; background: white; }
+@media (max-width: 900px) { .expedientes-search { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 550px) { .expedientes-search { grid-template-columns: minmax(0, 1fr); } }
+.expedientes-view .expedientes-table :is(th, td) { font-size: 14px; line-height: 1.5; }

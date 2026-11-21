@@ -69,7 +69,7 @@ export function configuredLocalNotificationLots(env: NodeJS.ProcessEnv = process
     !["127.0.0.1", "localhost", "::1"].includes(env.INSTITUTIONAL_HOST ?? "")) return undefined;
 
   return createNotificationLotsHttp({
-    canConsult: role => role === "collaborator",
-    canDownload: role => role === "collaborator",
+    canConsult: role => role === "collaborator" || role === "administrator",
+    canDownload: role => role === "collaborator" || role === "administrator",
   });
 }

@@ -25,7 +25,11 @@ export function createConsultationHttp(repository:ConsultationRepository,reads:C
       if(request.method!=='GET')throw new HttpError(405,'METHOD_NOT_ALLOWED','Método no permitido.');
       return result({read:true,write:enabled()});
     }
-    if(request.method==='GET')return result(segments.length===1?await reads.list(query,actor):await reads.detail(segments[1],actor,query));
+    if(request.method==='GET') {
+      if(segments.length===1)return result(await reads.list(query,actor));
+      const consultation=await reads.detail(segments[1],actor,query);
+      return result({...consultation,canEdit:enabled() && consultation.canEdit});
+    }
     if(!enabled())throw new HttpError(403,'WRITES_DISABLED','El guardado de consultas está deshabilitado para este entorno.');
     const body=await jsonBody(request);
     if(request.method==='POST' && segments.length===1) {
