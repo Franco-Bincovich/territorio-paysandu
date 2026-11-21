@@ -14,7 +14,7 @@ const context=()=>({requestId:currentRequestId()??randomUUID()});
 const action=(request:Request,segments:string[]):AuditEvent['action']=>segments[1]==='audit'?'audit-list':request.method==='GET'?'list':segments[3]==='reset-password'?'reset-password':request.method==='DELETE'?'delete':request.method==='PATCH'?'update':'create';
 // Only syntactically valid IDs reach audit storage; arbitrary URLs are never logged.
 const target=(segments:string[])=>segments[1]==='users'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(segments[2]??'')?segments[2]:null;
-export function createAdminHttp(service?:AdminService):AdminHandler{
+export function createAdminHttp(service?:AdminService,writesEnabled=true):AdminHandler{
   const handler:AdminHandler=async(request,segments,actor)=>{
     if(segments[0]!=='admin')return null;
     const operationContext=context(),operation=action(request,segments);
@@ -28,9 +28,17 @@ export function createAdminHttp(service?:AdminService):AdminHandler{
       if(!allowed.includes(request.method))return Response.json({error:{code:'METHOD_NOT_ALLOWED',message:'Método no permitido.'}},{status:405,headers:{...headers,Allow:allowed.join(', ')}});
       if(!service)throw new HttpError(503,'ADMIN_UNAVAILABLE','Administración no disponible.');
       const query=new URL(request.url).searchParams;
-      if(capabilities){if(query.size)throw new HttpError(400,'VALIDATION','Parámetros no permitidos.');return Response.json(await service.capabilities(actor,operationContext),{headers});}
+      if(capabilities){
+        if(query.size)throw new HttpError(400,'VALIDATION','Parámetros no permitidos.');
+        const available=await service.capabilities(actor,operationContext);
+        return Response.json(writesEnabled?available:{
+          ...available,users:{list:true,edit:false,delete:false,create:false,resetPassword:false},
+          credentialDelivery:{available:false,code:'ADMIN_WRITES_DISABLED'},
+        },{headers});
+      }
       if(audit){if([...query.keys()].some(key=>!['page','pageSize'].includes(key)))throw new HttpError(400,'VALIDATION','Parámetros no permitidos.');return Response.json(await service.auditLog(actor,listQuery(query),operationContext),{headers});}
       if(list&&request.method==='GET')return Response.json(await service.list(actor,listQuery(query),operationContext),{headers});
+      if(!writesEnabled)throw new HttpError(403,'ADMIN_WRITES_DISABLED','Los cambios de Administración están deshabilitados en este entorno.');
       if(query.size)throw new HttpError(400,'VALIDATION','Parámetros no permitidos.');
       const body=await jsonBody(request);
       if(list){const result=await service.create(actor,body,request.headers.get('Idempotency-Key')??'',operationContext);return Response.json(result,{status:201,headers});}
@@ -46,7 +54,8 @@ export function createAdminHttp(service?:AdminService):AdminHandler{
  * administrative requests validate its schema. Passwords are supplied manually; no delivery provider or plaintext receipt exists. */
 export function configuredAdminHttp(repository?:AdminRepository,env:NodeJS.ProcessEnv=process.env):AdminHandler{
   let handler:AdminHandler|undefined;
-  const ready=()=>handler??=createAdminHttp(new AdminService(repository??new MariaAdminRepository()));
+  const ready=()=>handler??=createAdminHttp(new AdminService(repository??new MariaAdminRepository()),
+    env.ADMINISTRATION_WRITE_ENABLED!=='false');
   const enabled=env.ADMINISTRATION_ENABLED==='true';
   const configured:AdminHandler=async(request,segments,actor)=>{
     if(segments[0]!=='admin')return null;

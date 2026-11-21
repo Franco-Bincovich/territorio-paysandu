@@ -5,7 +5,7 @@ require("../scripts/register-runtime-ts.cjs");
 const { createConsultationHttp } = require("../Backend/server/consultations/http.ts");
 const { createMariaHttp } = require("../Backend/server/mariadb/http.ts");
 const { MariaAuthStore } = require("../Backend/server/mariadb/store.ts");
-const { configuredLocalNotificationLots } = require("../Backend/server/notification-lots/http.ts");
+const { configuredLocalNotificationLots, configuredNotificationLots } = require("../Backend/server/notification-lots/http.ts");
 const { ROLES } = require("../shared/permissions.ts");
 
 const id = "12345678-1234-1234-1234-123456789012";
@@ -68,4 +68,20 @@ test("V2 grants lots to administrators and collaborators only with the synthetic
   assert.equal(configuredLocalNotificationLots({ ...env, INSTITUTIONAL_HOST: "institutional.example" }), undefined);
   assert.equal(configuredLocalNotificationLots({ ...env, NODE_ENV: "production" }), undefined);
   assert.equal(configuredLocalNotificationLots({ ...env, NOTIFICATION_LOTS_LOCAL_QA: "false" }), undefined);
+});
+
+test("Production lots require the HTTPS MariaDB delivery contract and are administrator only", () => {
+  const env = {
+    NODE_ENV: "production", AUTH_PROVIDER: "mariadb", MARIADB_ENABLED: "true",
+    APP_ORIGIN: "https://localhost:3105", INSTITUTIONAL_ENABLED: "true",
+    INSTITUTIONAL_DATABASE: "TRABAJO_DATOS", NOTIFICATION_LOTS_ENABLED: "true",
+  };
+  const policy = configuredNotificationLots(env);
+  for (const role of ROLES) {
+    const permitted = role === "administrator";
+    assert.deepEqual(policy.capabilities(role), { consult: permitted, download: permitted });
+  }
+  assert.equal(configuredNotificationLots({ ...env, APP_ORIGIN: "http://localhost:3105" }), undefined);
+  assert.equal(configuredNotificationLots({ ...env, INSTITUTIONAL_TLS: "false" }), undefined);
+  assert.equal(configuredNotificationLots({ ...env, NOTIFICATION_LOTS_ENABLED: "false", NOTIFICATION_LOTS_LOCAL_QA: "true" }), undefined);
 });

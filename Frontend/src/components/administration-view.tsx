@@ -31,7 +31,9 @@ export function AdministrationView({onRequiresLogin}:{onRequiresLogin:()=>void})
   return <section className="panel admin-users-view" aria-label="Administración de usuarios">
     <div className="panel-head"><div><p className="eyebrow">Administración</p><h1>Usuarios</h1></div><button className="btn primary" disabled={loading||!capabilities?.users.create||!!editing||!!reset||!!deleting} onClick={()=>{setNotice('');setEditing('new');}}>Crear usuario</button></div>
     {capabilityError&&<p className="error" role="alert">{capabilityError} <button className="btn small" onClick={()=>setCapabilityRefresh(value=>value+1)}>Reintentar disponibilidad</button></p>}
-    {capabilities&&!capabilities.credentialDelivery.available&&<p className="notice">La creación de usuarios y el restablecimiento de contraseñas no están disponibles: el servicio de credenciales temporales no está disponible en este entorno. Podés utilizar las demás operaciones habilitadas.</p>}
+    {capabilities&&!capabilities.credentialDelivery.available&&<p className="notice">{capabilities.credentialDelivery.code==='ADMIN_WRITES_DISABLED'
+      ?'Administración está disponible para consultar usuarios y auditoría. Los cambios están deshabilitados en este entorno.'
+      :'La creación de usuarios y el restablecimiento de contraseñas no están disponibles en este entorno.'}</p>}
     {notice&&<p role="status">{notice}</p>}
     {editing&&<UserEditor key={editing==='new'?'new':editing.id} user={editing==='new'?null:editing} onSaved={saved} onStale={()=>setRefresh(value=>value+1)} onCancel={()=>{setEditing(null);}}/>}
     {reset&&<UserEditor key={`reset-${reset.id}`} user={reset} reset onSaved={saved} onStale={()=>setRefresh(value=>value+1)} onCancel={()=>{setReset(null);}}/>}

@@ -3,6 +3,7 @@ import { queryKeys } from "../filters";
 import { HttpError } from "../security";
 import { excelRowLimit, NotificationLotRepository, notificationLotPageSize } from "./repository";
 import { notificationLotWorkbook } from "./xlsx";
+import { productionMariaEnabled } from "../mariadb/provider";
 
 type NotificationLotPolicy = {
   canConsult(role: string): boolean;
@@ -60,7 +61,7 @@ export function createNotificationLotsHttp(policy: NotificationLotPolicy, reposi
 
 export type NotificationLotsHttp = ReturnType<typeof createNotificationLotsHttp>;
 
-/** Local synthetic QA only, until the production role is enabled. */
+/** The synthetic fixture retains its own loopback-only policy. */
 export function configuredLocalNotificationLots(env: NodeJS.ProcessEnv = process.env) {
   if (env.NOTIFICATION_LOTS_LOCAL_QA !== "true" ||
     (env.NODE_ENV !== "development" && env.NODE_ENV !== "test") ||
@@ -71,5 +72,15 @@ export function configuredLocalNotificationLots(env: NodeJS.ProcessEnv = process
   return createNotificationLotsHttp({
     canConsult: role => role === "collaborator" || role === "administrator",
     canDownload: role => role === "collaborator" || role === "administrator",
+  });
+}
+
+export function configuredNotificationLots(env: NodeJS.ProcessEnv = process.env) {
+  if (!productionMariaEnabled(env)) return configuredLocalNotificationLots(env);
+  if (env.NOTIFICATION_LOTS_ENABLED !== "true" || env.INSTITUTIONAL_ENABLED !== "true" ||
+    env.INSTITUTIONAL_DATABASE !== "TRABAJO_DATOS") return undefined;
+  return createNotificationLotsHttp({
+    canConsult: role => role === "administrator",
+    canDownload: role => role === "administrator",
   });
 }

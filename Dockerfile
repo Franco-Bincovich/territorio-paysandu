@@ -33,6 +33,8 @@ COPY --from=builder --chown=nextjs:nextjs /app/Frontend/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/Frontend/.next/static ./Frontend/.next/static
 COPY --from=builder --chown=nextjs:nextjs /app/Frontend/public ./Frontend/public
 COPY --chown=root:root Backend/server/expedientes/converter-sandbox.py /usr/local/lib/territorio/converter-sandbox.py
+ARG SOURCE_TREE=unrecorded
+LABEL org.opencontainers.image.revision=$SOURCE_TREE
 USER nextjs
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \

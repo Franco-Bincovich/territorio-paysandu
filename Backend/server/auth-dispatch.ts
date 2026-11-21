@@ -2,7 +2,7 @@ import { handle as supabaseHandle } from "./handler";
 import { requestedAuthProvider } from "./mariadb/provider";
 import { authError } from "./mariadb/http";
 import { observeRequest,routeTemplate } from './observability';
-import { configuredLocalNotificationLots } from "./notification-lots/http";
+import { configuredNotificationLots } from "./notification-lots/http";
 import { HttpError } from "./security";
 
 let mariaHandler: Promise<ReturnType<typeof import("./mariadb/http").createMariaHttp>> | undefined;
@@ -26,7 +26,7 @@ async function localHandler() {
         import("./admin/http"), import("./expedientes/http"),
       ]);
       return createMariaHttp(await createMariaAuth(new MariaAuthStore()), process.env.APP_ORIGIN ?? "http://127.0.0.1:3000",
-        institutional, consultations, undefined, configuredLocalNotificationLots(), configuredAdminHttp(), configuredExpedientesHttp());
+        institutional, consultations, undefined, configuredNotificationLots(), configuredAdminHttp(), configuredExpedientesHttp());
     })().catch(error => { mariaHandler = undefined; throw error; });
   }
   return mariaHandler;
