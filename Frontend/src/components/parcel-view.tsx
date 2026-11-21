@@ -117,6 +117,10 @@ export function ParcelView({
               </button>
             ))}
           </div>
+          <p className="tab-scroll-hint" aria-hidden="true">Deslizá para ver todas las solapas.</p>
+          {parcelTabs.filter(({ key }) => key !== tab).map(({ key }) => (
+            <div key={key} id={`panel-${key}`} role="tabpanel" aria-labelledby={`tab-${key}`} hidden />
+          ))}
           <div
             id={`panel-${tab}`}
             role="tabpanel"

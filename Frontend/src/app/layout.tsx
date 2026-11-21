@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./prototype-art.css";
+import "./territory-theme.css";
 export const metadata: Metadata = {
   title: "Territorio Paysandú",
   description: "Consulta territorial y registro de consultas",

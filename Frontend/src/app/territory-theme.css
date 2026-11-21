@@ -1,0 +1,172 @@
+/* Cartographic theme. The base stylesheet owns the V2 layout. */
+:root {
+  --bg: #e3edf0;
+  --paper: #fff;
+  --ink: #102c45;
+  --muted: #405a6c;
+  --blue: #0d5781;
+  --border: #c6d6e0;
+  --radius: 15px;
+  --surface: #f0f6f8;
+  --wash: #e4f1f5;
+  --shadow: 0 2px 5px #102d5c0a, 0 12px 30px #26497014;
+  --control-border: #718f9f;
+  --focus: #126385;
+  --action: linear-gradient(145deg, #106489, #123e64);
+  --territory-art: url("/territory-map.webp");
+}
+body { background: linear-gradient(145deg, var(--bg), #f1f5f7 75%); }
+h1 { font-weight: 750; letter-spacing: -.035em; }
+h2 { font-weight: 700; }
+:focus-visible { outline-color: var(--focus); }
+.panel { background: var(--paper); }
+
+.auth-map {
+  --map-position: 50%;
+  position: relative;
+  isolation: isolate;
+  background-color: #081d2d;
+  background-image: linear-gradient(118deg, #06192999, #0c394830), var(--territory-art);
+  background-position: center, var(--map-position) center;
+  background-size: cover;
+}
+.auth-map .auth-card {
+  position: relative;
+  z-index: 1;
+  border-color: #d2e2e5;
+  background: linear-gradient(140deg, #f7fbfb, #fff 46%);
+  box-shadow: inset 0 3px #58a7b4, 0 1px 0 #fff9, 0 22px 64px #01141ab8;
+}
+.auth-map .auth-card h1 {
+  font-family: Bahnschrift, "Segoe UI", system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: -.035em;
+}
+.auth-card .eyebrow { color: #13587b; }
+.survey-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.map-playback {
+  position: absolute;
+  z-index: 2;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  min-height: 44px;
+  padding: 6px 13px;
+  border: 1px solid #739cb6;
+  border-radius: 10px;
+  background: #133249;
+  color: #e5f3f9;
+  font-size: 12px;
+}
+.map-playback:hover { background: #214963; }
+.map-playback:focus-visible { outline-color: #9ad9e4; }
+@media (max-width: 550px) {
+  .auth-map { --map-position: 80%; }
+}
+@media (max-height: 610px) {
+  .auth-map:has(.map-playback:not([hidden])) {
+    padding-block-end: calc(58px + max(14px, env(safe-area-inset-bottom)));
+  }
+}
+@media (max-height: 745px) {
+  .auth-map:has(.map-playback:not([hidden])):has(.auth-card [role="alert"]) {
+    padding-block-end: calc(58px + max(14px, env(safe-area-inset-bottom)));
+  }
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .survey-overlay, .map-playback { display: none; }
+}
+
+.sidebar {
+  color: #f5f9ff;
+  background: linear-gradient(175deg, #14384d, #081e31 72%);
+  border-color: #2b5061;
+  box-shadow: inset -1px 0 #50b0bd30;
+}
+.sidebar .brand-name span { color: #8ed8e3; }
+.sidebar .brand small, .sidebar .org small { color: #bdcfea; }
+.sidebar .paysandu-logo { background: white; border-radius: 8px; }
+.sidebar .org { background: #d5e6ff0d; border-color: #86acd350; }
+.sidebar .navlabel { color: #a4bddf; }
+.sidebar .nav button { color: #d6e4fc; }
+.sidebar .nav button:hover:not(.active) { background: #81dce025; color: white; }
+.sidebar .nav button.active {
+  color: white;
+  background: linear-gradient(110deg, #146986, #123f64);
+  box-shadow: inset 3px 0 #8bdce2, 0 6px 16px #0005;
+}
+.sidebar .nav button.active:hover { background: linear-gradient(110deg, #16607c, #123252); }
+.sidebar :focus-visible { outline-color: #9ce3e8; }
+.sidebar > .mobile-menu { background: #e6efff; color: #153867; border-color: #a7c1e6; }
+.topbar { background: #f5fafb; }
+.collaborator-avatar { background: #def1f2; color: #14586b; border-color: #a1cdd0; }
+
+.hero {
+  border-color: #284e63;
+  background-color: #0b2637;
+  background-image: linear-gradient(90deg, #0b2538 12%, #0b2538e9 46%, #153b4a40 100%), var(--territory-art);
+  background-position: center, center 54%;
+  background-size: cover;
+  box-shadow: 0 12px 28px #0c2d432e;
+}
+.hero h1 { color: white; }
+.hero .eyebrow { color: #b3e5ed; }
+.hero-copy > p:last-child { color: #deedf4; }
+.art-map { box-shadow: -8px 13px 0 #a8c8f1, -15px 24px 0 #7da6de99, 0 22px 22px #030c3e55; }
+.art-caption { background: #f7fbff; color: #1b406d; }
+
+.search-pair > .panel { box-shadow: inset 3px 0 #70b7bf, var(--shadow); }
+.step { background: #dfedf2; border-color: #acc8d1; color: #13546d; }
+.badge { background: #deeff1; color: #17536c; }
+.notice { background: #eff7f8; }
+.field :is(input, select, textarea):not([aria-invalid="true"]) {
+  background-color: #f4f8f9;
+  border-color: var(--control-border);
+}
+.field :is(input, textarea)::placeholder { color: #526877; }
+.field :is(input, select, textarea):not([aria-invalid="true"]):focus {
+  background-color: white;
+  border-color: var(--focus);
+}
+.password-control .btn { background: #e2eff3; border-color: var(--control-border); color: #164d6a; }
+.btn.primary { background: var(--action); color: white; border-color: #195777; }
+.btn.primary:hover:not(:disabled) { background: linear-gradient(145deg, #126080, #102f4e); }
+.btn.primary:active:not(:disabled) { background: #102e49; }
+.error, .field-error { color: #8b253b; }
+
+.record-main .tabs { background: #e7f1f4; border-color: #c0d4dc; }
+.record-main .tabs button.active { background: #155776; color: white; }
+.panel table thead th { color: #f1f6ff; background: #17384e; }
+.tablewrap, .record-main .tabs {
+  scrollbar-color: #668a9d #e7f1f4;
+  scrollbar-width: thin;
+}
+.tab-scroll-hint { display: none; }
+@media (max-width: 445px) {
+  .tab-scroll-hint {
+    display: block;
+    padding: 4px 12px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero .pin { animation: survey-pin 3.8s cubic-bezier(.22,.8,.28,1) 1 both; }
+  .hero .plot { animation: survey-plot 3.8s cubic-bezier(.22,.8,.28,1) 1 both; }
+}
+@keyframes survey-pin {
+  0%, 12%, 100% { transform: translate(0, 0) rotate(-45deg); }
+  31%, 43% { transform: translate(-39px, 16px) rotate(-45deg); }
+  62%, 74% { transform: translate(36px, -15px) rotate(-45deg); }
+}
+@keyframes survey-plot {
+  0%, 12%, 100% { transform: translateX(0); }
+  31%, 43% { transform: translateX(-43px); }
+  62%, 74% { transform: translateX(43px); }
+}

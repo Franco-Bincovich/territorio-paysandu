@@ -17,6 +17,7 @@ import { ParcelView, type ParcelTab } from "./parcel-view";
 import { ParcelClassificationNotice } from "./parcel-classification-notice";
 import { ParcelSearchResults } from "./parcel-search-results";
 import { NotificationLotsView } from "./notification-lots-view";
+import { CartographicLogin } from "./cartographic-login";
 import { requiresClassificationNotice, type ParcelSearchResult } from "./parcel-classification";
 import {
   request,
@@ -56,13 +57,25 @@ export function TerritoryApp() {
   const [checkingParcelConsultations, setCheckingParcelConsultations] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationToggle = useRef<HTMLButtonElement>(null);
+  const navigationPanel = useRef<HTMLElement>(null);
+  const navigationWasOpen = useRef(false);
   const topbarRef = useRef<HTMLElement>(null);
   const [notice, setNotice] = useState("");
   useEffect(() => {
-    if (navigationOpen)
-      document
-        .querySelector<HTMLButtonElement>("#workspace-navigation .mobile-menu")
-        ?.focus();
+    if (navigationOpen) {
+      navigationPanel.current?.querySelector<HTMLButtonElement>(".mobile-menu")?.focus();
+    } else if (navigationWasOpen.current) {
+      const toggle = navigationToggle.current;
+      if (toggle?.getClientRects().length) toggle.focus();
+    }
+    navigationWasOpen.current = navigationOpen;
+  }, [navigationOpen]);
+  useEffect(() => {
+    if (!navigationOpen) return;
+    const mobile = matchMedia("(max-width: 800px)");
+    const closeOnDesktop = () => { if (!mobile.matches) setNavigationOpen(false); };
+    mobile.addEventListener("change", closeOnDesktop);
+    return () => mobile.removeEventListener("change", closeOnDesktop);
   }, [navigationOpen]);
   const [detailOrigin, setDetailOrigin] = useState<"history" | "parcel">(
     "history",
@@ -209,7 +222,10 @@ export function TerritoryApp() {
       if (!operation.isCurrent()){images?.dispose();return;}
       const institutional = result.source === "institutional";
       setRestoreHistory(restore ? "parcel" : null);
-      if (!restore) parcelHistoryReturn.current = null;
+      if (!restore) {
+        parcelHistoryReturn.current = null;
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }
       setCheckingParcelConsultations(institutional);
       setParcel(institutional ? { ...result, consultationsRead: false, readOnly: true } : result);
       setParcelTab(tab);
@@ -276,11 +292,11 @@ export function TerritoryApp() {
   }
   useEffect(() => {
     if (session?.user && !session.mustChangePassword)
-      document.getElementById("main")?.focus();
+      document.getElementById("main")?.focus({ preventScroll: screen === "parcel" });
   }, [screen, session?.user?.id, session?.mustChangePassword]);
   if (loading)
     return (
-      <main className="auth-wrap">
+      <main className="auth-wrap auth-map">
         <div className="panel" role="status">
           Verificando sesión…
         </div>
@@ -288,7 +304,7 @@ export function TerritoryApp() {
     );
   if (!session?.user)
     return (
-      <main className="auth-wrap">
+      <CartographicLogin>
         <section className="panel auth-card">
           <Brand />
           <p className="eyebrow">Acceso de colaboradores</p>
@@ -303,11 +319,11 @@ export function TerritoryApp() {
             </button>
           )}
         </section>
-      </main>
+      </CartographicLogin>
     );
   if (session.mustChangePassword)
     return (
-      <main className="auth-wrap">
+      <main className="auth-wrap auth-map">
         <section className="panel auth-card">
           <Brand />
           <h1>Cambiá tu contraseña</h1>
@@ -324,26 +340,39 @@ export function TerritoryApp() {
     );
   return (
     <div className="shell">
-      <a className="skip" href="#main">
+      <a className="skip" href="#main" inert={navigationOpen}>
         Ir al contenido
       </a>
       <aside
         id="workspace-navigation"
+        ref={navigationPanel}
         className={`sidebar${navigationOpen ? " open" : ""}`}
+        role={navigationOpen ? "dialog" : undefined}
+        aria-modal={navigationOpen || undefined}
+        aria-label={navigationOpen ? "Menú principal" : undefined}
         onKeyDown={(event) => {
+          if (!navigationOpen) return;
           if (event.key === "Escape") {
+            event.preventDefault();
             setNavigationOpen(false);
-            navigationToggle.current?.focus();
+          } else if (event.key === "Tab") {
+            const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+            const first = buttons[0];
+            const last = buttons[buttons.length - 1];
+            if (event.shiftKey && event.target === first) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && event.target === last) {
+              event.preventDefault();
+              first.focus();
+            }
           }
         }}
       >
         <button
           type="button"
           className="btn mobile-menu"
-          onClick={() => {
-            setNavigationOpen(false);
-            navigationToggle.current?.focus();
-          }}
+          onClick={() => setNavigationOpen(false)}
         >
           Cerrar menú
         </button>
@@ -380,7 +409,7 @@ export function TerritoryApp() {
           )}
         </nav>
       </aside>
-      <div className="main-wrap">
+      <div className="main-wrap" inert={navigationOpen}>
         <header className="topbar" ref={topbarRef}>
           <button
             ref={navigationToggle}
@@ -632,7 +661,13 @@ function AuthForm({
 }) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
   const requests = useRequestScope();
+  useEffect(() => {
+    if (error && !busy && !changePassword) {
+      form.current?.querySelector<HTMLInputElement>('input[name="password"]')?.focus({ preventScroll: true });
+    }
+  }, [error, busy, changePassword]);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy || disabled) return;
@@ -665,7 +700,7 @@ function AuthForm({
     }
   }
   return (
-    <form className="form-stack" onSubmit={submit}>
+    <form ref={form} className="form-stack" onSubmit={submit}>
       {!changePassword && (
         <label className="field">
           Usuario
