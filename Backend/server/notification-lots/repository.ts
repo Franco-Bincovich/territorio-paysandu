@@ -48,15 +48,26 @@ export class NotificationLotRepository {
 
   async detail(id: NotificationLot["id"], page: number) {
     return this.read(async reader => {
-      const [count] = await reader.query(`SELECT COUNT(*) AS total, COUNT(DISTINCT ${padCod}) AS uniqueParcels,
-        COUNT(*) - COUNT(CASE WHEN ${hasParcel} THEN 1 END) AS unmatched
-        ${source} WHERE ${membership}`, [id]);
+      const [count, ...rows] = await reader.query(`SELECT result.* FROM (
+        SELECT 0 AS rowKind, COUNT(*) AS total, COUNT(DISTINCT ${padCod}) AS uniqueParcels,
+          COUNT(*) - COUNT(CASE WHEN ${hasParcel} THEN 1 END) AS unmatched,
+          NULL AS padCod, NULL AS locality, NULL AS parcel, NULL AS hasParcel,
+          NULL AS sortObject, NULL AS sortType
+        ${source} WHERE ${membership}
+        UNION ALL
+        SELECT 1, NULL, NULL, NULL, pageRows.padCod, pageRows.locality, pageRows.parcel,
+          pageRows.hasParcel, pageRows.sortObject, pageRows.sortType
+        FROM (
+          SELECT ${padCod} AS padCod, v.ZONA AS locality, v.OBSERVACIONES_TIPO_OBJETOS AS parcel,
+            CASE WHEN ${hasParcel} THEN 1 ELSE 0 END AS hasParcel,
+            v.NRO_OBJETO_NRO_PLAN AS sortObject, v.TIPO_OBJETO AS sortType
+          ${source} WHERE ${membership} ${detailOrder} LIMIT ? OFFSET ?
+        ) pageRows
+      ) result ORDER BY result.rowKind, BINARY result.locality, BINARY result.parcel,
+        BINARY result.sortObject, BINARY result.sortType`,
+      [id, id, notificationLotPageSize, (page - 1) * notificationLotPageSize]);
       const unmatched = Number(count.unmatched);
       if (unmatched > 0) console.warn("notification_lot_assignments_without_parcel", { lot: id, count: unmatched });
-      const rows = await reader.query(`SELECT ${padCod} AS padCod, v.ZONA AS locality,
-        v.OBSERVACIONES_TIPO_OBJETOS AS parcel, CASE WHEN ${hasParcel} THEN 1 ELSE 0 END AS hasParcel
-        ${source} WHERE ${membership} ${detailOrder} LIMIT ? OFFSET ?`,
-      [id, notificationLotPageSize, (page - 1) * notificationLotPageSize]);
       return {
         rows: rows.map(row => ({ padCod: optionalText(row.padCod), locality: optionalText(row.locality),
           parcel: row.padCod == null ? null : optionalText(row.parcel), hasParcel: Number(row.hasParcel) === 1 })),
