@@ -21,12 +21,19 @@ export function mapInstitutionalParcel(p: Row, links: Row[], contacts: Row[]): I
       documentType: text(v.TIPO_DOCUMENTO), documentOriginal: text(v.DOCUMENTO_ORIGINAL),
       documentNormalized: text(v.DOCUMENTO_NORMALIZADO), documentValid: text(v.DOCUMENTO_VALIDO), documentState: text(v.ESTADO_DOCUMENTO) });
   }
+  const contactsByPerson = new Map<string, Row[]>();
+  for (const contact of contacts) {
+    const id = text(contact.ID_PERSONA_CP);
+    if (id === null) continue;
+    const group = contactsByPerson.get(id);
+    if (group) group.push(contact);
+    else contactsByPerson.set(id, [contact]);
+  }
   for (const person of people.values()) {
     person.links.sort((a, b) => (a.priority ?? Infinity) - (b.priority ?? Infinity));
     const seen = new Set<string>();
     if (person.personId === null) continue;
-    for (const c of contacts) {
-      if (text(c.ID_PERSONA_CP) !== person.personId) continue;
+    for (const c of contactsByPerson.get(person.personId) ?? []) {
       const type = (text(c.TIPO_MEDIO) ?? "SIN_TIPO").toUpperCase();
       const value = text(c.VALOR_CONTACTO);
       if (!value) continue;

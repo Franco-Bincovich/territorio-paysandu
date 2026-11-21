@@ -66,11 +66,16 @@ export class InstitutionalRepository {
   async searchPerson(kind: string, value: string, selectedPersonId?: string): Promise<PersonSearchResult> {
     const predicate = personPredicate(kind, value);
     if (selectedPersonId !== undefined) identifier(selectedPersonId);
+    // The normalized-name predicate has no index. Evaluate it on links before
+    // looking up eligible parcels. Document searches can use their own index.
+    const source = kind === "name"
+      ? "AGM_CIU_VINCULOS v STRAIGHT_JOIN AGM_CIU_PADRONES p ON p.PadCod = v.PadCod"
+      : "AGM_CIU_PADRONES p JOIN AGM_CIU_VINCULOS v ON v.PadCod = p.PadCod";
     return this.read(async r => {
       const rows = bounded(await r.query(`SELECT DISTINCT p.PadCod, p.PADRON, p.LOCALIDAD, p.DOMICILIO_INMUEBLE,
         v.ID_PERSONA_CP, v.ConCod, v.RelCod, v.RelNom, v.PRIORIDAD_VINCULO,
         v.NOMBRE_CP, v.TIPO_DOCUMENTO, v.DOCUMENTO_NORMALIZADO
-        FROM AGM_CIU_PADRONES p JOIN AGM_CIU_VINCULOS v ON v.PadCod = p.PadCod
+        FROM ${source}
         WHERE ${eligibleParcelSql} AND ${predicate.sql} ORDER BY p.PadCod, v.ID_PERSONA_CP, v.ConCod LIMIT 501`, predicate.params), 500);
       const people = new Map<string, { candidate: PersonCandidate; parcels: Map<string, InstitutionalRef> }>();
       let unidentifiedMatches = 0;
@@ -136,11 +141,11 @@ export class InstitutionalRepository {
   private async details(r: Reader, parcel: Record<string, any>, survey: SurveyInformation) {
     const links = bounded(await r.query(`SELECT PadCod, ConCod, RelCod, RelNom, PRIORIDAD_VINCULO, ES_PRIORIZADO,
       ID_PERSONA_CP, NOMBRE_CP, DOCUMENTO_ORIGINAL, DOCUMENTO_NORMALIZADO, TIPO_DOCUMENTO,
-      DOCUMENTO_VALIDO, ESTADO_DOCUMENTO, PRIORIDAD_CONTACTO, ES_CONTACTO_PRIORIZADO,
-      CANT_MAILS, CANT_CELULARES, CANT_FIJOS FROM AGM_CIU_VINCULOS WHERE PadCod = ?
+      DOCUMENTO_VALIDO, ESTADO_DOCUMENTO, PRIORIDAD_CONTACTO, ES_CONTACTO_PRIORIZADO
+      FROM AGM_CIU_VINCULOS WHERE PadCod = ?
       ORDER BY PRIORIDAD_VINCULO IS NULL, PRIORIDAD_VINCULO, ConCod LIMIT 501`, [String(parcel.PadCod)]), 500);
     const ids = [...new Set(links.map(v => text(v.ID_PERSONA_CP)).filter((id): id is string => id !== null))];
-    const media = ids.length ? bounded(await r.query(`SELECT ID_CONTACTO, ID_PERSONA_CP, TIPO_MEDIO, ID_MEDIO_CP, VALOR_CONTACTO
+    const media = ids.length ? bounded(await r.query(`SELECT ID_CONTACTO, ID_PERSONA_CP, TIPO_MEDIO, VALOR_CONTACTO
       FROM AGM_CIU_CONTACTOS WHERE ID_PERSONA_CP IN (${ids.map(() => "?").join(",")})
       ORDER BY ID_PERSONA_CP, TIPO_MEDIO, ID_CONTACTO LIMIT 10001`, ids), 10000) : [];
     return { ...mapInstitutionalParcel(parcel, links, media), survey };
