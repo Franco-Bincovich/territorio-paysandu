@@ -13,10 +13,15 @@ export function requiresClassificationNotice(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
   const classification = value as Partial<NonNullable<ParcelSearchResult["classification"]>>;
   return (
-    ["PH", "UH", "RURAL"].includes(classification.code ?? "") &&
+    classification.code === "RURAL" &&
     classification.evidence?.source === "institutional" &&
     classification.evidence.verified === true &&
     typeof classification.evidence.reference === "string" &&
     classification.evidence.reference.trim().length > 0
   );
+}
+
+export function parcelTypeWithNotice(padPh: string | null | undefined) {
+  const code = padPh?.trim().toUpperCase();
+  return code === "PH" || code === "UH" ? code : null;
 }

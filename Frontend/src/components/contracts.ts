@@ -1,4 +1,4 @@
-import type { InstitutionalPerson, InstitutionalRef, SurveyInformation } from "@backend/domain/institutional";
+import type { InstitutionalParcel, InstitutionalPerson, InstitutionalRef, SurveyInformation } from "@backend/domain/institutional";
 import type { NotificationLotCapabilities } from "@backend/domain/notification-lots";
 export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
@@ -34,6 +34,7 @@ export type ParcelImage = {
 };
 export const isInstitutionalImage = (image: ParcelImage) => image.provider === 'sftp' || image.provider === 'filesystem';
 export type Parcel = ParcelRef & {
+  padPh?: InstitutionalParcel["padPh"];
   survey?: SurveyInformation;
   fields?: Record<string, string>;
   provenance?: string;

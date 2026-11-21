@@ -4,6 +4,7 @@ import { HistoryView, type HistoryReturnState } from "./territory-app";
 import { isInstitutionalImage, type Parcel, type ParcelImage } from "./contracts";
 import { SurveyCard } from "./survey-card";
 import { InstitutionalPeople } from "./institutional-people";
+import { parcelTypeWithNotice } from "./parcel-classification";
 import {parcelImageIdentity,type ParcelImageCache} from './parcel-image-cache';
 import { useSftpCatalogue,useSftpMedia,useParcelImageCache } from './use-sftp-images';
 export type ParcelTab = "record" | "images" | "contacts" | "consultations";
@@ -40,6 +41,7 @@ export function ParcelView({
 }) {
   const imageCache=useParcelImageCache(parcelImageIdentity(parcel),selectedImageCache);
   const [tab, setTab] = useState<ParcelTab>(initialTab);
+  const parcelType = parcelTypeWithNotice(parcel.padPh);
   const recordContact = Object.entries(parcel.fields ?? {}).filter(([label]) =>
     /^(Titular|Documento|Teléfono|Correo|Vínculo)/.test(label),
   );
@@ -66,6 +68,15 @@ export function ParcelView({
           {parcel.readOnly && !consultationsLoading && <p className="muted">El registro de consultas todavía no está habilitado.</p>}
         </div>
       </div>
+      {parcelType && (
+        <aside className="parcel-type-warning" aria-label="Alcance del relevamiento">
+          <span className="parcel-type-warning-icon" aria-hidden="true">⚠︎</span>
+          <div>
+            <h2>Padrón de tipo {parcelType}</h2>
+            <p>Este tipo de padrón está fuera del alcance del relevamiento actual.</p>
+          </div>
+        </aside>
+      )}
       <div className="parcel-detail-grid">
         <section className="panel record-main">
           <div

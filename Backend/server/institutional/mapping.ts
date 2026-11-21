@@ -52,7 +52,8 @@ export function mapInstitutionalParcel(p: Row, links: Row[], contacts: Row[]): I
     ESTADO_CRUCE_CATASTRO: "Estado del cruce catastral", PadBlock: "Bloque · PadBlock", PadApto: "Apartamento · PadApto",
     PadManCod: "Manzana · código PadManCod", PadZonCod: "Zona · código PadZonCod", CALLE: "Calle", PadNPuerta: "Número de puerta" };
   for (const [column, label] of Object.entries(labels)) if (text(p[column]) !== null) fields[label] = String(p[column]);
-  return { ...parcelRef(p), fields, provenance: "Fuente institucional · Solo lectura. Códigos sin equivalencias confirmadas.",
+  return { ...parcelRef(p), padPh: text(p.PadPH), fields,
+    provenance: "Fuente institucional · Solo lectura. Códigos sin equivalencias confirmadas.",
     originalLandArea: number(p.AREA_PREDIO_CATASTRO), originalBuiltArea: number(p.AREA_EDIFICADA_CATASTRO), detectedBuiltArea: null,
     institutionalPeople: [...people.values()].sort((a, b) => (a.links[0]?.priority ?? Infinity) - (b.links[0]?.priority ?? Infinity)),
     contacts: [], images: [], readOnly: true, synthetic: false };

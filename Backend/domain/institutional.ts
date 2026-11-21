@@ -20,6 +20,7 @@ export type PersonCandidate = { personId: string; name: string; documentType: st
 export type PersonSearchResult = { results: InstitutionalRef[]; people: PersonCandidate[];
   requiresDisambiguation: boolean; selectedPersonId: string | null; unidentifiedMatches: number };
 export type InstitutionalParcel = InstitutionalRef & {
+  padPh: string | null;
   survey?: SurveyInformation;
   fields: Record<string, string>; provenance: string;
   originalLandArea: number | null; originalBuiltArea: number | null; detectedBuiltArea: null;
