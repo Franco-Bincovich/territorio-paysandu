@@ -15,6 +15,7 @@ const parcelTabs: { key: ParcelTab; label: string }[] = [
 ];
 export function ParcelView({
   parcel,
+  consultationsLoading,
   selectedImageCache,
   onCreate,
   onDetail,
@@ -26,6 +27,7 @@ export function ParcelView({
   onHistoryRestored,
 }: {
   parcel: Parcel;
+  consultationsLoading: boolean;
   selectedImageCache?:ParcelImageCache;
   onCreate: () => void;
   onDetail: (id: string) => Promise<void>;
@@ -61,7 +63,7 @@ export function ParcelView({
           <button className="btn primary" onClick={onCreate} disabled={parcel.readOnly}>
             + Registrar consulta
           </button>
-          {parcel.readOnly && <p className="muted">El registro de consultas todavía no está habilitado.</p>}
+          {parcel.readOnly && !consultationsLoading && <p className="muted">El registro de consultas todavía no está habilitado.</p>}
         </div>
       </div>
       <div className="parcel-detail-grid">
@@ -213,7 +215,9 @@ export function ParcelView({
             )}
             {tab === "consultations" && (
               <div>
-                {parcel.readOnly && !parcel.consultationsRead ? <p className="notice">El historial de la base propia todavía no está conectado a esta ficha institucional.</p> : <HistoryView
+                {consultationsLoading ? (
+                  <p role="status">Cargando Consultas…</p>
+                ) : parcel.readOnly && !parcel.consultationsRead ? <p className="notice">El historial de la base propia todavía no está conectado a esta ficha institucional.</p> : <HistoryView
                   parcel={parcel}
                   onDetail={onDetail}
                   returnState={historyReturnState}

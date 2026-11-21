@@ -8,6 +8,11 @@ const columns = `p.PadCod, p.PADRON, p.LOCALIDAD, p.DEPARTAMENTO, p.PadTipo, p.P
  p.PadPH, p.DOMICILIO_INMUEBLE, p.PadAreaTot, p.PadSupEdif, p.AREA_PREDIO_CATASTRO,
  p.AREA_EDIFICADA_CATASTRO, p.ESTADO_CRUCE_CATASTRO, p.PadBlock, p.PadApto,
  p.PadManCod, p.PadZonCod, p.CALLE, p.PadNPuerta`;
+const surveyColumns = `n.PadCod AS surveyPadCod,
+ CAST(n.FECHA_RELEVAMIENTO AS CHAR) AS surveyDate,
+ CAST(n.SUP_DETECTADA_M2 AS CHAR) AS detectedArea,
+ CAST(n.DIFERENCIA_CALCULADA_M2 AS CHAR) AS difference,
+ n.ESTADO_RELEVAMIENTO AS surveyState`;
 const validation = () => new HttpError(400, "VALIDATION", "Revisá los datos de búsqueda.");
 const limit = () => new HttpError(422, "RESULT_LIMIT", "La búsqueda supera el límite. Usá datos más específicos.");
 export function normalizeLocality(value: string) {
@@ -99,16 +104,35 @@ export class InstitutionalRepository {
   async getParcel(locality: string, parcel: string, padCod?: string) {
     const params = [normalizeLocality(locality), parcelNumber(parcel)];
     if (padCod !== undefined) params.push(identifier(padCod));
-    return this.read(async r => {
-      const rows = await r.query(`SELECT ${columns} FROM AGM_CIU_PADRONES p
-        WHERE ${eligibleParcelSql} AND p.LOCALIDAD = ? AND p.PADRON = ?${padCod !== undefined ? " AND p.PadCod = ?" : ""}
-        ORDER BY p.PadCod LIMIT 2`, params);
+    const filter = `WHERE ${eligibleParcelSql} AND p.LOCALIDAD = ? AND p.PADRON = ?${padCod !== undefined ? " AND p.PadCod = ?" : ""}
+      ORDER BY p.PadCod LIMIT 2`;
+    const parcelRow = (rows: Record<string, any>[]) => {
       if (!rows.length) throw new HttpError(404, "NOT_FOUND", "Padrón no encontrado.");
       if (rows.length > 1) throw new HttpError(409, "AMBIGUOUS_PARCEL", "Seleccioná el padrón por su identificador institucional.");
-      return this.details(r, rows[0]);
-    });
+      return rows[0];
+    };
+    let combinedReadFailed = false;
+    try {
+      return await this.read(async r => {
+        const rows = await r.query(`SELECT ${columns}, ${surveyColumns} FROM AGM_CIU_PADRONES p
+          LEFT JOIN AGM_LOTES_NOTIFICACION n ON n.PadCod = p.PadCod ${filter}`, params).catch(error => {
+          combinedReadFailed = true;
+          throw error;
+        });
+        const row = parcelRow(rows);
+        return this.details(r, row, mapSurvey(row));
+      });
+    } catch (error) {
+      if (!combinedReadFailed) throw error;
+      console.warn("institutional_survey_read_unavailable");
+      // A timeout can close the connection. Recover Catastro in a new read-only transaction.
+      return this.read(async r => {
+        const rows = await r.query(`SELECT ${columns} FROM AGM_CIU_PADRONES p ${filter}`, params);
+        return this.details(r, parcelRow(rows), { status: "unavailable" });
+      });
+    }
   }
-  private async details(r: Reader, parcel: Record<string, any>) {
+  private async details(r: Reader, parcel: Record<string, any>, survey: SurveyInformation) {
     const links = bounded(await r.query(`SELECT PadCod, ConCod, RelCod, RelNom, PRIORIDAD_VINCULO, ES_PRIORIZADO,
       ID_PERSONA_CP, NOMBRE_CP, DOCUMENTO_ORIGINAL, DOCUMENTO_NORMALIZADO, TIPO_DOCUMENTO,
       DOCUMENTO_VALIDO, ESTADO_DOCUMENTO, PRIORIDAD_CONTACTO, ES_CONTACTO_PRIORIZADO,
@@ -118,34 +142,27 @@ export class InstitutionalRepository {
     const media = ids.length ? bounded(await r.query(`SELECT ID_CONTACTO, ID_PERSONA_CP, TIPO_MEDIO, ID_MEDIO_CP, VALOR_CONTACTO
       FROM AGM_CIU_CONTACTOS WHERE ID_PERSONA_CP IN (${ids.map(() => "?").join(",")})
       ORDER BY ID_PERSONA_CP, TIPO_MEDIO, ID_CONTACTO LIMIT 10001`, ids), 10000) : [];
-    // The parcel has already passed locality, identity and EN_CATASTRO checks.
-    // Fetch only the four survey columns; never join by the display parcel number.
-    let survey: SurveyInformation;
-    try {
-      const rows = await r.query(`SELECT CAST(n.FECHA_RELEVAMIENTO AS CHAR) AS surveyDate,
-        CAST(n.SUP_DETECTADA_M2 AS CHAR) AS detectedArea,
-        CAST(n.DIFERENCIA_CALCULADA_M2 AS CHAR) AS difference,
-        n.ESTADO_RELEVAMIENTO AS surveyState
-        FROM AGM_LOTES_NOTIFICACION n
-        WHERE n.PadCod = ? LIMIT 1`, [String(parcel.PadCod)]);
-      const row = rows[0];
-      const decimal = (value: unknown): string | null => {
-        if (value == null) return null;
-        if (typeof value !== "string" || !/^-?\d{1,13}\.\d{2}$/.test(value)) throw new Error("Invalid survey decimal");
-        return value;
-      };
-      const date = row?.surveyDate == null ? null : String(row.surveyDate);
-      if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Invalid survey date");
-      const state = row?.surveyState == null ? null : String(row.surveyState);
-      if (state !== null && !["SIN_RELEVAR", "RELEVADO_CON_DIFERENCIA", "RELEVADO_DIFERENCIA_NEGATIVA", "RELEVADO_SIN_DIFERENCIA", "PENDIENTE_VALIDACION"].includes(state)) {
-        console.warn("institutional_survey_unknown_state");
-      }
-      survey = row ? { status: "available", date, detectedArea: decimal(row.detectedArea), difference: decimal(row.difference), state } : { status: "absent" };
-    } catch {
-      // Do not expose SQL, identifiers, credentials or institutional values.
-      console.warn("institutional_survey_read_unavailable");
-      survey = { status: "unavailable" };
-    }
     return { ...mapInstitutionalParcel(parcel, links, media), survey };
+  }
+}
+
+function mapSurvey(row: Record<string, any>): SurveyInformation {
+  if (row.surveyPadCod == null) return { status: "absent" };
+  try {
+    const decimal = (value: unknown): string | null => {
+      if (value == null) return null;
+      if (typeof value !== "string" || !/^-?\d{1,13}\.\d{2}$/.test(value)) throw new Error("Invalid survey decimal");
+      return value;
+    };
+    const date = row.surveyDate == null ? null : String(row.surveyDate);
+    if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Invalid survey date");
+    const state = row.surveyState == null ? null : String(row.surveyState);
+    if (state !== null && !["SIN_RELEVAR", "RELEVADO_CON_DIFERENCIA", "RELEVADO_DIFERENCIA_NEGATIVA", "RELEVADO_SIN_DIFERENCIA", "PENDIENTE_VALIDACION"].includes(state)) {
+      console.warn("institutional_survey_unknown_state");
+    }
+    return { status: "available", date, detectedArea: decimal(row.detectedArea), difference: decimal(row.difference), state };
+  } catch {
+    console.warn("institutional_survey_read_unavailable");
+    return { status: "unavailable" };
   }
 }

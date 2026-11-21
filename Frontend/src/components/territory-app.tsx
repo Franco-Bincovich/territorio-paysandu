@@ -53,6 +53,7 @@ export function TerritoryApp() {
   const [parcel, setParcel] = useState<Parcel | null>(null),
     [detail, setDetail] = useState<Consultation | null>(null),
     [busy, setBusy] = useState(false);
+  const [checkingParcelConsultations, setCheckingParcelConsultations] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationToggle = useRef<HTMLButtonElement>(null);
   const topbarRef = useRef<HTMLElement>(null);
@@ -196,21 +197,30 @@ export function TerritoryApp() {
     setBusy(true);
     setError("");
     try {
-      const result = await request<Parcel>(
+      const record = request<Parcel>(
         `/api/parcels/${encodeURIComponent(ref.locality)}/${encodeURIComponent(ref.parcel)}${ref.padCod ? `?padCod=${encodeURIComponent(ref.padCod)}` : ""}`,
         { signal: operation.signal },
       );
-      if (result.source === 'institutional') {
-        const capability = await request<{read:boolean;write:boolean}>('/api/consultations/capabilities', {signal:operation.signal}).catch(() => ({read:false,write:false}));
-        result.consultationsRead = capability.read;
-        result.readOnly = !capability.write;
-      }
+      const checkConsultations = () =>
+        request<{ read: boolean; write: boolean }>("/api/consultations/capabilities", { signal: operation.signal })
+          .catch(() => ({ read: false, write: false }));
+      const capability = session?.institutional ? checkConsultations() : undefined;
+      const result = await record;
       if (!operation.isCurrent()){images?.dispose();return;}
+      const institutional = result.source === "institutional";
       setRestoreHistory(restore ? "parcel" : null);
       if (!restore) parcelHistoryReturn.current = null;
-      setParcel(result);
+      setCheckingParcelConsultations(institutional);
+      setParcel(institutional ? { ...result, consultationsRead: false, readOnly: true } : result);
       setParcelTab(tab);
       setScreen("parcel");
+      if (institutional) {
+        void (capability ?? checkConsultations()).then(({ read, write }) => {
+          if (!operation.isCurrent()) return;
+          setParcel({ ...result, consultationsRead: read, readOnly: !write });
+          setCheckingParcelConsultations(false);
+        });
+      }
     } catch (e) {
       images?.dispose();if(selectedImages.current===images)selectedImages.current=null;
       if (operation.isCurrent() && !isAbort(e)) setError(message(e));
@@ -432,6 +442,7 @@ export function TerritoryApp() {
             <ParcelView
               key={parcel.padCod ?? `${parcel.locality}/${parcel.parcel}`}
               parcel={parcel}
+              consultationsLoading={checkingParcelConsultations}
               selectedImageCache={selectedImages.current??undefined}
               initialTab={parcelTab}
               historyReturnState={
