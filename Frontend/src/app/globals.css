@@ -192,15 +192,23 @@ strong {
 .nav button {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 8px;
   text-align: left;
   background: transparent;
   border: 0;
   border-radius: 13px;
-  padding: 12px;
-  font-size: 12px;
+  padding: 12px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
   color: var(--muted);
-  min-height: 44px;
+  min-height: 48px;
+}
+.nav .module-nav-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
 }
 .nav button:hover {
   background: var(--wash);
@@ -422,9 +430,7 @@ strong {
 .field textarea::placeholder {
   color: #71829c;
 }
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
+.field :is(input, select, textarea):enabled:focus {
   border-color: #6d97ec;
 }
 .stack,

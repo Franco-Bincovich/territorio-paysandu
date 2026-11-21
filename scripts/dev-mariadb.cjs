@@ -34,7 +34,7 @@ function configuration(configRoot = configurationRoot()) {
   const institutionalPath = path.join(configRoot, 'Backend/server/institutional/.env.local');
   if (fs.existsSync(institutionalPath)) {
     const source = parseEnv(fs.readFileSync(institutionalPath, 'utf8'));
-    for (const key of ['INSTITUTIONAL_ENABLED', 'INSTITUTIONAL_HOST', 'INSTITUTIONAL_PORT',
+    for (const key of ['INSTITUTIONAL_ENABLED', 'NOTIFICATION_LOTS_LOCAL_INSTITUTIONAL', 'INSTITUTIONAL_HOST', 'INSTITUTIONAL_PORT',
       'INSTITUTIONAL_DATABASE', 'INSTITUTIONAL_USER', 'INSTITUTIONAL_PASSWORD', 'INSTITUTIONAL_TLS', 'INSTITUTIONAL_TLS_CA_FILE']) {
       if (Object.hasOwn(source, key)) env[key] = source[key];
     }

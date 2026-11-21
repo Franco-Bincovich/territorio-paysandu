@@ -129,9 +129,14 @@ h2 { font-weight: 700; }
   border-color: var(--control-border);
 }
 .field :is(input, textarea)::placeholder { color: #526877; }
-.field :is(input, select, textarea):not([aria-invalid="true"]):focus {
+.field :is(input, select, textarea):not([aria-invalid="true"]):enabled:focus {
   background-color: white;
   border-color: var(--focus);
+}
+.municipal-search-grid :is(input, select):disabled {
+  background-color: var(--surface);
+  color: var(--muted);
+  cursor: not-allowed;
 }
 .password-control .btn { background: #e2eff3; border-color: var(--control-border); color: #164d6a; }
 .btn.primary { background: var(--action); color: white; border-color: #195777; }
@@ -142,6 +147,18 @@ h2 { font-weight: 700; }
 .record-main .tabs { background: #e7f1f4; border-color: #c0d4dc; }
 .record-main .tabs button.active { background: #155776; color: white; }
 .panel table thead th { color: #f1f6ff; background: #17384e; }
+:is(.consultation-history table, .admin-users-table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+:is(.consultation-history table, .admin-users-table) thead th:first-child {
+  border-start-start-radius: 12px;
+  border-end-start-radius: 12px;
+}
+:is(.consultation-history table, .admin-users-table) thead th:last-child {
+  border-start-end-radius: 12px;
+  border-end-end-radius: 12px;
+}
 .tablewrap, .record-main .tabs {
   scrollbar-color: #668a9d #e7f1f4;
   scrollbar-width: thin;

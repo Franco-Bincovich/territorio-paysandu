@@ -76,9 +76,18 @@ export function configuredLocalNotificationLots(env: NodeJS.ProcessEnv = process
 }
 
 export function configuredNotificationLots(env: NodeJS.ProcessEnv = process.env) {
-  if (!productionMariaEnabled(env)) return configuredLocalNotificationLots(env);
-  if (env.NOTIFICATION_LOTS_ENABLED !== "true" || env.INSTITUTIONAL_ENABLED !== "true" ||
-    env.INSTITUTIONAL_DATABASE !== "TRABAJO_DATOS") return undefined;
+  const production = productionMariaEnabled(env);
+  if (production) {
+    if (env.NOTIFICATION_LOTS_ENABLED !== "true") return undefined;
+  } else if (env.NOTIFICATION_LOTS_LOCAL_INSTITUTIONAL === "true") {
+    if (env.NODE_ENV !== "development" || env.AUTH_PROVIDER !== "mariadb-test" ||
+      env.MARIADB_AUTH_TEST_ENABLED !== "true" || env.APP_ORIGIN !== "http://127.0.0.1:3105" ||
+      env.MARIADB_TLS === "false" || env.INSTITUTIONAL_TLS === "false" ||
+      env.NODE_TLS_REJECT_UNAUTHORIZED === "0") return undefined;
+  } else {
+    return configuredLocalNotificationLots(env);
+  }
+  if (env.INSTITUTIONAL_ENABLED !== "true" || env.INSTITUTIONAL_DATABASE !== "TRABAJO_DATOS") return undefined;
   return createNotificationLotsHttp({
     canConsult: role => role === "administrator",
     canDownload: role => role === "administrator",

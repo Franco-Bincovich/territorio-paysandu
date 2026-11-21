@@ -4,8 +4,6 @@
 :is(.admin-users-view, .admin-user-dialog, .expedientes-view) :is(small, .muted, .meta, .badge) { font-size: 13px; }
 :is(.admin-users-view, .expedientes-view) .panel-head { gap: 16px; flex-wrap: wrap; }
 .admin-users-table { min-width: 740px; }
-.administration-navigation { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-.administration-navigation .btn[aria-pressed="true"] { color: var(--action); border-color: var(--action); }
 .admin-user-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .admin-user-actions .btn { white-space: nowrap; }
 .expedientes-view > .notice { margin-block: 20px; }

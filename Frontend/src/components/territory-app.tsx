@@ -2,7 +2,6 @@
 import "./consultation-history.css";
 import "./platform-modules.css";
 import { AdministrationView } from "./administration-view";
-import { AdministrativeAuditView } from "./administrative-audit-view";
 import { ExpedientesView } from "./expedientes-view";
 import { hasCapability } from "../../../shared/permissions";
 import { CollaboratorMenu } from "./collaborator-menu";
@@ -47,6 +46,21 @@ export type HistoryReturnState = {
 };
 const message = (e: unknown) =>
   e instanceof Error ? e.message : "No se pudo completar la operación.";
+
+const moduleIcons = {
+  search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></>,
+  history: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
+  lots: <><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 9h16M10 9v11" /></>,
+  expedientes: <><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" /><path d="M3 9h18" /></>,
+  administration: <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3" /></>,
+};
+
+function ModuleNavIcon({ name }: { name: keyof typeof moduleIcons }) {
+  return <svg className="module-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true" focusable="false">{moduleIcons[name]}</svg>;
+}
+
 export function TerritoryApp() {
   const selectedImages=useRef<ParcelImageCache|null>(null);
   useEffect(()=>()=>selectedImages.current?.dispose(),[]);
@@ -396,14 +410,14 @@ export function TerritoryApp() {
               navigate("search");
             }}
           >
-            ⌕ <span>Buscar padrón</span>
+            <ModuleNavIcon name="search" /><span>Buscar padrón</span>
           </button>
           {canAccessConsultations && (
             <button
               className={screen === "history" ? "active" : ""}
               onClick={() => navigate("history")}
             >
-              ☷ <span>Historial de consultas</span>
+              <ModuleNavIcon name="history" /><span>Historial de consultas</span>
             </button>
           )}
           {session.notificationLots?.consult && (
@@ -411,17 +425,17 @@ export function TerritoryApp() {
               className={screen === "notificationLots" ? "active" : ""}
               onClick={() => navigate("notificationLots")}
             >
-              ▤ <span>Lotes</span>
+              <ModuleNavIcon name="lots" /><span>Lotes</span>
             </button>
           )}
           {hasCapability(role, "expedientes.read") && (
             <button className={screen === "expedientes" ? "active" : ""} onClick={() => navigate("expedientes")}>
-              ▱ <span>Expedientes</span>
+              <ModuleNavIcon name="expedientes" /><span>Expedientes</span>
             </button>
           )}
           {hasCapability(role, "users.manage") && (
             <button className={screen === "administration" ? "active" : ""} onClick={() => navigate("administration")}>
-              ⚙ <span>Administración</span>
+              <ModuleNavIcon name="administration" /><span>Administración</span>
             </button>
           )}
         </nav>
@@ -474,7 +488,7 @@ export function TerritoryApp() {
           {error && <ErrorBox text={error} />}{" "}
           {busy && <p role="status">Cargando…</p>}
           {screen === "administration" && hasCapability(role, "users.manage") && (
-            <AdministrationModule onRequiresLogin={() => clearSession("Los cambios requieren iniciar sesión nuevamente.")} />
+            <AdministrationView onRequiresLogin={() => clearSession("Los cambios requieren iniciar sesión nuevamente.")} />
           )}
           {screen === "expedientes" && hasCapability(role, "expedientes.read") && (
             <section className="panel"><h1>Expedientes</h1><ExpedientesView role={role} /></section>
@@ -796,8 +810,8 @@ function SearchView({ onOpen, institutional, topbarRef }: {
   const pendingResultScroll = useRef<(() => boolean) | null>(null);
   const formErrorRef = useRef<HTMLParagraphElement>(null);
   const errorId = useId();
-  const useMunicipalCode = institutional && !!municipalCode.trim();
-  const useLocality = !!(locality || parcelNumber.trim());
+  const useMunicipalCode = Boolean(institutional && municipalCode);
+  const useLocality = Boolean(locality || parcelNumber);
   useEffect(() => {
     if (formError) formErrorRef.current?.focus();
   }, [formError]);
@@ -1013,19 +1027,6 @@ function SearchView({ onOpen, institutional, topbarRef }: {
     </>
   );
 }
-function AdministrationModule({ onRequiresLogin }: { onRequiresLogin: () => void }) {
-  const [audit, setAudit] = useState(false);
-  return <>
-    <div className="administration-navigation" role="group" aria-label="Secciones de Administración">
-      <button className="btn" aria-pressed={!audit} onClick={() => setAudit(false)}>Usuarios</button>
-      <button className="btn" aria-pressed={audit} onClick={() => setAudit(true)}>Auditoría</button>
-    </div>
-    {audit
-      ? <section className="panel"><AdministrativeAuditView /></section>
-      : <AdministrationView onRequiresLogin={onRequiresLogin} />}
-  </>;
-}
-
 export function HistoryView({
   onDetail,
   parcel,

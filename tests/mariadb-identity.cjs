@@ -85,3 +85,22 @@ test("Production lots require the HTTPS MariaDB delivery contract and are admini
   assert.equal(configuredNotificationLots({ ...env, INSTITUTIONAL_TLS: "false" }), undefined);
   assert.equal(configuredNotificationLots({ ...env, NOTIFICATION_LOTS_ENABLED: "false", NOTIFICATION_LOTS_LOCAL_QA: "true" }), undefined);
 });
+
+test("Institutional lots in local development require an explicit opt-in and are administrator only", () => {
+  const env = {
+    NODE_ENV: "development", AUTH_PROVIDER: "mariadb-test", MARIADB_AUTH_TEST_ENABLED: "true",
+    APP_ORIGIN: "http://127.0.0.1:3105", INSTITUTIONAL_ENABLED: "true",
+    INSTITUTIONAL_DATABASE: "TRABAJO_DATOS", INSTITUTIONAL_HOST: "institutional.example",
+    NOTIFICATION_LOTS_LOCAL_INSTITUTIONAL: "true",
+  };
+  const policy = configuredNotificationLots(env);
+  for (const role of ROLES) {
+    const permitted = role === "administrator";
+    assert.deepEqual(policy.capabilities(role), { consult: permitted, download: permitted });
+  }
+  assert.equal(configuredNotificationLots({ ...env, NOTIFICATION_LOTS_LOCAL_INSTITUTIONAL: "false" }), undefined);
+  assert.equal(configuredNotificationLots({ ...env, APP_ORIGIN: "http://example.invalid:3105" }), undefined);
+  assert.equal(configuredNotificationLots({ ...env, INSTITUTIONAL_TLS: "false" }), undefined);
+  assert.equal(configuredNotificationLots({ ...env, NODE_ENV: "test", NOTIFICATION_LOTS_LOCAL_QA: "true",
+    INSTITUTIONAL_HOST: "127.0.0.1" }), undefined);
+});
