@@ -52,7 +52,8 @@ export class InstitutionalRepository {
   constructor(private read: InstitutionalRead = institutionalRead) {}
   async searchParcel(locality: string, parcel: string) {
     const params = [normalizeLocality(locality), parcelNumber(parcel)];
-    return this.read(async r => bounded(await r.query(`SELECT ${columns} FROM AGM_CIU_PADRONES p
+    return this.read(async r => bounded(await r.query(`SELECT p.PadCod, p.PADRON, p.LOCALIDAD, p.DOMICILIO_INMUEBLE
+      FROM AGM_CIU_PADRONES p
       WHERE ${eligibleParcelSql} AND p.LOCALIDAD = ? AND p.PADRON = ? ORDER BY p.PadCod LIMIT 51`, params), 50).map(parcelRef));
   }
   async searchPadCod(value: string) {
