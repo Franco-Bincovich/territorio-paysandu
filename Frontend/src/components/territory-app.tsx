@@ -731,7 +731,7 @@ function SearchView({ onOpen, institutional, topbarRef }: {
     );
     setNameSearch(query.get("kind") === "name");
     lastPersonQuery.current = query.has("kind") ? new URLSearchParams(query) : null;
-    const parcelSearch = query.has("locality") && query.has("parcel") && !query.has("kind");
+    const parcelSearch = query.has("padCod") || (query.has("locality") && query.has("parcel") && !query.has("kind"));
     try {
       const result = await request<{ results: ParcelSearchResult[]; people?: import("./contracts").PersonCandidate[];
         requiresDisambiguation?: boolean; unidentifiedMatches?: number }>(
@@ -798,7 +798,9 @@ function SearchView({ onOpen, institutional, topbarRef }: {
           <p className="eyebrow">Información territorial</p>
           <h1>El territorio, en un solo lugar.</h1>
           <p>
-            Buscá por localidad y padrón o por los datos exactos de una persona.
+            {institutional
+              ? "Buscá por localidad y padrón, por PadCod o por los datos exactos de una persona."
+              : "Buscá por localidad y padrón o por los datos exactos de una persona."}
           </p>
         </div>
       </section>
@@ -863,6 +865,22 @@ function SearchView({ onOpen, institutional, topbarRef }: {
             <p className="muted">Incluye todas las localidades.</p>
           </form>
         </section>
+        {institutional && (
+          <section className="panel">
+            <div className="panel-head">
+              <h2>Por PadCod</h2>
+            </div>
+            <form className="search-grid" onSubmit={search}>
+              <label className="field">
+                PadCod
+                <input name="padCod" required inputMode="numeric" pattern="[0-9]+" />
+              </label>
+              <button className="btn primary" disabled={busy}>
+                Buscar por PadCod
+              </button>
+            </form>
+          </section>
+        )}
       </div>
       <ParcelClassificationNotice open={classificationNoticeOpen}
         onDismiss={() => setClassificationNoticeOpen(false)} returnFocus={searchSubmitter.current} />

@@ -50,6 +50,13 @@ export class InstitutionalRepository {
     return this.read(async r => bounded(await r.query(`SELECT ${columns} FROM AGM_CIU_PADRONES p
       WHERE ${eligibleParcelSql} AND p.LOCALIDAD = ? AND p.PADRON = ? ORDER BY p.PadCod LIMIT 51`, params), 50).map(parcelRef));
   }
+  async searchPadCod(value: string) {
+    const normalized = value.replace(/^0+/, "");
+    if (!/^[1-9]\d{0,9}$/.test(normalized) || Number(normalized) > 2147483647)
+      throw new HttpError(400, "VALIDATION", "Ingresá un PadCod entre 1 y 2147483647.");
+    return this.read(async r => (await r.query(`SELECT p.PadCod, p.PADRON, p.LOCALIDAD, p.DOMICILIO_INMUEBLE
+      FROM AGM_CIU_PADRONES p WHERE p.PadCod = ? AND ${eligibleParcelSql}`, [Number(normalized)])).map(parcelRef));
+  }
   async searchPerson(kind: string, value: string, selectedPersonId?: string): Promise<PersonSearchResult> {
     const predicate = personPredicate(kind, value);
     if (selectedPersonId !== undefined) identifier(selectedPersonId);

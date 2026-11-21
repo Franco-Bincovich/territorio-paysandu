@@ -25,6 +25,11 @@ export function createInstitutionalHttp(repository = new InstitutionalRepository
       return images.download(segments[1],ref,request.signal);
     }
     if (segments.join("/") === "search") {
+      const padCod = url.searchParams.get("padCod");
+      if (padCod !== null) {
+        queryKeys(url.searchParams, ["padCod"]);
+        return result({ results: await repository.searchPadCod(padCod) });
+      }
       if (url.searchParams.has("kind")) {
         queryKeys(url.searchParams, ["kind", "q", "personId"]);
         return result(await repository.searchPerson(required(url.searchParams.get("kind"), 10), required(url.searchParams.get("q"), 200),
