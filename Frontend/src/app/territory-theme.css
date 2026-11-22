@@ -147,15 +147,15 @@ h2 { font-weight: 700; }
 .record-main .tabs { background: #e7f1f4; border-color: #c0d4dc; }
 .record-main .tabs button.active { background: #155776; color: white; }
 .panel table thead th { color: #f1f6ff; background: #17384e; }
-:is(.consultation-history table, .admin-users-table) {
+:is(.consultation-history table, .admin-users-table, .admin-permissions-table, .notification-lot-table) {
   border-collapse: separate;
   border-spacing: 0;
 }
-:is(.consultation-history table, .admin-users-table) thead th:first-child {
+:is(.consultation-history table, .admin-users-table, .admin-permissions-table, .notification-lot-table) thead th:first-child {
   border-start-start-radius: 12px;
   border-end-start-radius: 12px;
 }
-:is(.consultation-history table, .admin-users-table) thead th:last-child {
+:is(.consultation-history table, .admin-users-table, .admin-permissions-table, .notification-lot-table) thead th:last-child {
   border-start-end-radius: 12px;
   border-end-end-radius: 12px;
 }

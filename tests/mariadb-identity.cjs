@@ -54,7 +54,7 @@ test("MariaDB session preserves the real role and all platform roles may read co
   }
 });
 
-test("V2 grants lots to administrators and collaborators only with the synthetic QA configuration", () => {
+test("Synthetic QA lots retain their loopback guard and are administrator only", () => {
   const env = {
     NODE_ENV: "development", AUTH_PROVIDER: "mariadb-test", MARIADB_AUTH_TEST_ENABLED: "true",
     NOTIFICATION_LOTS_LOCAL_QA: "true", INSTITUTIONAL_ENABLED: "true",
@@ -62,7 +62,7 @@ test("V2 grants lots to administrators and collaborators only with the synthetic
   };
   const policy = configuredLocalNotificationLots(env);
   for (const role of ROLES) {
-    const permitted = role !== "atencion_publico";
+    const permitted = role === "administrator";
     assert.deepEqual(policy.capabilities(role), { consult: permitted, download: permitted });
   }
   assert.equal(configuredLocalNotificationLots({ ...env, INSTITUTIONAL_HOST: "institutional.example" }), undefined);

@@ -1,12 +1,14 @@
 import type { InstitutionalParcel, InstitutionalPerson, InstitutionalRef, SurveyInformation } from "@backend/domain/institutional";
 import type { NotificationLotCapabilities } from "@backend/domain/notification-lots";
 import type { Role } from "../../../shared/permissions";
+import type { ModuleAccess } from "../../../shared/module-access";
 export type { PersonCandidate } from "@backend/domain/institutional";
 export type Session = {
   user: { id: string; username: string; role?: Role; provider?: "mariadb" } | null;
   mustChangePassword: boolean;
   synthetic: boolean;
   institutional?: boolean;
+  access?: ModuleAccess;
   notificationLots?: NotificationLotCapabilities;
 };
 export type ParcelRef = { locality: string; parcel: string; address: string;

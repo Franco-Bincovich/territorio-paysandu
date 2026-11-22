@@ -137,27 +137,65 @@ test("nombre cambia el orden del cruce y CI/RUT conservan su predicado", async (
 });
 
 const lotId = "LOTE_INICIAL_47";
-test("Lotes usa un comando y conserva página, faltantes y totales aun sin filas", async t => {
+const previewFields = [
+  "NRO_OBJETO_NRO_PLAN", "OBSERVACIONES_TIPO_OBJETOS", "ZONA", "DENOMINACION",
+  "DOMICILIO", "ALTURA", "ESTADO_RELEVAMIENTO", "CUIT", "TIPO_DOCUMENTO",
+  "DOCUMENTO", "CELULAR2", "CORREO_ELECTRONICO",
+];
+const previewHeadings = [
+  "Código municipal", "Número de padrón", "Localidad", "Denominación",
+  "Domicilio y altura", "Estado del relevamiento", "RUT",
+  "Cédula de identidad", "Celular", "Correo",
+];
+const previewMetadata = previewFields.map(name => ({ name, dataType: "varchar" }));
+
+test("Lotes proyecta solo los campos solicitados y respeta el límite y los totales", async t => {
   t.mock.method(console, "warn", () => {});
+  const shortLotId = "E2-P03";
+  const emptyLotId = "E2-P04";
+  const largeRows = Array.from({ length: 47 }, (_, i) => ({ NRO_OBJETO_NRO_PLAN: i + 1 }));
+  const shortRows = [
+    { NRO_OBJETO_NRO_PLAN: "008", OBSERVACIONES_TIPO_OBJETOS: "123", ZONA: "PAYSANDU",
+      DENOMINACION: "Predio QA", DOMICILIO: "Calle QA", ALTURA: "  ", ESTADO_RELEVAMIENTO: "Pendiente",
+      CUIT: "00123456", TIPO_DOCUMENTO: "CI", DOCUMENTO: " 00-3 ", CELULAR2: "+598099000004",
+      CORREO_ELECTRONICO: "qa@example.test", NOMBRE_IMAGEN_ACTUAL: "/sftp/no-publicar.jpg" },
+    { ALTURA: 400, DOCUMENTO: "0005" },
+    { DOMICILIO: "Calle Dos", ALTURA: 0, TIPO_DOCUMENTO: "RUT" },
+    {},
+  ];
   const repository = new NotificationLotRepository(async read => read({
     async query(sql, params) {
-      assert.match(sql, /UNION ALL/);
-      assert.match(sql, /ORDER BY result\.rowKind, BINARY result\.locality, BINARY result\.parcel,/);
-      assert.deepEqual(params.slice(0, 3), [lotId, lotId, 25]);
-      const rows = params[3] === 25 ? [
-        { rowKind: 1, padCod: 12n, locality: " PAYSANDU ", parcel: "", hasParcel: 0 },
-        { rowKind: 1, padCod: null, locality: null, parcel: "ignored", hasParcel: 0 },
-      ] : [];
-      return [{ rowKind: 0, total: 27n, uniqueParcels: 25n, unmatched: 2n }, ...rows];
+      if (sql.includes("information_schema.COLUMNS")) {
+        return [...previewMetadata, { name: "NOMBRE_IMAGEN_ACTUAL", dataType: "varchar" }];
+      }
+      const [id] = params;
+      const rows = id === lotId ? largeRows : id === shortLotId ? shortRows : [];
+      if (sql.includes("COUNT(*)")) return [{ total: rows.length, uniqueParcels: rows.length, unmatched: 0 }];
+      const projection = sql.slice(7, sql.indexOf(" FROM "));
+      const selectedFields = [...projection.matchAll(/ AS `([^\x60]+)`/g)].map(match => match[1]);
+      assert.deepEqual(selectedFields, previewFields);
+      assert.match(sql, /ORDER BY BINARY COALESCE\(CAST\(v.`ZONA` AS CHAR/);
+      assert.match(sql, / LIMIT \?$/);
+      assert.doesNotMatch(sql, /\bOFFSET\b/);
+      assert.deepEqual(params, [id, 10]);
+      return rows.slice(0, params[1]);
     },
   }));
-  assert.deepEqual(await repository.detail(lotId, 2), {
-    page: 2, pageSize: 25, total: 27, uniqueParcels: 25, unmatched: 2,
-    rows: [{ padCod: "12", locality: "PAYSANDU", parcel: null, hasParcel: false },
-      { padCod: null, locality: null, parcel: null, hasParcel: false }],
+  const preview = await repository.preview(lotId);
+  assert.equal(preview.total, 47);
+  assert.equal(preview.uniqueParcels, 47);
+  assert.deepEqual(preview.rows.map(row => row[0]), largeRows.slice(0, 10).map(row => String(row.NRO_OBJETO_NRO_PLAN)));
+  assert.deepEqual(await repository.preview(shortLotId), {
+    columns: previewHeadings, total: 4, uniqueParcels: 4, unmatched: 0,
+    rows: [
+      ["008", "123", "PAYSANDU", "Predio QA", "Calle QA", "Pendiente", "00123456", "CI 00-3", "+598099000004", "qa@example.test"],
+      ["", "", "", "", "400", "", "", "0005", "", ""],
+      ["", "", "", "", "Calle Dos 0", "", "", "RUT", "", ""],
+      ["", "", "", "", "", "", "", "", "", ""],
+    ],
   });
-  assert.deepEqual(await repository.detail(lotId, 3), {
-    page: 3, pageSize: 25, total: 27, uniqueParcels: 25, unmatched: 2, rows: [],
+  assert.deepEqual(await repository.preview(emptyLotId), {
+    columns: previewHeadings, total: 0, uniqueParcels: 0, unmatched: 0, rows: [],
   });
 });
 
@@ -177,24 +215,45 @@ function zipEntry(bytes, name) {
   throw new Error(`Missing ZIP entry: ${name}`);
 }
 
-test("permisos HTTP y exportación completa de 84 columnas", async () => {
+test("solo Administración accede al listado, a la vista previa y al Excel completo", async () => {
   const metadata = [
     { name: "FECHA_RELEVAMIENTO", dataType: "date" },
     { name: "AREA_PREDIO_CATASTRO", dataType: "decimal" },
+    { name: "CUIT", dataType: "decimal" },
+    { name: "NOMBRE_IMAGEN_ACTUAL", dataType: "varchar" },
+    { name: "NOMBRE_IMAGEN_HISTORICA", dataType: "varchar" },
+    ...previewMetadata.filter(column => column.name !== "CUIT"),
     ...Array.from({ length: 46 }, (_, i) => ({ name: `BIN_${i}`, dataType: "binary" })),
-    ...Array.from({ length: 36 }, (_, i) => ({ name: `TXT_${i}`, dataType: "varchar" })),
+    ...Array.from({ length: 22 }, (_, i) => ({ name: `TXT_${i}`, dataType: "varchar" })),
   ];
   const fullRow = Object.fromEntries(metadata.map(({ name, dataType }) =>
     [name, ({ date: "2026-01-02", decimal: "12.30", binary: Buffer.from("QA"), varchar: "Fixture" })[dataType]]));
-  const query = mock.fn(async sql => {
-    if (sql.includes("COUNT(*)")) return [{ total: 0, uniqueParcels: 0, unmatched: 0 }];
+  Object.assign(fullRow, {
+    CUIT: "00123456",
+    ZONA: "PAYSANDU CHACRAS",
+    OBSERVACIONES_TIPO_OBJETOS: "420",
+    NOMBRE_IMAGEN_ACTUAL: "/sftp/ficticio/420_1.jpg",
+    NOMBRE_IMAGEN_HISTORICA: "/sftp/ficticio/1985_420.jpg",
+    TXT_21: null,
+  });
+  const query = mock.fn(async (sql, params) => {
+    if (sql.includes("COUNT(*)")) return [{ id: lotId, total: 47, uniqueParcels: 42, unmatched: 0 }];
     if (sql.includes("information_schema.COLUMNS")) return metadata;
-    assert.match(sql, /CAST\(v.`FECHA_RELEVAMIENTO` AS CHAR\) AS `FECHA_RELEVAMIENTO`/);
     assert.ok(metadata.every(({ name }) => sql.includes(`v.\`${name}\``)));
-    return [fullRow];
+    assert.match(sql, /ORDER BY BINARY COALESCE\(CAST\(v.`ZONA` AS CHAR/);
+    assert.match(sql, / LIMIT \?$/);
+    const [, limit] = params;
+    if (limit === 1_048_576) assert.match(sql, /CAST\(v.`FECHA_RELEVAMIENTO` AS CHAR\) AS `FECHA_RELEVAMIENTO`/);
+    assert.ok(limit === 10 || limit === 1_048_576);
+    return Array.from({ length: Math.min(47, limit) }, (_, index) => ({
+      ...fullRow,
+      NOMBRE_IMAGEN_HISTORICA: [
+        fullRow.NOMBRE_IMAGEN_HISTORICA, "/sftp/ficticio/sin-fecha.jpg", null,
+      ][index % 3],
+    }));
   });
   const repository = new NotificationLotRepository(async read => read({ query }));
-  const lots = createNotificationLotsHttp({ canConsult: role => role !== "blocked", canDownload: role => role === "collaborator" }, repository);
+  const lots = createNotificationLotsHttp(repository);
   const origin = "http://127.0.0.1:3200";
   const auth = {
     async identify(token) {
@@ -204,29 +263,54 @@ test("permisos HTTP y exportación completa de 84 columnas", async () => {
   };
   const limits = { enter: async () => () => {}, user: async () => {} };
   const route = createMariaHttp(auth, origin, undefined, undefined, limits, lots);
-  const request = (token, suffix = "") => {
-    const path = `notification-lots/${lotId}${suffix}`;
+  const request = (token, suffix = `/${lotId}`) => {
+    const path = `notification-lots${suffix}`;
     return route(new Request(`${origin}/api/${path}`, {
       headers: token ? { cookie: `tp_maria_session=${token}` } : undefined,
     }), path.split("/"));
   };
+  const pageRequest = new Request(`${origin}/api/notification-lots/${lotId}?page=2`);
+  await assert.rejects(lots.handle(pageRequest, ["notification-lots", lotId], "administrator"),
+    error => error.status === 400);
   assert.equal((await request()).status, 401);
-  assert.equal((await request("blocked")).status, 403);
-  assert.equal((await request("reader", "/export")).status, 403);
+  for (const role of ["collaborator", "atencion_publico", "unknown"]) {
+    assert.equal((await request(role, "")).status, 403);
+    assert.equal((await request(role)).status, 403);
+    assert.equal((await request(role, `/${lotId}/export`)).status, 403);
+  }
   assert.equal(query.mock.callCount(), 0);
-  assert.equal((await request("reader")).status, 200);
+  const list = await request("administrator", "");
+  assert.equal(list.status, 200);
+  assert.equal((await list.json()).lots[0].total, 47);
   assert.equal(query.mock.callCount(), 1);
-  const xlsx = await request("collaborator", "/export");
+  const previewResponse = await request("administrator");
+  assert.equal(previewResponse.status, 200);
+  const preview = await previewResponse.json();
+  assert.equal(query.mock.callCount(), 4);
+  assert.equal(preview.total, 47);
+  assert.equal(preview.uniqueParcels, 42);
+  assert.deepEqual(preview.columns, previewHeadings);
+  assert.equal(preview.rows.length, 10);
+  assert.ok(preview.rows.every(row => row.length === 10));
+  assert.equal(preview.rows[0][6], "00123456");
+  assert.doesNotMatch(JSON.stringify(preview), /sftp|\.jpg/);
+  const xlsx = await request("administrator", `/${lotId}/export`);
   assert.equal(xlsx.status, 200);
-  assert.equal(query.mock.callCount(), 3);
+  assert.equal(query.mock.callCount(), 6);
   const sheet = zipEntry(Buffer.from(await xlsx.arrayBuffer()), "xl/worksheets/sheet1.xml");
-  assert.match(sheet, /<dimension ref="A1:CF2"/);
-  const [head, body] = [...sheet.matchAll(/<row r="\d+">(.*?)<\/row>/g)].map(match => match[1]);
+  assert.match(sheet, /<dimension ref="A1:CF48"/);
+  const [head, ...bodyRows] = [...sheet.matchAll(/<row r="\d+">(.*?)<\/row>/g)].map(match => match[1]);
+  assert.equal(bodyRows.length, 47);
+  const [body] = bodyRows;
   assert.equal([...head.matchAll(/<c r=/g)].length, 84);
-  assert.equal([...body.matchAll(/<c r=/g)].length, 84);
+  assert.equal([...body.matchAll(/<c r=/g)].length, 83);
   assert.deepEqual([...head.matchAll(/<t xml:space="preserve">(.*?)<\/t>/g)].map(match => match[1]),
-    metadata.map(({ name }) => name));
+    metadata.map(({ name }) => ({ CUIT: "RUT", NOMBRE_IMAGEN_ACTUAL: "Imagen actual",
+      NOMBRE_IMAGEN_HISTORICA: "Imagen histórica" })[name] ?? name));
   assert.match(body, /r="A2" s="2" t="n"/);
   assert.match(body, /r="B2" s="3" t="n"><v>12\.30<\/v>/);
+  assert.match(body, /r="C2" s="0" t="inlineStr"><is><t xml:space="preserve">00123456<\/t>/);
+  assert.match(body, /2026 · Paysandú Chacras · 420/);
+  assert.match(body, /1985 · Paysandú Chacras · 420/);
   assert.match(body, /UUE=/);
 });

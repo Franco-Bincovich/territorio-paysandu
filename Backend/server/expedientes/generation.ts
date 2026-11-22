@@ -55,4 +55,7 @@ export class DocumentGeneration {
     if (!await this.policy.canReadParcel(actor,item.metadata.padCod)) throw fail('FORBIDDEN',403);
     return {metadata:{...item.metadata},bytes:Uint8Array.from(item.bytes)};
   }
+  discard(id: string) {
+    this.artifacts.delete(id);
+  }
 }

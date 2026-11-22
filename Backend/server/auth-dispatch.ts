@@ -1,14 +1,34 @@
 import { handle as supabaseHandle } from "./handler";
 import { requestedAuthProvider } from "./mariadb/provider";
-import { authError } from "./mariadb/http";
+import { authError, observeMariaHttp } from "./mariadb/http";
 import { observeRequest,routeTemplate } from './observability';
 import { configuredNotificationLots } from "./notification-lots/http";
 import { HttpError } from "./security";
+import { configuredModuleAccess } from "./admin/module-access-repository";
+import { mariaPool } from "./mariadb/pool";
+import { requireAdminSchema } from "./admin/schema";
+import { auditUnavailable } from "./audit/platform";
+
+// Activate only after the expanded schema and all administrative readers are installed.
+let auditSchemaReady = false;
+const audit = process.env.PLATFORM_AUDIT_ENABLED === "true" ? {
+  query: (sql: string, params: unknown[]) => {
+    if (!auditSchemaReady) throw auditUnavailable();
+    return mariaPool().query(sql, params);
+  },
+} : undefined;
 
 let mariaHandler: Promise<ReturnType<typeof import("./mariadb/http").createMariaHttp>> | undefined;
 async function localHandler() {
   if (!mariaHandler) {
     mariaHandler = (async () => {
+      if (audit && !auditSchemaReady) {
+        const connection = await mariaPool().getConnection();
+        try {
+          if (!await requireAdminSchema(connection)) throw auditUnavailable();
+          auditSchemaReady = true;
+        } finally { await connection.release(); }
+      }
       const [{ createMariaAuth }, { MariaAuthStore }, { createMariaHttp }] = await Promise.all([
         import("./mariadb/auth"), import("./mariadb/store"), import("./mariadb/http"),
       ]);
@@ -26,7 +46,7 @@ async function localHandler() {
         import("./admin/http"), import("./expedientes/http"),
       ]);
       return createMariaHttp(await createMariaAuth(new MariaAuthStore()), process.env.APP_ORIGIN ?? "http://127.0.0.1:3000",
-        institutional, consultations, undefined, configuredNotificationLots(), configuredAdminHttp(), configuredExpedientesHttp());
+        institutional, consultations, undefined, configuredNotificationLots(), configuredAdminHttp(), configuredExpedientesHttp(), configuredModuleAccess(), audit);
     })().catch(error => { mariaHandler = undefined; throw error; });
   }
   return mariaHandler;
@@ -36,7 +56,7 @@ export async function mariaResponse(request: Request, segments: string[]): Promi
   try {
     if (requestedAuthProvider() === "supabase") return null;
     return await (await localHandler())(request, segments);
-  } catch (error) { return observeRequest(routeTemplate(segments),async()=>authError(error)); }
+  } catch (error) { return observeMariaHttp(request, segments, audit, async()=>authError(error)); }
 }
 export async function dispatch(request: Request, segments: string[]) {
   const maria = await mariaResponse(request, segments);

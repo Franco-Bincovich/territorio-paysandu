@@ -3,6 +3,8 @@ import * as argon2 from "argon2";
 import { accountBucket, HttpError, required } from "../security";
 import { isRole } from "../../../shared/permissions";
 import { usernameKey } from "../../../shared/user-profile";
+import { auditActor, auditNoChange } from "../audit/platform";
+import { passwordIssues, passwordPolicyMessage, PASSWORD_MAX_LENGTH } from "../../../shared/password-policy";
 
 export type AuthUser = {
   id: string; username: string; enabled: boolean; role: string;
@@ -24,8 +26,8 @@ export type Session = {
 export interface AuthStore {
   reserveAttempt(bucket: string, now: number, limit: number, windowMs: number): Promise<boolean | string>;
   findUser(username: string): Promise<AuthUser | null>;
-  issueSession(session: Session, expectedHash: string, attemptId?: string): Promise<boolean>;
-  sessionWithUser(hash: string): Promise<{ session: Session; user: AuthUser } | null>;
+  issueSession(session: Session, expectedHash: string, attemptId?: string, priorSessionHash?: string): Promise<boolean>;
+  sessionWithUser(hash: string, touchActivity?: boolean): Promise<{ session: Session; user: AuthUser } | null>;
   revokeSession(hash: string): Promise<void>;
   changePassword(hash: string, expectedHash: string, nextHash: string, now: number): Promise<boolean>;
 }
@@ -35,27 +37,29 @@ export const hashPassword = (password: string) => argon2.hash(password, {
 });
 const invalid = () => new HttpError(401, "INVALID_LOGIN", "Usuario o contraseña incorrectos.");
 const expired = () => new HttpError(401, "UNAUTHENTICATED", "Iniciá sesión para continuar.");
+const validToken = (token: string | undefined): token is string => typeof token === "string" && /^[A-Za-z0-9_-]{43}$/.test(token);
 
 export async function createMariaAuth(store: AuthStore, now = Date.now) {
   // A random dummy credential equalizes password verification for unknown users.
   const dummy = await hashPassword(randomBytes(32).toString("base64url"));
-  async function identify(token: string | undefined, allowPasswordChange = false) {
-    if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) throw expired();
+  async function identify(token: string | undefined, allowPasswordChange = false, touchActivity = true) {
+    if (!validToken(token)) throw expired();
     const sessionHash = tokenHash(token);
-    const found = await store.sessionWithUser(sessionHash);
+    const found = await store.sessionWithUser(sessionHash, touchActivity);
     if (!found || found.session.revoked || found.session.expiresAt <= now() ||
       found.session.userId !== found.user.id) throw expired();
     const { user } = found;
     const { role } = user;
     if (!user.enabled || !isRole(role))
       throw new HttpError(403, "FORBIDDEN", "No tenés acceso a esta aplicación.");
+    auditActor(user);
     if (user.mustChangePassword && !allowPasswordChange)
       throw new HttpError(403, "PASSWORD_CHANGE_REQUIRED", "Cambiá tu contraseña para continuar.");
     return { ...user, role, sessionHash, sessionExpiresAt: found.session.expiresAt };
   }
   return {
     identify,
-    async login(username: string, password: string) {
+    async login(username: string, password: string, priorToken?: string) {
       username = usernameKey(required(username, 100));
       required(password, 1024);
       const timestamp = now();
@@ -69,18 +73,25 @@ export async function createMariaAuth(store: AuthStore, now = Date.now) {
       const token = randomBytes(32).toString("base64url");
       const session: Session = { tokenHash: tokenHash(token), userId: user.id,
         expiresAt: timestamp + 8 * 60 * 60_000, revoked: false };
-      if (!await store.issueSession(session, user.passwordHash, typeof attempt === "string" ? attempt : undefined)) throw invalid();
+      if (!await store.issueSession(session, user.passwordHash, typeof attempt === "string" ? attempt : undefined,
+        validToken(priorToken) ? tokenHash(priorToken) : undefined)) throw invalid();
+      auditActor(user);
       return { token, expiresAt: session.expiresAt,
         user: { id: user.id, username: user.username, role: user.role }, mustChangePassword: user.mustChangePassword };
     },
     async logout(token: string | undefined) {
-      if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) await store.revokeSession(tokenHash(token));
+      if (validToken(token)) await store.revokeSession(tokenHash(token));
+      else auditNoChange();
     },
-    async changePassword(token: string, password: string) {
+    async changePassword(token: string, currentPassword: string, password: string, confirmPassword: string) {
       const user = await identify(token, true);
-      required(password, 1024);
-      if (password.length < 12 || await argon2.verify(user.passwordHash, password))
-        throw new HttpError(400, "PASSWORD_WEAK", "Usá una contraseña nueva de al menos 12 caracteres.");
+      required(currentPassword, PASSWORD_MAX_LENGTH);
+      const [issue] = passwordIssues(password, confirmPassword, currentPassword);
+      if (issue) throw new HttpError(400, issue, passwordPolicyMessage(issue));
+      if (!await store.reserveAttempt(accountBucket(user.username), now(), 5, 15 * 60_000))
+        throw new HttpError(429, "RATE_LIMIT", "Demasiados intentos. Esperá unos minutos.");
+      if (!await argon2.verify(user.passwordHash, currentPassword))
+        throw new HttpError(400, "CURRENT_PASSWORD_INVALID", "La contraseña actual no es correcta.");
       if (!await store.changePassword(tokenHash(token), user.passwordHash, await hashPassword(password), now())) throw expired();
       // Require a fresh login; no pre-change session survives.
     },

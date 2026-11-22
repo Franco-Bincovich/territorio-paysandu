@@ -1,21 +1,43 @@
-# Territorio Paysandú V1.0: operación institucional
+# Territorio Paysandú V2 — operación institucional
 
 La entrega es una imagen Linux con frontend, backend y seguridad standalone. Se
 ejecuta un contenedor de aplicación, sin Redis. MariaDB propia, MariaDB institucional,
 imágenes y proxy HTTPS son sistemas externos existentes. Infraestructura recibe la
 imagen validada; no necesita compilar ni instalar herramientas de desarrollo.
 
-## Cargar y comprobar la entrega
+## Empaquetar después de la confirmación del equipo
 
-1. Verificar el SHA-256 del archivo `.tar` contra `SHA256SUMS.txt` recibido por el
-   canal de entrega aprobado: `sha256sum -c SHA256SUMS.txt`.
-2. Cargar esa imagen con `docker load -i territorio-paysandu-v1.0.tar`.
-3. Comparar `docker image inspect territorio-paysandu:v1.0-candidato --format '{{.Id}}'`
-   con el identificador registrado en `release.json`. Usar esa misma imagen;
-   recompilar produciría otro artefacto que requiere validación.
-4. La revisión candidata se identifica por el árbol Git staged y el manifiesto de
-   fuentes. El SHA base de HEAD no es el SHA de un commit nuevo. Después de autorizar
-   commit/push, hay que repetir la validación desde el commit remoto de `Docker`.
+En Linux o en una terminal POSIX con Docker, usar un clon limpio. `RELEASE_SHA`
+es el SHA completo de `origin/V2` confirmado en el informe de entrega. El
+comando de comprobación detiene el proceso si esa revisión ya no es la punta de `V2`.
+
+```sh
+set -eu
+git clone --branch V2 --single-branch https://github.com/Franco-Bincovich/territorio-paysandu.git territorio-paysandu-v2
+cd territorio-paysandu-v2
+: "${RELEASE_SHA:?Definir el SHA completo confirmado en el informe de entrega}"
+test "$(git rev-parse origin/V2)" = "$RELEASE_SHA"
+git checkout --detach "$RELEASE_SHA"
+test -z "$(git status --porcelain)"
+SHORT_SHA=$(git rev-parse --short=12 HEAD)
+APP_IMAGE="territorio-paysandu:v2-$SHORT_SHA"
+ARCHIVE="territorio-paysandu-v2-$SHORT_SHA.tar"
+docker build --platform linux/amd64 --build-arg "SOURCE_TREE=$RELEASE_SHA" --tag "$APP_IMAGE" .
+docker image inspect --format '{{.Id}} {{index .Config.Labels "org.opencontainers.image.revision"}}' "$APP_IMAGE"
+docker save --output "$ARCHIVE" "$APP_IMAGE"
+sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+sha256sum -c "$ARCHIVE.sha256"
+```
+
+Antes de transferir el paquete, registrar SHA Git, ID de imagen y checksum.
+En el host de destino, verificar el checksum y cargar con
+`docker load --input "$ARCHIVE"`. Verificar el ID y la etiqueta de revisión
+contra el registro de la entrega. Levantar la imagen con `--no-build`.
+
+Para reproducir QA desde Git, usar `npm ci`, `npm run typecheck`, `npm test` y
+`npm run build` con Node 26. Para la integración aislada, disponer de
+`mariadb:11.8.9` en Docker y ejecutar `npm run test:audit:integration`. El
+runner crea un contenedor descartable con un puerto de loopback.
 
 ## Configuración externa y arranque
 
@@ -34,6 +56,15 @@ Las dos conexiones usan TLS con verificación. Si requieren CA privadas, montar
 certificados **públicos** y definir `MARIADB_TLS_CA_FILE` y
 `INSTITUTIONAL_TLS_CA_FILE` bajo `/run/territorio-ca/`.
 
+Para Expedientes, conservar el proveedor y aplicar el overlay documental solo
+cuando el directorio autorizado esté disponible. Ver [Expedientes](EXPEDIENTES.md)
+y [configuración de Nginx de ejemplo](nginx.conf.example).
+
+Con `APP_IMAGE` exportada y `RUNTIME_ENV_FILE` apuntando al archivo externo aprobado,
+validar con `docker compose -f compose.yaml config --quiet`. En la ventana autorizada,
+recrear con `docker compose -f compose.yaml up -d --no-build` y comprobar el estado con
+`docker compose -f compose.yaml ps`. Agregar los mismos overlays aprobados a cada comando.
+
 Confirmar las dos rutas físicas del host de Docker: las rutas del chroot SFTP no
 determinan las rutas reales. Verificar lectura y búsqueda con UID/GID 1001:1001,
 ACL, SELinux, user namespaces y submontajes. No usar root como solución. El dataset
@@ -41,7 +72,7 @@ debe ser confiable y publicarse sin archivos parciales. Consultar `IMAGES.md` pa
 los controles de symlinks, submontajes, tamaños y límites.
 
 ```sh
-export APP_IMAGE=territorio-paysandu:v1.0-candidato
+export APP_IMAGE="territorio-paysandu:v2-$SHORT_SHA"
 export RUNTIME_ENV_FILE=/RUTA_PRIVADA/runtime.env
 export TLS_CA_DIRECTORY=/RUTA_REAL/ca-publicas
 export IMAGES_SURVEY_HOST_DIRECTORY=/RUTA_REAL/ACTUALES
@@ -59,6 +90,27 @@ Para SFTP, completar su configuración externa y pin verificado; usar contraseñ
 clave privada, nunca ambas. Con la misma imagen ejecutar `sh deploy/run-images.sh sftp`.
 No hay fallback automático. Cambiar variables o montajes requiere recrear el contenedor;
 `docker restart` conserva su configuración anterior.
+
+## Auditoría y secuencia de publicación
+
+1. Mantener `PLATFORM_AUDIT_ENABLED=false` en el archivo privado del despliegue inicial.
+   En `auxiliares` ya se aplicó `002`. Consultar la
+   [verificación de solo lectura](auditoria-transversal-verificacion.sql).
+   El [ALTER](../Backend/server/mariadb/migrations/002-platform-audit.sql) se conserva
+   para reproducir el esquema en QA o preparar otro entorno autorizado.
+   La aplicación necesita `SELECT` e `INSERT` en `TP_ADMIN_AUDIT_V1`.
+2. Confirmar la fila de configuración de permisos si se usa la matriz editable.
+   Su [SQL de instalación](../Backend/server/mariadb/migrations/001-module-access.sql)
+   se ejecuta manualmente donde corresponda y con autorización.
+3. Publicar el backend compatible con auditoría transversal apagada. Validar el
+   listado administrativo y confirmar que todos sus lectores usan el filtro
+   `ADMIN_VISIBLE` antes de autorizar el cambio de la bandera.
+4. Con autorización, recrear el servicio con `PLATFORM_AUDIT_ENABLED=true`.
+   Verificar el registro con actividad normal y las consultas de solo lectura.
+5. Para revertir, recrear el servicio con la bandera apagada y el lector
+   compatible con el filtro. Conservar el esquema ampliado y todas las filas.
+   Una imagen que pagina toda la tabla queda fuera de la reversión después
+   de que existan eventos transversales.
 
 ## HTTPS y acceso
 
@@ -101,7 +153,7 @@ es efímera. La protección global de login reside en MariaDB y sobrevive al rei
 Para actualizar: aprobar la nueva versión, verificar checksum/ID, conservar la imagen
 anterior y la configuración externa, programar una ventana para detener y recrear
 el único contenedor con el comando aprobado, y ejecutar nuevamente diagnóstico y
-QA autorizado. Volver a la imagen/configuración anterior si no supera las comprobaciones.
+QA autorizado. Para una reversión con eventos transversales, aplicar el procedimiento de auditoría de esta guía.
 No mantener dos instancias activas: standalone posee un bloqueo exclusivo en MariaDB
 y la segunda instancia debe fallar cerrada. La recuperación ante una caída abrupta
 puede requerir esperar que MariaDB libere la conexión y su bloqueo; no se garantiza HA.

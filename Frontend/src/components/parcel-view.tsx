@@ -17,6 +17,7 @@ const parcelTabs: { key: ParcelTab; label: string }[] = [
 export function ParcelView({
   parcel,
   consultationsLoading,
+  consultationAccess = true,
   selectedImageCache,
   onCreate,
   onDetail,
@@ -29,6 +30,7 @@ export function ParcelView({
 }: {
   parcel: Parcel;
   consultationsLoading: boolean;
+  consultationAccess?: boolean;
   selectedImageCache?:ParcelImageCache;
   onCreate: () => void;
   onDetail: (id: string) => Promise<void>;
@@ -40,7 +42,9 @@ export function ParcelView({
   onHistoryRestored?: () => void;
 }) {
   const imageCache=useParcelImageCache(parcelImageIdentity(parcel),selectedImageCache);
-  const [tab, setTab] = useState<ParcelTab>(initialTab);
+  const [selectedTab, setTab] = useState<ParcelTab>(initialTab);
+  const visibleTabs = consultationAccess ? parcelTabs : parcelTabs.filter(item => item.key !== "consultations");
+  const tab = !consultationAccess && selectedTab === "consultations" ? "record" : selectedTab;
   const parcelType = parcelTypeWithNotice(parcel.padPh);
   const recordContact = Object.entries(parcel.fields ?? {}).filter(([label]) =>
     /^(Titular|Documento|Teléfono|Correo|Vínculo)/.test(label),
@@ -61,12 +65,12 @@ export function ParcelView({
             {parcel.locality} · {parcel.address}
           </p>
         </div>
-        <div className="actions">
+        {consultationAccess && <div className="actions">
           <button className="btn primary" onClick={onCreate} disabled={parcel.readOnly}>
             + Registrar consulta
           </button>
           {parcel.readOnly && !consultationsLoading && <p className="muted">El registro de consultas todavía no está habilitado.</p>}
-        </div>
+        </div>}
       </div>
       {parcelType && (
         <aside className="parcel-type-warning" aria-label="Alcance del relevamiento">
@@ -84,7 +88,7 @@ export function ParcelView({
             role="tablist"
             aria-label="Secciones del padrón"
           >
-            {parcelTabs.map(({ key, label }, index) => (
+            {visibleTabs.map(({ key, label }, index) => (
               <button
                 key={key}
                 role="tab"
@@ -100,14 +104,14 @@ export function ParcelView({
                 onKeyDown={(event) => {
                   let next = index;
                   if (event.key === "ArrowRight")
-                    next = (index + 1) % parcelTabs.length;
+                    next = (index + 1) % visibleTabs.length;
                   else if (event.key === "ArrowLeft")
-                    next = (index + parcelTabs.length - 1) % parcelTabs.length;
+                    next = (index + visibleTabs.length - 1) % visibleTabs.length;
                   else if (event.key === "Home") next = 0;
-                  else if (event.key === "End") next = parcelTabs.length - 1;
+                  else if (event.key === "End") next = visibleTabs.length - 1;
                   else return;
                   event.preventDefault();
-                  const selected = parcelTabs[next].key;
+                  const selected = visibleTabs[next].key;
                   setTab(selected);
                   onTabChange?.(selected);
                   document.getElementById(`tab-${selected}`)?.focus();
@@ -118,7 +122,7 @@ export function ParcelView({
             ))}
           </div>
           <p className="tab-scroll-hint" aria-hidden="true">Deslizá para ver todas las solapas.</p>
-          {parcelTabs.filter(({ key }) => key !== tab).map(({ key }) => (
+          {visibleTabs.filter(({ key }) => key !== tab).map(({ key }) => (
             <div key={key} id={`panel-${key}`} role="tabpanel" aria-labelledby={`tab-${key}`} hidden />
           ))}
           <div

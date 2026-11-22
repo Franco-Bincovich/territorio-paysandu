@@ -1,0 +1,6 @@
+SELECT COUNT(*) AS missing_active_keys FROM auxiliares.FB_USUARIOS WHERE DELETED_AT IS NULL AND USERNAME_KEY IS NULL;
+SELECT COUNT(*) AS deleted_keys_not_released FROM auxiliares.FB_USUARIOS WHERE DELETED_AT IS NOT NULL AND (USERNAME_KEY IS NOT NULL OR EMAIL_KEY IS NOT NULL);
+SELECT USERNAME_KEY,COUNT(*) FROM auxiliares.FB_USUARIOS WHERE USERNAME_KEY IS NOT NULL GROUP BY USERNAME_KEY HAVING COUNT(*)>1;
+SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='auxiliares' AND TABLE_NAME IN ('FB_USUARIOS','TP_ADMIN_AUDIT_V1');
+-- Compare pre/post counts, USER_ID, username spelling, hashes, roles, flags,
+-- sessions and the 11 business trigger definitions with the protected backup.

@@ -9,7 +9,7 @@ const publicCapabilities = [
   'consultations.read', 'consultations.write',
 ] as const;
 const collaboratorCapabilities = [...publicCapabilities, 'expedientes.read', 'expedientes.download', 'expedientes.export'] as const;
-const administratorCapabilities = [...collaboratorCapabilities, 'users.manage', 'audit.read', 'consultations.edit.any'] as const;
+const administratorCapabilities = [...collaboratorCapabilities, 'users.manage', 'audit.read', 'consultations.edit.any', 'notification-lots.access'] as const;
 // Reserved legacy capability is deliberately assigned to no role: institutional files are read-only.
 export type Capability = typeof administratorCapabilities[number] | 'expedientes.generate';
 export const ROLE_CAPABILITIES: Readonly<Record<Role, readonly Capability[]>> = Object.freeze({

@@ -4,6 +4,7 @@ import { HttpError, required } from "../security";
 import { InstitutionalRepository } from "./repository";
 import type { InstitutionalImages } from '../image-provider';
 import { imagePadCod, kindValue } from '../sftp-images/config';
+import { auditObject } from '../audit/platform';
 
 /** Invoked only AFTER the existing MariaDB session/role/password guard succeeds. */
 export function createInstitutionalHttp(repository = new InstitutionalRepository(),images?:InstitutionalImages) {
@@ -41,6 +42,7 @@ export function createInstitutionalHttp(repository = new InstitutionalRepository
     if (segments[0] === "parcels" && segments.length === 3) {
       queryKeys(url.searchParams, ["padCod"]);
       const parcel=await repository.getParcel(segments[1], segments[2], url.searchParams.get("padCod") ?? undefined);
+      if (parcel.padCod) auditObject({ type: "parcel", id: parcel.padCod });
       return result(images?{...parcel,images:images.placeholders(parcel.padCod)}:parcel);
     }
     if (segments[0] === "parcel-image")

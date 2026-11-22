@@ -10,6 +10,7 @@ export const routes = {
   "/api/notification-lots/{id}/export": ["GET"],
   "/api/expedientes": ["GET"],
   "/api/admin/capabilities": ["GET"],
+  "/api/admin/permissions": ["GET", "PATCH"],
   "/api/admin/audit": ["GET"],
   "/api/expedientes/generar": ["POST"],
   "/api/expedientes/{id}/exportar": ["GET"],
@@ -23,11 +24,13 @@ export const routes = {
   "/api/auth/logout": ["POST"],
   "/api/auth/password": ["POST"],
   "/api/session": ["GET"],
+  "/api/module-access": ["GET"],
   "/api/search": ["GET"],
   "/api/parcel-images": ["GET"],
   "/api/parcel-image/{kind}": ["GET"],
   "/api/parcels/{locality}/{parcel}": ["GET"],
   "/api/consultations": ["GET", "POST"],
+  "/api/consultations/capabilities": ["GET"],
   "/api/consultations/{id}": ["GET", "PATCH"],
 } as const;
 export type RouteTemplate = keyof typeof routes | "unmatched";

@@ -1,0 +1,59 @@
+-- BORRADOR NO EJECUTADO. RECUPERACION TEMPRANA solamente, antes de reabrir aplicación.
+-- Requiere backup, todos los escritores detenidos y SET @tp_roles_v1_rollback_approved=1;
+-- No es ROLLBACK de una transacción global: los ALTER ya realizaron commits.
+USE auxiliares;
+DELIMITER //
+BEGIN NOT ATOMIC
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  IF COALESCE(@tp_roles_v1_rollback_approved,0)<>1 OR DATABASE()<>'auxiliares' THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Rollback requiere autorizacion independiente';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM TP_ADMIN_ROLES_V1_STATE WHERE ID=1 AND PHASE IN ('captured','expanded','admin-ready','migrated','rollback-data','rolled-back')) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='No hay snapshot de migracion reconocida';
+  END IF;
+  IF (SELECT COUNT(*) FROM FB_USUARIOS)<>10 OR (SELECT COUNT(*) FROM TP_ADMIN_ROLES_V1_USERS)<>10 OR
+     (SELECT COUNT(*) FROM FB_USUARIOS u JOIN TP_ADMIN_ROLES_V1_USERS b ON b.USER_ID=u.USER_ID
+       WHERE u.ROLE IN ('atencion_publico','collaborator')
+       AND u.ENABLED<=>b.ORIGINAL_ENABLED AND u.MUST_CHANGE_PASSWORD<=>b.ORIGINAL_MUST_CHANGE_PASSWORD
+       AND u.PASSWORD_CHANGED_AT<=>b.ORIGINAL_PASSWORD_CHANGED_AT)<>10 OR
+     (SELECT COUNT(*) FROM FB_USUARIOS_CREDENCIALES)<>(SELECT CREDENTIAL_COUNT FROM TP_ADMIN_ROLES_V1_STATE WHERE ID=1) OR
+     (SELECT COUNT(*) FROM FB_USUARIOS_SESIONES)<>(SELECT SESSION_COUNT FROM TP_ADMIN_ROLES_V1_STATE WHERE ID=1) OR
+     (SELECT COUNT(*) FROM FB_CIU_CONSULTAS_WEB)<>0 OR (SELECT COUNT(*) FROM FB_CONSULTAS_HISTORIAL)<>0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Actividad posterior: rollback automatico bloqueado';
+  END IF;
+  IF EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='auxiliares' AND TABLE_NAME='FB_USUARIOS' AND COLUMN_NAME='ADMIN_REVISION') THEN
+    IF EXISTS(SELECT 1 FROM FB_USUARIOS WHERE ADMIN_REVISION<>1 OR DELETED_AT IS NOT NULL) THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Usuarios administrados: rollback bloqueado';
+    END IF;
+  END IF;
+  IF EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='auxiliares' AND TABLE_NAME='TP_ADMIN_AUDIT_V1') THEN
+    IF EXISTS(SELECT 1 FROM TP_ADMIN_AUDIT_V1) THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Hay auditoria administrativa: requiere recuperacion manual';
+    END IF;
+  END IF;
+  IF (SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='auxiliares')<>11 OR
+     (SELECT COUNT(*) FROM TP_ADMIN_ROLES_V1_TRIGGERS)<>11 OR
+     EXISTS(SELECT 1 FROM TP_ADMIN_ROLES_V1_TRIGGERS b LEFT JOIN information_schema.TRIGGERS t
+       ON t.TRIGGER_SCHEMA='auxiliares' AND t.TRIGGER_NAME=b.TRIGGER_NAME
+       WHERE t.TRIGGER_NAME IS NULL OR b.DEFINITION_HASH<>SHA2(CONCAT_WS('|',t.EVENT_OBJECT_TABLE,t.ACTION_TIMING,t.EVENT_MANIPULATION,t.ACTION_STATEMENT,t.ACTION_ORDER,t.SQL_MODE,t.DEFINER,t.CHARACTER_SET_CLIENT,t.COLLATION_CONNECTION,t.DATABASE_COLLATION),256)) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Triggers cambiaron: no ejecutar DML';
+  END IF;
+  IF (SELECT PHASE FROM TP_ADMIN_ROLES_V1_STATE WHERE ID=1)<>'rolled-back' THEN
+    START TRANSACTION;
+    UPDATE FB_USUARIOS u JOIN TP_ADMIN_ROLES_V1_USERS b ON b.USER_ID=u.USER_ID
+      SET u.ROLE=b.ORIGINAL_ROLE WHERE u.ROLE='atencion_publico';
+    UPDATE TP_ADMIN_ROLES_V1_STATE SET PHASE='rollback-data' WHERE ID=1;
+    COMMIT;
+    -- Si el ALTER falla, dejar app detenida y reanudar este script tras diagnóstico.
+    ALTER TABLE FB_USUARIOS
+      DROP CONSTRAINT CHK_FB_USUARIOS_ROLE,
+      ADD CONSTRAINT CHK_FB_USUARIOS_ROLE CHECK(ROLE='collaborator'),
+      ALTER COLUMN ROLE SET DEFAULT 'collaborator';
+    UPDATE TP_ADMIN_ROLES_V1_STATE SET PHASE='rolled-back' WHERE ID=1;
+    COMMIT;
+  END IF;
+  -- Retener columnas y tablas aditivas, snapshot y auditoría. No DROP ni DELETE.
+END//
+DELIMITER ;
+-- Verificación manual: 10 collaborator, default collaborator, CHECK original;
+-- comparar triggers y tablas con backup; recién entonces reiniciar versión anterior.

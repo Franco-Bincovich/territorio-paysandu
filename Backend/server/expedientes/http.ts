@@ -1,6 +1,7 @@
 import { authorize, type Actor } from '../consultations/model';
 import { HttpError, jsonBody } from '../security';
 import { requireCapability } from '../authorization';
+import { discardUnauditedResult } from '../audit/platform';
 import { configuredInstitutionalExpedientesHttp } from './institutional-http';
 import type { DocumentGeneration } from './generation';
 import { documentId, fail, padCode, publicDocument, types, validateDocument, hasDocumentSignature,
@@ -8,7 +9,7 @@ import { documentId, fail, padCode, publicDocument, types, validateDocument, has
 
 const headers = { 'Cache-Control':'private, no-store', 'X-Content-Type-Options':'nosniff',
   'Referrer-Policy':'no-referrer', 'Cross-Origin-Resource-Policy':'same-origin' };
-export type ExpedientesHandler = (request: Request, segments: string[], actor: Actor) => Promise<Response | null>;
+export type ExpedientesHandler = (request: Request, segments: string[], actor: Actor, moduleAccess?: boolean) => Promise<Response | null>;
 export function matchesExpedientes(segments: string[]) {
   return segments.length === 2 && segments[0] === 'expedientes' && segments[1] === 'generar' ||
     segments.length === 3 && ((segments[0] === 'parcels' && segments[2] === 'expedientes') ||
@@ -55,12 +56,13 @@ export function createExpedientesHttp(catalog: ExpedientesCatalog, policy: Exped
   const concurrency = options.concurrency ?? 2, timeoutMs = options.timeoutMs ?? 15000;
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 6 || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 30000) throw fail('EXPEDIENTES_CONFIG');
   let active = 0;
-  return async (request, segments, actor) => {
+  return async (request, segments, actor, moduleAccess) => {
     if (!matchesExpedientes(segments)) return null;
     let release = () => {};
     try {
       authorize(actor, Date.now());
-      requireCapability(actor,capability(segments));
+      const operationCapability = capability(segments);
+      if (!moduleAccess || operationCapability !== 'expedientes.read') requireCapability(actor,operationCapability);
       const generate=segments.length===2 && segments[1]==='generar', exporting=segments[2]==='exportar';
       const method=generate?'POST':'GET';
       if (request.method !== method) return Response.json({error:{code:'METHOD_NOT_ALLOWED',message:'Método no permitido.'}}, {status:405,headers:{...headers,Allow:method}});
@@ -70,17 +72,22 @@ export function createExpedientesHttp(catalog: ExpedientesCatalog, policy: Exped
       const query = new URL(request.url).searchParams;
       if (generate || exporting) {
         if(query.size)throw fail('VALIDATION',400);
-        if(!options.generation)throw fail('EXPEDIENTES_DOCUMENT_CONTRACT_PENDING');
+        const generation=options.generation;
+        if(!generation)throw fail('EXPEDIENTES_DOCUMENT_CONTRACT_PENDING');
         if(generate) {
           const body=await jsonBody(request);
           if(Object.keys(body).some(k=>!['padCod','contractId'].includes(k)) || typeof body.padCod!=='string' || typeof body.contractId!=='string')throw fail('VALIDATION',400);
           const controller=new AbortController(),cancel=()=>controller.abort();
           request.signal.addEventListener('abort',cancel,{once:true});if(request.signal.aborted)cancel();
           const timer=setTimeout(cancel,timeoutMs);
-          try {return Response.json(await options.generation.generate(actor,body.padCod,body.contractId,controller.signal),{status:201,headers});}
+          try {
+            const artifact=await generation.generate(actor,body.padCod,body.contractId,controller.signal);
+            discardUnauditedResult(()=>generation.discard(artifact.id));
+            return Response.json(artifact,{status:201,headers});
+          }
           finally {clearTimeout(timer);request.signal.removeEventListener('abort',cancel);}
         }
-        const artifact=await options.generation.export(actor,segments[1]);
+        const artifact=await generation.export(actor,segments[1]);
         const admitted=admittedBody(artifact.bytes,request.signal,timeoutMs,release);
         try {
           const response=new Response(admitted.body,{headers:{...headers,'Content-Type':artifact.metadata.mimeType,

@@ -15,7 +15,22 @@ Thumbs.db
 
 # Local work, evidence and generated Next declarations (never delete locally).
 /Docs/
-/tests/
+/.qa-platform-audit/
+/qa/
+/delivery/
+*.tar
+*.tar.sha256
+*.tar.gz
+/tests/*
+!/tests/data-tuning.cjs
+!/tests/mariadb-identity.cjs
+!/tests/module-access.cjs
+!/tests/parcel-type-notice.cjs
+!/tests/platform-audit*.cjs
+!/tests/fixtures/
+/tests/fixtures/*
+!/tests/fixtures/consultations-7.1-baseline.sql
+!/tests/fixtures/platform-audit-admin-ddl.sql
 /Frontend/AGENTS.md
 /Frontend/next-env.d.ts
 *.zip
@@ -43,12 +58,12 @@ Thumbs.db
 /Backend/sql/package-7.1/baseline-isolated-only.sql
 /Backend/sql/package-7.1/02-constraints.sql
 /Backend/sql/package-7.1/03-idempotency.sql
-/Backend/sql/package-7.1/README.md
 /Backend/sql/package-7.1/ENTREGA.md
 /Backend/sql/package-7.1/SHA256SUMS.txt
 
 # Proposed minimum delivery: retain these files locally only.
-/Backend/sql/
+/Backend/sql/*
+!/Backend/sql/package-7.1/
 /README.md
 
 # Audit fixtures and operational SQL remain physically local, outside the runtime delivery.
@@ -56,4 +71,3 @@ Thumbs.db
 /Backend/server/sftp-images/*.isolated.cjs
 /Backend/server/sftp-images/HISTORICAL-INDEX.md
 /Backend/server/rate-limiting/standalone/README.md
-/Backend/server/rate-limiting/standalone/sql/

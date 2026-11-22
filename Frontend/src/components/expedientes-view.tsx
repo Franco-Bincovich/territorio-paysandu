@@ -19,7 +19,9 @@ export function expedienteDocumentUrl(item:DocumentItem,action:DocumentAction):s
   return `/api/expedientes/${encodeURIComponent(item.id)}/${action}?${expedienteQuery(item.localidad,item.padron,item.caseNumber)}`;
 }
 export function ExpedientesView({role}:{padCod?:string;role?:Role}) {
-  const id=useId(),allowed=hasCapability(role,'expedientes.read');
+  const id=useId();
+  const documentActions = (['contenido','descarga','exportar'] as const).filter(action =>
+    hasCapability(role, action === 'descarga' ? 'expedientes.download' : 'expedientes.export'));
   const [localidad,setLocalidad]=useState('PAYSANDU'),[padron,setPadron]=useState('');
   const [data,setData]=useState<DocumentPage|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const [active,setActive]=useState<string|null>(null),[status,setStatus]=useState('');
@@ -53,7 +55,6 @@ export function ExpedientesView({role}:{padCod?:string;role?:Role}) {
     }catch(e){if(documentController.current===controller){setStatus('');setError(isAbort(e)?'La operación se canceló o demoró demasiado. Intentá nuevamente.':e instanceof Error?e.message:'No se pudo preparar el documento.');}}
     finally{clearTimeout(timer);if(documentController.current===controller)setActive(null);}
   }
-  if(!allowed)return null;
   return <section className="expedientes-view" aria-label="Consulta de expedientes">
     <div className="panel-head"><h2>Buscar expedientes</h2><span className="badge">Solo lectura</span></div>
     <p className="muted">Ingresá la localidad y el número de padrón para consultar todos sus expedientes.</p>
@@ -65,7 +66,7 @@ export function ExpedientesView({role}:{padCod?:string;role?:Role}) {
     {busy&&<p role="status">Buscando expedientes…</p>}
     {error&&<p className="error" role="alert">{error}</p>}
     {status&&<p role="status">{status} {active&&<button className="btn small" onClick={()=>documentController.current?.abort()}>Cancelar</button>}</p>}
-    {data&&<div aria-live="polite">{data.items.length===0?<p className="empty">No se encontraron expedientes para los datos ingresados.</p>:<><p>{data.total} {data.total===1?'expediente encontrado':'expedientes encontrados'}</p><div className="tablewrap" role="region" tabIndex={0} aria-label="Resultados de expedientes"><table className="expedientes-table"><thead><tr><th scope="col">Padrón</th><th scope="col">Localidad</th><th scope="col">Documento</th><th scope="col">Acciones</th></tr></thead><tbody>{data.items.map(item=><tr key={item.id}><td>{item.padron}</td><td>{item.localidad==='PAYSANDU_CHACRAS'?'Paysandú Chacras':'Paysandú'}</td><td className="expediente-name">{item.name}<br/><span className="muted">{Math.ceil(item.size/1024)} KB · Word</span></td><td><div className="actions">{(['contenido','descarga','exportar'] as const).map(action=><button key={action} className="btn small" disabled={!!active} onClick={()=>void openDocument(item,action)}>{active===`${item.id}:${action}`?'Preparando…':action==='contenido'?'Visualizar PDF':action==='descarga'?'Exportar a Word':'Exportar a PDF'}<span className="sr-only"> · caso {item.caseNumber}</span></button>)}</div></td></tr>)}</tbody></table></div></>}</div>}
+    {data&&<div aria-live="polite">{data.items.length===0?<p className="empty">No se encontraron expedientes para los datos ingresados.</p>:<><p>{data.total} {data.total===1?'expediente encontrado':'expedientes encontrados'}</p><div className="tablewrap" role="region" tabIndex={0} aria-label="Resultados de expedientes"><table className="expedientes-table"><thead><tr><th scope="col">Padrón</th><th scope="col">Localidad</th><th scope="col">Documento</th><th scope="col">Acciones</th></tr></thead><tbody>{data.items.map(item=><tr key={item.id}><td>{item.padron}</td><td>{item.localidad==='PAYSANDU_CHACRAS'?'Paysandú Chacras':'Paysandú'}</td><td className="expediente-name">{item.name}<br/><span className="muted">{Math.ceil(item.size/1024)} KB · Word</span></td><td><div className="actions">{documentActions.map(action=><button key={action} className="btn small" disabled={!!active} onClick={()=>void openDocument(item,action)}>{active===`${item.id}:${action}`?'Preparando…':action==='contenido'?'Visualizar PDF':action==='descarga'?'Exportar a Word':'Exportar a PDF'}<span className="sr-only"> · caso {item.caseNumber}</span></button>)}</div></td></tr>)}</tbody></table></div></>}</div>}
     {preview&&<section className="expediente-preview" aria-labelledby={`${id}-preview`}><div className="panel-head"><h3 id={`${id}-preview`}>Vista PDF: {preview.name}</h3><button className="btn" onClick={()=>setPreview(null)}>Cerrar vista</button></div><p className="muted">Si tu navegador no muestra el PDF, podés <a href={preview.url} download={preview.name.replace(/\.docx$/i,'.pdf')}>descargarlo</a>.</p><iframe title={`Vista PDF de ${preview.name}`} src={preview.url}/></section>}
   </section>;
 }

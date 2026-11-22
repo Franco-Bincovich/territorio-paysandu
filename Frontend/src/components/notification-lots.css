@@ -1,0 +1,71 @@
+.notification-lots .padron-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.notification-lots .padron-card {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  cursor: pointer;
+}
+.notification-lots .padron-card[aria-pressed="true"] {
+  background: var(--wash);
+  border-color: var(--focus);
+}
+.notification-lot-detail {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.notification-lot-detail .panel-head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.notification-lot-detail :is(h2, .muted) {
+  margin: 0;
+}
+.notification-lot-detail .panel-head .muted {
+  margin-top: 6px;
+}
+.notification-lot-actions {
+  text-align: end;
+}
+.notification-lot-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.notification-lot-detail .tablewrap {
+  max-inline-size: 100%;
+}
+.notification-lot-table {
+  width: max-content;
+  min-width: 100%;
+}
+.notification-lot-table :is(th, td) {
+  padding: 12px;
+  font-size: 14px;
+  vertical-align: top;
+}
+.notification-lot-table th {
+  white-space: nowrap;
+}
+.notification-lot-table td {
+  max-inline-size: 24rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.notification-lot-table tbody tr:hover {
+  background: var(--surface);
+}
+@media (max-width: 520px) {
+  .notification-lot-detail .panel-head {
+    flex-direction: column;
+  }
+  .notification-lot-actions {
+    text-align: start;
+  }
+}

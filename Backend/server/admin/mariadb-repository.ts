@@ -7,6 +7,8 @@ import { isRole,type Principal } from '../authorization';
 import { userDto,type AdminUser,type ListQuery } from './contracts';
 import type { AdminRepository,AdminTransaction,AuditEvent } from './repository';
 import { requireAdminSchema } from './schema';
+import { readModuleAccess, saveModuleAccess } from './module-access-repository';
+import { administrativeSnapshots, confirmAuditCommit, discardStagedAudit, recordAdministrativeAudit, writeTransactionalAudit } from '../audit/platform';
 
 const unavailable=()=>new HttpError(503,'ADMIN_UNAVAILABLE','Administración no disponible temporalmente.');
 const mutex='tp.auxiliares.admin.v1';
@@ -24,11 +26,12 @@ function publicSnapshot(value:unknown){
   return userDto(user as AdminUser);
 }
 async function insertAudit(c:PoolConnection,event:AuditEvent){
-  const before=event.before?JSON.stringify(userDto(event.before)):null,after=event.after?JSON.stringify(userDto(event.after)):null;
+  const id = randomUUID();
+  const {before, after}=administrativeSnapshots(event);
   await c.query(`INSERT INTO TP_ADMIN_AUDIT_V1
     (EVENT_ID,ACTOR_ID,TARGET_ID,ACTION,RESULT,OCCURRED_AT,REASON,REQUEST_ID,ERROR_CODE,BEFORE_JSON,AFTER_JSON,ACTOR_USERNAME,TARGET_USERNAME)
     VALUES (?,?,?,?,?,UTC_TIMESTAMP(6),?,?,?,?,?,?,?)`,
-    [randomUUID(),event.actorId,event.targetId,event.action,event.result,event.reason,event.requestId,event.code??null,before,after,event.actorUsername??null,event.targetUsername??null]);
+    [id,event.actorId,event.targetId,event.action,event.result,event.reason,event.requestId,event.code??null,before,after,event.actorUsername??null,event.targetUsername??null]);
 }
 function controlled(error:unknown):HttpError{
   if(error instanceof HttpError)return error;
@@ -39,14 +42,14 @@ function controlled(error:unknown):HttpError{
  * the same user/credential -> session row lock order. No DDL or institutional pool. */
 export class MariaAdminRepository implements AdminRepository {
   constructor(private pool?:Pick<Pool,'getConnection'>){}
-  private async connection<T>(run:(c:PoolConnection)=>Promise<T>):Promise<T>{
+  private async connection<T>(run:(c:PoolConnection,expandedAudit:boolean)=>Promise<T>):Promise<T>{
     let c:PoolConnection|undefined;
-    try{c=await (this.pool??mariaPool()).getConnection();await c.query("SET time_zone = '+00:00'");await requireAdminSchema(c);return await run(c);}
+    try{c=await (this.pool??mariaPool()).getConnection();await c.query("SET time_zone = '+00:00'");return await run(c,await requireAdminSchema(c));}
     catch(error){if(c&&!(error instanceof HttpError))c.destroy();throw controlled(error);}
     finally{if(c)try{await c.release();}catch{c.destroy();}}
   }
   async transaction<T>(actor:Principal,targetId:string|null,run:(tx:AdminTransaction)=>Promise<T>):Promise<T>{
-    return this.connection(async c=>{
+    return this.connection(async (c, expandedAudit)=>{
       const lock=await c.query('SELECT GET_LOCK(?,3) AS acquired',[mutex]);
       if(Number(lock[0]?.acquired)!==1)throw new HttpError(503,'ADMIN_BUSY','Administración ocupada. Intentá nuevamente.');
       let unusable=false;
@@ -75,13 +78,9 @@ export class MariaAdminRepository implements AdminRepository {
             findUsername:async username=>{const result=await c.query(`SELECT ${userColumns} FROM FB_USUARIOS WHERE USERNAME_KEY=? AND DELETED_AT IS NULL`,[Buffer.from(usernameKey(username))]);return result[0]?fromRow(result[0]):null;},
             findEmail:async email=>{const result=await c.query(`SELECT ${userColumns} FROM FB_USUARIOS WHERE EMAIL_KEY=? AND DELETED_AT IS NULL`,[Buffer.from(emailKey(email))]);return result[0]?fromRow(result[0]):null;},
             list:async query=>this.list(c,query),
-            listAudit:async query=>{
-              const count=await c.query('SELECT COUNT(*) AS total FROM TP_ADMIN_AUDIT_V1');
-              const result=await c.query(`SELECT ACTOR_ID,TARGET_ID,ACTION,RESULT,DATE_FORMAT(OCCURRED_AT,'%Y-%m-%dT%H:%i:%s.%fZ') AS at_iso,
-                REASON,REQUEST_ID,ERROR_CODE,BEFORE_JSON,AFTER_JSON,COALESCE(ACTOR_USERNAME,(SELECT USERNAME FROM FB_USUARIOS WHERE USER_ID=ACTOR_ID)) AS actor_name,COALESCE(TARGET_USERNAME,(SELECT USERNAME FROM FB_USUARIOS WHERE USER_ID=TARGET_ID)) AS target_name FROM TP_ADMIN_AUDIT_V1 ORDER BY OCCURRED_AT DESC,EVENT_ID DESC LIMIT ? OFFSET ?`,[query.pageSize,(query.page-1)*query.pageSize]);
-              return {total:Number(count[0].total),items:result.map((r:any)=>({actorId:r.ACTOR_ID,actorUsername:r.actor_name??null,targetUsername:r.target_name??null,targetId:r.TARGET_ID,action:r.ACTION,result:r.RESULT,at:r.at_iso,
-                reason:r.REASON,requestId:r.REQUEST_ID,...(r.ERROR_CODE?{code:r.ERROR_CODE}:{}),...(r.BEFORE_JSON?{before:publicSnapshot(r.BEFORE_JSON)}:{}),...(r.AFTER_JSON?{after:publicSnapshot(r.AFTER_JSON)}:{})}))};
-            },
+            moduleAccess:lock=>readModuleAccess(c,lock),
+            saveModuleAccess:(matrix,revision)=>saveModuleAccess(c,matrix,revision),
+            listAudit:query=>this.listAudit(c,query,expandedAudit),
             put:async user=>{
               const old=originals.get(user.id);if(!old){
                 if(user.revision!==1||!user.mustChangePassword||!user.enabled||user.deletedAt)throw unavailable();
@@ -106,10 +105,23 @@ export class MariaAdminRepository implements AdminRepository {
                 if(Number(result.affectedRows)!==1)throw unavailable();
               }
             },
-            audit:async event=>insertAudit(c,event),
+            audit:async event=>{
+              if(!recordAdministrativeAudit(event)){
+                await insertAudit(c,event);
+                return;
+              }
+              const currentActor = originals.get(actor.userId);
+              if(event.action==='permissions-update'){
+                await writeTransactionalAudit(c,{version:event.permissionRevision},true,currentActor);
+              } else if(event.after&&event.targetId){
+                await writeTransactionalAudit(c,{version:event.after.revision,
+                  object:{type:'user',id:event.targetId}},event.after.revision!==event.before?.revision,currentActor);
+              }
+            },
           };
-          const result=await run(tx);commitStarted=true;await c.commit();return result;
+          const result=await run(tx);commitStarted=true;await c.commit();confirmAuditCommit();return result;
         }catch(error){
+          discardStagedAudit(commitStarted);
           if(commitStarted){unusable=true;c.destroy();throw new HttpError(503,'ADMIN_COMMIT_UNCERTAIN','No se pudo confirmar el resultado. Actualizá el listado antes de reintentar.');}
           try{await c.rollback();}catch{unusable=true;c.destroy();throw unavailable();}
           throw error;
@@ -122,6 +134,26 @@ export class MariaAdminRepository implements AdminRepository {
       }
     });
   }
+  private async listAudit(c:PoolConnection,query:{page:number;pageSize:number},expandedAudit:boolean){
+    const where=expandedAudit?' WHERE ADMIN_VISIBLE = 1':'';
+    const action=expandedAudit?'COALESCE(ADMIN_ACTION,ACTION)':'ACTION';
+    const count=await c.query(`SELECT COUNT(*) AS total FROM TP_ADMIN_AUDIT_V1${where}`);
+    const result=await c.query(`SELECT ACTOR_ID,TARGET_ID,${action} AS DISPLAY_ACTION,RESULT,
+      DATE_FORMAT(OCCURRED_AT,'%Y-%m-%dT%H:%i:%s.%fZ') AS at_iso,REASON,REQUEST_ID,ERROR_CODE,BEFORE_JSON,AFTER_JSON,
+      COALESCE(ACTOR_USERNAME,(SELECT USERNAME FROM FB_USUARIOS WHERE USER_ID=ACTOR_ID)) AS actor_name,
+      COALESCE(TARGET_USERNAME,(SELECT USERNAME FROM FB_USUARIOS WHERE USER_ID=TARGET_ID)) AS target_name
+      FROM TP_ADMIN_AUDIT_V1${where} ORDER BY OCCURRED_AT DESC,EVENT_ID DESC LIMIT ? OFFSET ?`,
+      [query.pageSize,(query.page-1)*query.pageSize]);
+    const items=result.map((r:any):AuditEvent=>({
+      actorId:r.ACTOR_ID,actorUsername:r.actor_name??null,targetUsername:r.target_name??null,targetId:r.TARGET_ID,
+      action:r.DISPLAY_ACTION,result:['success','no_change'].includes(r.RESULT)?'success':'denied',at:r.at_iso,
+      reason:r.REASON,requestId:r.REQUEST_ID,...(r.ERROR_CODE?{code:r.ERROR_CODE}:{}),...(r.BEFORE_JSON?{before:publicSnapshot(r.BEFORE_JSON)}:{}),
+      ...(r.AFTER_JSON ? r.DISPLAY_ACTION==='permissions-update'
+        ? {permissionChanges:typeof r.AFTER_JSON==='string'?JSON.parse(r.AFTER_JSON):r.AFTER_JSON}
+        : {after:publicSnapshot(r.AFTER_JSON)} : {}),
+    }));
+    return {total:Number(count[0].total),items};
+  }
   private async list(c:PoolConnection,query:ListQuery){
     const clauses:string[]=query.deleted?[]:['DELETED_AT IS NULL'],params:unknown[]=[];
     // LOCATE treats percent/underscore literally; SQL collation defines identity search.
@@ -133,5 +165,7 @@ export class MariaAdminRepository implements AdminRepository {
     const rows=await c.query(`SELECT ${userColumns} FROM FB_USUARIOS${where} ORDER BY USERNAME,USER_ID LIMIT ? OFFSET ?`,[...params,query.pageSize,(query.page-1)*query.pageSize]);
     return {total:Number(count[0].total),items:rows.map(fromRow)};
   }
-  async denied(event:AuditEvent){await this.connection(c=>insertAudit(c,{...event,result:'denied',before:undefined,after:undefined}));}
+  async denied(event:AuditEvent){
+    if(!recordAdministrativeAudit(event))await this.connection(c=>insertAudit(c,event));
+  }
 }

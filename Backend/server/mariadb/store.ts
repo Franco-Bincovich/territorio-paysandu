@@ -5,6 +5,7 @@ import type { AuthStore, AuthUser, Session } from "./auth";
 import { mariaPool } from "./pool";
 import { isRole } from "../../../shared/permissions";
 import { usernameKey } from "../../../shared/user-profile";
+import { auditActor, confirmAuditCommit, discardStagedAudit, writeTransactionalAudit } from "../audit/platform";
 
 type Row = Record<string, any>;
 const unavailable = () => new HttpError(503, "AUTH_UNAVAILABLE", "El acceso no está disponible temporalmente.");
@@ -28,19 +29,30 @@ export class MariaAuthStore implements AuthStore {
       c = await this.pool.getConnection();
       await c.query("SET time_zone = '+00:00'");
       return await run(c);
-    } catch {
+    } catch (error) {
       // Never expose SQL, parameter values, credentials or driver error messages.
       if (c) c.destroy();
-      throw unavailable();
+      throw error instanceof HttpError ? error : unavailable();
     } finally {
-      if (c) try { await c.release(); } catch { c.destroy(); throw unavailable(); }
+      if (c) try { await c.release(); } catch { c.destroy(); }
     }
   }
   private async transaction<T>(run: (c: PoolConnection) => Promise<T>): Promise<T> {
     return this.connection(async c => {
       await c.beginTransaction();
-      try { const result = await run(c); await c.commit(); return result; }
+      let committing = false;
+      try {
+        const result = await run(c);
+        committing = true;
+        await c.commit();
+        confirmAuditCommit();
+        return result;
+      }
       catch (error) {
+        discardStagedAudit(committing);
+        if (committing) {
+          throw new HttpError(503, "AUTH_COMMIT_UNCERTAIN", "No se pudo confirmar el resultado de la operación.");
+        }
         try { await c.rollback(); } catch { c.destroy(); }
         throw error;
       }
@@ -78,7 +90,7 @@ export class MariaAuthStore implements AuthStore {
       return userFrom(rows[0]);
     });
   }
-  async issueSession(session: Session, expectedHash: string, attemptId?: string) {
+  async issueSession(session: Session, expectedHash: string, attemptId?: string, priorSessionHash?: string) {
     return this.transaction(async c => {
       const rows = await c.query(`${userSelect} WHERE u.USER_ID = ? AND u.DELETED_AT IS NULL FOR UPDATE`, [session.userId]);
       const user = rows[0] && userFrom(rows[0]);
@@ -95,10 +107,13 @@ export class MariaAuthStore implements AuthStore {
         VALUES (?, ?, ?, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), TIMESTAMPADD(HOUR, 8, UTC_TIMESTAMP(6)), NULL)`,
       [randomUUID(), user.id, session.tokenHash]);
       await c.query("UPDATE FB_LOGIN_INTENTOS SET EXITOSO = 1 WHERE ID_INTENTO = ?", [attemptId]);
+      if (priorSessionHash) await c.query(`UPDATE FB_USUARIOS_SESIONES SET REVOKED_AT=UTC_TIMESTAMP(6)
+        WHERE TOKEN_HASH=? AND REVOKED_AT IS NULL`, [priorSessionHash]);
+      await writeTransactionalAudit(c, { object: { type: "user", id: user.id } }, true, user);
       return true;
     });
   }
-  async sessionWithUser(hash: string) {
+  async sessionWithUser(hash: string, touchActivity = true) {
     return this.connection(async c => {
       const rows = await c.query(`SELECT u.USER_ID, u.USERNAME, u.ROLE, u.ENABLED,
         u.MUST_CHANGE_PASSWORD, c.PASSWORD_HASH, s.TOKEN_HASH,
@@ -109,7 +124,7 @@ export class MariaAuthStore implements AuthStore {
         AND s.LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6))`, [hash]);
       if (!rows.length) return null;
       const user = userFrom(rows[0]);
-      if (user.enabled && isRole(user.role)) {
+      if (touchActivity && user.enabled && isRole(user.role)) {
         const result = await c.query(`UPDATE FB_USUARIOS_SESIONES SET LAST_ACTIVITY_AT = UTC_TIMESTAMP(6)
           WHERE TOKEN_HASH = ? AND REVOKED_AT IS NULL AND EXPIRES_AT > UTC_TIMESTAMP(6)
           AND LAST_ACTIVITY_AT > TIMESTAMPADD(HOUR, -1, UTC_TIMESTAMP(6))`, [hash]);
@@ -120,8 +135,24 @@ export class MariaAuthStore implements AuthStore {
     });
   }
   async revokeSession(hash: string) {
-    await this.connection(c => c.query(`UPDATE FB_USUARIOS_SESIONES
-      SET REVOKED_AT = COALESCE(REVOKED_AT, UTC_TIMESTAMP(6)) WHERE TOKEN_HASH = ?`, [hash]));
+    await this.transaction(async c => {
+      // Check the active identity without refreshing the session being closed.
+      const [active] = await c.query(`SELECT u.USER_ID AS id, u.USERNAME AS username, u.ROLE AS role
+        FROM FB_USUARIOS_SESIONES s JOIN FB_USUARIOS u ON u.USER_ID=s.USER_ID
+        JOIN FB_USUARIOS_CREDENCIALES p ON p.USER_ID=u.USER_ID
+        WHERE s.TOKEN_HASH=? AND s.REVOKED_AT IS NULL AND s.EXPIRES_AT>UTC_TIMESTAMP(6)
+        AND s.LAST_ACTIVITY_AT>TIMESTAMPADD(HOUR,-1,UTC_TIMESTAMP(6))
+        AND u.ENABLED=1 AND u.DELETED_AT IS NULL`, [hash]);
+      const result = await c.query(`UPDATE FB_USUARIOS_SESIONES SET REVOKED_AT=UTC_TIMESTAMP(6)
+        WHERE TOKEN_HASH=? AND REVOKED_AT IS NULL`, [hash]);
+      const changed = Number(result.affectedRows) > 0;
+      if (changed && active && isRole(active.role)) {
+        auditActor(active);
+        await writeTransactionalAudit(c, { object: { type: "user", id: active.id } }, true);
+      } else {
+        await writeTransactionalAudit(c, {}, changed);
+      }
+    });
   }
   async changePassword(hash: string, expectedHash: string, nextHash: string, _now: number) {
     return this.transaction(async c => {
@@ -141,6 +172,7 @@ export class MariaAuthStore implements AuthStore {
         PASSWORD_CHANGED_AT = UTC_TIMESTAMP(6) WHERE USER_ID = ?`, [user.id]);
       await c.query(`UPDATE FB_USUARIOS_SESIONES SET REVOKED_AT = UTC_TIMESTAMP(6)
         WHERE USER_ID = ? AND REVOKED_AT IS NULL`, [user.id]);
+      await writeTransactionalAudit(c, { object: { type: "user", id: user.id } }, true, user);
       return true;
     });
   }

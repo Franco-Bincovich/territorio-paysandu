@@ -8,6 +8,10 @@ import type { NotificationLotsHttp } from "../notification-lots/http";
 import { requireCapability, type Principal } from "../authorization";
 import type { AdminHandler } from "../admin/http";
 import type { ExpedientesHandler } from "../expedientes/http";
+import { defaultModuleAccess, type AccessSettings, type Module } from "../../../shared/module-access";
+import { isRole } from "../../../shared/permissions";
+import { auditActor, auditRequest, type AuditConnection } from "../audit/platform";
+import { auditOperation } from "../audit/operation";
 
 type MariaAuth = Awaited<ReturnType<typeof createMariaAuth>>;
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
@@ -23,14 +27,25 @@ function tokenFrom(request: Request) {
   if (parts.length !== 1) return undefined;
   return parts[0].slice("tp_maria_session=".length);
 }
+
+function routeModule(template: string): Module | undefined {
+  if (template.startsWith("/api/consultations")) return "history";
+  if (template.startsWith("/api/notification-lots")) return "notificationLots";
+  if (template.startsWith("/api/expedientes") || template === "/api/parcels/{padCod}/expedientes") return "expedientes";
+  if (["/api/search", "/api/parcels/{locality}/{parcel}", "/api/parcel-images", "/api/parcel-image/{kind}"].includes(template))
+    return "search";
+}
+
 export function createMariaHttp(auth: MariaAuth, origin: string,
   institutional?: (request: Request, segments: string[]) => Promise<Response | null>,
   consultations?: (request: Request, segments: string[], actor: import('../consultations/model').Actor) => Promise<Response | null>,
   limits:RequestLimits=requestLimits(),
   notificationLots?: NotificationLotsHttp,
   administration?: AdminHandler,
-  expedientes?: ExpedientesHandler) {
-  return async (request: Request, segments: string[]) => observeRequest(routeTemplate(segments),async()=>{
+  expedientes?: ExpedientesHandler,
+  readAccess?: () => Promise<AccessSettings>,
+  audit?: AuditConnection) {
+  return async (request: Request, segments: string[]) => observeMariaHttp(request, segments, audit, async()=>{
     let release=()=>{};
     try {
       // Next dev canonicalizes request.url to localhost. Validate the actual Host
@@ -58,9 +73,7 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
         const body = await jsonBody(request);
         if (Object.keys(body).some(k => !["username", "password"].includes(k)))
           throw new HttpError(400, "VALIDATION", "Campo no permitido.");
-        const login = await auth.login(required(body.username, 100), required(body.password, 1024));
-        // Replace prior browser session only after successful authentication.
-        await auth.logout(token);
+        const login = await auth.login(required(body.username, 100), required(body.password, 1024), token);
         return result({ user: login.user, mustChangePassword: login.mustChangePassword, synthetic: true },
           sessionCookie(login.token, origin, login.expiresAt));
       }
@@ -70,23 +83,38 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
       }
       if (path === "auth/password") {
         const changing=await auth.identify(token,true);
+        auditActor(changing);
         await limits.user(changing.id,request,segments);
         const body = await jsonBody(request);
-        if (Object.keys(body).some(k => k !== "password"))
+        if (Object.keys(body).some(k => !["currentPassword", "password", "confirmPassword"].includes(k)))
           throw new HttpError(400, "VALIDATION", "Campo no permitido.");
-        await auth.changePassword(token ?? "", required(body.password, 1024));
+        await auth.changePassword(token ?? "", required(body.currentPassword, 1024),
+          required(body.password, 1024), required(body.confirmPassword, 1024));
         return result({ ok: true, requiresLogin: true }, sessionCookie("", origin, 0));
       }
-      const user = await auth.identify(token, path === "session");
+      const user = await auth.identify(token, path === "session", path !== "module-access");
+      auditActor(user);
       await limits.user(user.id,request,segments);
       const identity = { id: user.id, username: user.username, role: user.role, provider: "mariadb" };
-      if (path === "session") return result({
-        user: identity, mustChangePassword: user.mustChangePassword, synthetic: !institutional, institutional: !!institutional,
-        ...(notificationLots && !user.mustChangePassword ? { notificationLots: notificationLots.capabilities(user.role) } : {}),
-      });
+      const module = routeModule(template);
+      if (module || path === "session" || path === "module-access") {
+        const saved = !user.mustChangePassword && isRole(user.role) && readAccess ? (await readAccess()).matrix[user.role] : undefined;
+        const access = { ...(saved ?? defaultModuleAccess(user.role)) };
+        access.notificationLots = access.notificationLots && !!notificationLots;
+        if (path === "module-access") return result({ access });
+        if (path === "session") return result({
+          user: identity, mustChangePassword: user.mustChangePassword, synthetic: !institutional, institutional: !!institutional,
+          ...(!user.mustChangePassword && { access }),
+          ...(notificationLots && !user.mustChangePassword && {
+            notificationLots: { consult: access.notificationLots, download: access.notificationLots && notificationLots.capabilities(user.role).download },
+          }),
+        });
+        if (module && !access[module])
+          throw new HttpError(403, "MODULE_ACCESS_FORBIDDEN", "No tenés permiso para acceder a esta solapa.");
+      }
       if (segments[0] === "notification-lots") {
         if (!notificationLots) throw new HttpError(403, "NOTIFICATION_LOTS_FORBIDDEN", "Acceso a lotes no habilitado.");
-        return await notificationLots.handle(request, segments, user.role);
+        return await notificationLots.handle(request, segments, user.role, true);
       }
       const actor: Principal = { verified: true, userId: user.id, role: user.role, enabled: user.enabled,
         mustChangePassword: user.mustChangePassword, expiresAt: user.sessionExpiresAt, sessionHash: user.sessionHash };
@@ -95,17 +123,14 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
         catch (error) { await administration?.denied?.(request, segments, actor, error); throw error; }
       }
       if (segments[0] === "expedientes") {
-        const capability = path === "expedientes/generar" ? "expedientes.generate"
-          : segments[2] === "exportar" ? "expedientes.export"
-          : segments[2] === "descarga" ? "expedientes.download" : "expedientes.read";
-        requireCapability(actor, capability);
+        if (path === "expedientes/generar") requireCapability(actor, "expedientes.generate");
+        if (segments[2] === "descarga") requireCapability(actor, "expedientes.download");
+        if (segments[2] === "exportar" || segments[2] === "contenido") requireCapability(actor, "expedientes.export");
       }
-      if (segments[0] === "parcels" && segments[2] === "expedientes")
-        requireCapability(actor, "expedientes.read");
-      for (const handler of [administration, expedientes]) {
-        const response = await handler?.(request, segments, actor);
-        if (response) return response;
-      }
+      const administrative = await administration?.(request, segments, actor);
+      if (administrative) return administrative;
+      const documents = await expedientes?.(request, segments, actor, module === "expedientes");
+      if (documents) return documents;
       if (consultations) {
         const response = await consultations(request, segments, actor);
         if (response) return response;
@@ -125,4 +150,9 @@ export function createMariaHttp(auth: MariaAuth, origin: string,
       throw new HttpError(503, "MARIADB_DATA_PENDING", "Sesión MariaDB válida. El acceso a datos todavía no está integrado.");
     } catch (error) { return authError(error); } finally {release();}
   });
+}
+
+export function observeMariaHttp(request: Request, segments: string[], audit: AuditConnection | undefined, run: () => Promise<Response>) {
+  const route = routeTemplate(segments);
+  return observeRequest(route, () => auditRequest(auditOperation(request, segments, route), audit, run, authError));
 }

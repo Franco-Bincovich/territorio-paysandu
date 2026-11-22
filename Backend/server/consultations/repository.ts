@@ -3,6 +3,7 @@ import { HttpError } from "../security";
 import { randomUUID } from "node:crypto";
 import { retiredAddressFields } from '../../domain/personal-address';
 import { addressLimits, authorize, checkEvidence, fingerprint, id, invalid, parseInput, type Actor, type Evidence, type Input, type Verify } from "./model";
+import { confirmAuditCommit, discardStagedAudit, writeTransactionalAudit } from "../audit/platform";
 
 // Explicit injection only. No production pool import, route, feature flag or login changes.
 export interface Connection {
@@ -46,10 +47,15 @@ export class ConsultationRepository {
       c=await this.pool.getConnection(); await c.query("SET time_zone = '+00:00'"); await c.beginTransaction();
       const installed=await c.query("SELECT REVISION FROM FB_MODELO_REVISION WHERE MODELO = ?",["consultas"]);
       if(installed[0]?.REVISION!=="7.1")throw unavailable();
-      const result=await operation(c); committing=true; await c.commit(); return result;
+      const result=await operation(c); committing=true; await c.commit(); confirmAuditCommit(); return result;
     } catch(error) {
+      discardStagedAudit(committing);
+      if(committing){
+        c?.destroy();
+        c=undefined;
+        throw new HttpError(503,"CONSULTATION_COMMIT_UNCERTAIN","No se pudo confirmar el resultado de la consulta.");
+      }
       if(c)try{await c.rollback();}catch{c.destroy();throw unavailable();}
-      if(committing)throw unavailable();
       if(error instanceof HttpError)throw error;
       if((error as {errno?:number}).errno===1062)throw invalid("IDENTITY_CONFLICT",409);
       if([1020,1213,1205].includes((error as {errno?:number}).errno??0))throw invalid("RETRY_TRANSACTION",409);
@@ -123,7 +129,9 @@ export class ConsultationRepository {
       if(receipt.RESERVA_TOKEN!==reservation){
         if(!receipt || receipt.PAYLOAD_HASH!==fingerprint(input))throw invalid("IDEMPOTENCY_CONFLICT",409);
         if(!receipt.ID_CONSULTA || !receipt.RESPUESTA_JSON)throw unavailable();
-        return typeof receipt.RESPUESTA_JSON==="string"?JSON.parse(receipt.RESPUESTA_JSON):receipt.RESPUESTA_JSON;
+        const prior: Receipt = typeof receipt.RESPUESTA_JSON==="string"?JSON.parse(receipt.RESPUESTA_JSON):receipt.RESPUESTA_JSON;
+        await writeTransactionalAudit(c,{object:{type:"consultation",id:prior.id},version:prior.version},false);
+        return prior;
       }
       const personId=await this.person(c,input,evidence);
       const contact=(await c.query("SELECT * FROM FB_CONTACTOS WHERE ID_PERSONA = ? FOR UPDATE",[personId]))[0];
@@ -135,6 +143,7 @@ export class ConsultationRepository {
       await this.address(c,input,evidence,personId,queryId,actor);
       const response={id:queryId,personId,padCod:input.parcel.padCod,version:1};
       await c.query("UPDATE FB_CONSULTAS_IDEMPOTENCIA SET ID_CONSULTA = ?, RESPUESTA_JSON = ? WHERE USUARIO_ID = ? AND CLAVE = ?",[queryId,JSON.stringify(response),actor.userId,input.idempotencyKey]);
+      await writeTransactionalAudit(c,{object:{type:"consultation",id:queryId},version:response.version});
       return response;
     });
   }
@@ -172,7 +181,9 @@ export class ConsultationRepository {
         [evidence.personId??null,evidence.conCod??null,input.relationship.code,input.relationship.text,JSON.stringify(evidence),queryId,personId,input.parcel.padCod]);
       await this.address(c,input,evidence,personId,queryId,actor,current);
       const fresh=(await c.query("SELECT VERSION FROM FB_CIU_CONSULTAS_WEB WHERE ID_CONSULTA = ?",[queryId]))[0];
-      return {id:queryId,personId,padCod:input.parcel.padCod,version:Number(fresh.VERSION)};
+      const version=Number(fresh.VERSION);
+      await writeTransactionalAudit(c,{object:{type:"consultation",id:queryId},version},version!==expectedVersion);
+      return {id:queryId,personId,padCod:input.parcel.padCod,version};
     });
   }
 }

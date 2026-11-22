@@ -4,6 +4,8 @@ import { hashPassword } from '../mariadb/auth';
 import { HttpError } from '../security';
 import { createInput,patchInput,resetInput,revisionInput,userDto,userId,type AdminUser,type ListQuery } from './contracts';
 import type { AdminRepository,AdminTransaction,AuditEvent,Credential } from './repository';
+import { accessChanges, isAccessMatrix } from '../../../shared/module-access';
+import { auditNoChange } from '../audit/platform';
 const fail=(code:string,status=409,message='No se pudo completar la operación.')=>new HttpError(status,code,message);
 export type OperationContext={requestId:string};
 export class AdminService {
@@ -16,7 +18,7 @@ export class AdminService {
     // labelled denied: its atomic success audit may already have committed.
     if(error instanceof HttpError&&['ADMIN_SCHEMA_INCOMPATIBLE','ADMIN_DISABLED','ADMIN_COMMIT_UNCERTAIN'].includes(error.code))return;
     try {
-      await this.repository.denied({actorId:actor?.userId??'unverified',targetId,action,result:'denied',at:new Date(this.now()).toISOString(),reason,requestId:context.requestId,code:error instanceof HttpError?error.code:'ADMIN_UNAVAILABLE'});
+      await this.repository.denied({actorId:actor?.verified?actor.userId:'unverified',targetId,action,result:'denied',at:new Date(this.now()).toISOString(),reason,requestId:context.requestId,code:error instanceof HttpError?error.code:'ADMIN_UNAVAILABLE'});
       if(error&&typeof error==='object')this.recordedRejections.add(error);
     } catch { const unavailable=fail('ADMIN_AUDIT_UNAVAILABLE',503,'No se pudo registrar la operación administrativa.');this.recordedRejections.add(unavailable);throw unavailable; }
   }
@@ -52,6 +54,28 @@ export class AdminService {
     await tx.audit({actorId:actor.userId,actorUsername:actorUser?.username??null,targetUsername:after?.username??before?.username??null,targetId:after?.id??before?.id??null,action,result:'success',at:new Date(this.now()).toISOString(),reason,requestId:context.requestId,...(before?{before:userDto(before)}:{}),...(after?{after:userDto(after)}:{})});
   }
   async list(actor:Principal,query:ListQuery,context:OperationContext){return this.run(actor,null,'list','Consulta administrativa',context,async(tx,current)=>{const result=await tx.list(query);await this.audit(tx,current,'list','Consulta administrativa',context);return {items:result.items.map(userDto),total:result.total,page:query.page,pageSize:query.pageSize};});}
+  async moduleAccess(actor:Principal,context:OperationContext) {
+    return this.run(actor,null,'list','Consulta de permisos',context,tx=>tx.moduleAccess());
+  }
+  async updateModuleAccess(actor:Principal,value:Record<string,unknown>,context:OperationContext) {
+    const reason = 'Actualización de permisos de acceso a solapas';
+    return this.run(actor,null,'permissions-update',reason,context,async(tx,current)=>{
+      const { matrix, revision } = value;
+      if(Object.keys(value).length!==2 || typeof revision!=='number' || !Number.isSafeInteger(revision) || revision<0 || !isAccessMatrix(matrix))
+        throw fail('VALIDATION',400,'Revisá la matriz de permisos. El acceso a Administración es fijo.');
+      const previous = await tx.moduleAccess(true);
+      if(!previous.writable) throw fail('MODULE_ACCESS_MIGRATION_REQUIRED',503,'Falta instalar la migración de permisos en auxiliares.');
+      if(previous.revision!==revision) throw fail('VERSION_CONFLICT',409,'Los permisos cambiaron. Volvé a cargar la matriz antes de guardar.');
+      const changes = accessChanges(previous.matrix,matrix);
+      if(!changes.length) { auditNoChange(); return previous; }
+      await tx.saveModuleAccess(matrix,revision);
+      const actorUser = await tx.get(current.userId);
+      await tx.audit({actorId:current.userId,actorUsername:actorUser?.username??null,targetId:null,
+        action:'permissions-update',result:'success',at:new Date(this.now()).toISOString(),
+        reason,requestId:context.requestId,permissionChanges:changes,permissionRevision:revision+1});
+      return {matrix,revision:revision+1,writable:true};
+    });
+  }
   async create(actor:Principal,value:unknown,_key:string,context:OperationContext){
     await this.authorize(actor,'create',context);const input=createInput(value);
     const reason=input.reason.replaceAll(input.temporalPassword,'[dato reservado]');
@@ -112,7 +136,7 @@ export class AdminService {
       requireCapability(current,'audit.read',this.now());
       if(!tx.listAudit)throw fail('ADMIN_AUDIT_UNAVAILABLE',503);
       const result=await tx.listAudit({page:query.page,pageSize:query.pageSize});
-      const items=result.items.map(event=>({actorId:event.actorId,actorUsername:event.actorUsername??null,targetUsername:event.targetUsername??event.after?.username??event.before?.username??null,targetId:event.targetId,action:event.action,result:event.result,at:event.at,reason:event.reason,requestId:event.requestId,...(event.code?{code:event.code}:{}),...(event.before?{before:userDto(event.before)}:{}),...(event.after?{after:userDto(event.after)}:{})}));
+      const items=result.items.map(event=>({actorId:event.actorId,actorUsername:event.actorUsername??null,targetUsername:event.targetUsername??event.after?.username??event.before?.username??null,targetId:event.targetId,action:event.action,result:event.result,at:event.at,reason:event.reason,requestId:event.requestId,...(event.code?{code:event.code}:{}),...(event.before?{before:userDto(event.before)}:{}),...(event.after?{after:userDto(event.after)}:{}),...(event.permissionChanges?{permissionChanges:event.permissionChanges}:{})}));
       await this.audit(tx,current,'audit-list','Consulta de auditoría administrativa',context);
       return {items,total:result.total,page:query.page,pageSize:query.pageSize};
     });

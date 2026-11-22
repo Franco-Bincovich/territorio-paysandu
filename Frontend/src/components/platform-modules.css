@@ -48,6 +48,37 @@
 .expedientes-table { min-width: 760px; }
 .expediente-name { overflow-wrap: anywhere; max-width: 310px; }
 .expediente-preview { margin-top: 24px; }
+
+.administration-cards {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.administration-cards > h1 { margin: 0 0 4px; }
+.administration-card { padding: 0; }
+.administration-card > summary {
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.administration-card[open] > summary {
+  background: var(--wash);
+  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: 1px solid var(--border);
+}
+.administration-card-content { padding: 20px 22px; min-width: 0; }
+.administration-card:not([open]) > .administration-card-content { display: none; }
+.administration-card-content > .admin-users-view {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+.permissions-fields { border: 0; margin: 0; padding: 0; min-width: 0; }
+.admin-permissions-table { min-width: 570px; margin-bottom: 20px; }
+.admin-permissions-table :is(th, td) { font-size: 14px; }
+.admin-permissions-table :is(th, td):not(:first-child) { text-align: center; }
+.admin-permissions-table input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--focus); }
 .expediente-preview h3 { overflow-wrap: anywhere; }
 .expediente-preview iframe { width: 100%; min-height: 65vh; border: 1px solid var(--border); border-radius: 12px; background: white; }
 @media (max-width: 900px) { .expedientes-search { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

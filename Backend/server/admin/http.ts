@@ -11,7 +11,7 @@ export type AdminHandler=((request:Request,segments:string[],actor:Principal)=>P
   denied?:(request:Request,segments:string[],actor:Principal,error:unknown)=>Promise<void>;
 };
 const context=()=>({requestId:currentRequestId()??randomUUID()});
-const action=(request:Request,segments:string[]):AuditEvent['action']=>segments[1]==='audit'?'audit-list':request.method==='GET'?'list':segments[3]==='reset-password'?'reset-password':request.method==='DELETE'?'delete':request.method==='PATCH'?'update':'create';
+const action=(request:Request,segments:string[]):AuditEvent['action']=>segments[1]==='audit'?'audit-list':request.method==='GET'?'list':segments[1]==='permissions'?'permissions-update':segments[3]==='reset-password'?'reset-password':request.method==='DELETE'?'delete':request.method==='PATCH'?'update':'create';
 // Only syntactically valid IDs reach audit storage; arbitrary URLs are never logged.
 const target=(segments:string[])=>segments[1]==='users'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(segments[2]??'')?segments[2]:null;
 export function createAdminHttp(service?:AdminService,writesEnabled=true):AdminHandler{
@@ -23,11 +23,17 @@ export function createAdminHttp(service?:AdminService,writesEnabled=true):AdminH
       else requireCapability(actor,'users.manage');
       const list=segments.length===2&&segments[1]==='users',edit=segments.length===3&&segments[1]==='users',reset=segments.length===4&&segments[1]==='users'&&segments[3]==='reset-password';
       const audit=segments.length===2&&segments[1]==='audit',capabilities=segments.length===2&&segments[1]==='capabilities';
-      if(!list&&!edit&&!reset&&!audit&&!capabilities)throw new HttpError(404,'NOT_FOUND','Ruta no encontrada.');
-      const allowed=audit||capabilities?['GET']:list?['GET','POST']:edit?['PATCH','DELETE']:['POST'];
+      const permissions=segments.length===2&&segments[1]==='permissions';
+      if(!list&&!edit&&!reset&&!audit&&!capabilities&&!permissions)throw new HttpError(404,'NOT_FOUND','Ruta no encontrada.');
+      const allowed=permissions?['GET','PATCH']:audit||capabilities?['GET']:list?['GET','POST']:edit?['PATCH','DELETE']:['POST'];
       if(!allowed.includes(request.method))return Response.json({error:{code:'METHOD_NOT_ALLOWED',message:'Método no permitido.'}},{status:405,headers:{...headers,Allow:allowed.join(', ')}});
       if(!service)throw new HttpError(503,'ADMIN_UNAVAILABLE','Administración no disponible.');
       const query=new URL(request.url).searchParams;
+      if(permissions&&request.method==='GET'){
+        if(query.size)throw new HttpError(400,'VALIDATION','Parámetros no permitidos.');
+        const settings=await service.moduleAccess(actor,operationContext);
+        return Response.json({...settings,writable:writesEnabled&&settings.writable},{headers});
+      }
       if(capabilities){
         if(query.size)throw new HttpError(400,'VALIDATION','Parámetros no permitidos.');
         const available=await service.capabilities(actor,operationContext);
@@ -41,6 +47,7 @@ export function createAdminHttp(service?:AdminService,writesEnabled=true):AdminH
       if(!writesEnabled)throw new HttpError(403,'ADMIN_WRITES_DISABLED','Los cambios de Administración están deshabilitados en este entorno.');
       if(query.size)throw new HttpError(400,'VALIDATION','Parámetros no permitidos.');
       const body=await jsonBody(request);
+      if(permissions)return Response.json(await service.updateModuleAccess(actor,body,operationContext),{headers});
       if(list){const result=await service.create(actor,body,request.headers.get('Idempotency-Key')??'',operationContext);return Response.json(result,{status:201,headers});}
       if(edit&&request.method==='DELETE')return Response.json(await service.remove(actor,segments[2],body,operationContext),{headers});
       if(edit)return Response.json(await service.patch(actor,segments[2],body,operationContext),{headers});

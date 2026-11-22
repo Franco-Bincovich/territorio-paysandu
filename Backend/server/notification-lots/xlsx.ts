@@ -1,6 +1,7 @@
 import { crc32, deflateRawSync } from "node:zlib";
 import type { NotificationLot } from "../../domain/notification-lots";
 import type { NotificationLotExport } from "./repository";
+import { notificationLotHeading, presentNotificationLotCell } from "./presentation";
 
 const spreadsheet = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
 const documentRels = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
@@ -60,15 +61,6 @@ function zip(files: Record<string, string>) {
   return Buffer.concat([...parts, ...directory, end]);
 }
 
-const headings: Record<string, string> = {
-  CUIT: "RUT",
-  NOMBRE_IMAGEN_ACTUAL: "Imagen actual",
-  NOMBRE_IMAGEN_HISTORICA: "Imagen histórica",
-};
-const decimalTypes = new Set(["decimal", "numeric", "float", "double", "real"]);
-const msPerDay = 86_400_000;
-const excelEpoch = Date.UTC(1899, 11, 30);
-
 function columnName(index: number) {
   let label = "";
   for (let value = index + 1; value > 0; value = Math.floor((value - 1) / 26)) {
@@ -85,40 +77,6 @@ function numericCell(ref: string, value: string, style: number) {
   return `<c r="${ref}" s="${style}" t="n"><v>${value}</v></c>`;
 }
 
-function imageLocation(value: unknown) {
-  const locality = String(value ?? "").trim();
-  const key = locality.normalize("NFD").replace(/\p{M}/gu, "").toUpperCase().replace(/[\s_-]+/g, " ");
-  if (key === "PAYSANDU") return "Paysandú";
-  if (key === "PAYSANDU CHACRAS") return "Paysandú Chacras";
-  return locality || "Sin localidad informada";
-}
-
-function imageLabel(name: string, value: unknown, row: Record<string, unknown>) {
-  const source = String(value ?? "").trim();
-  if (!source) return "";
-  const parcel = String(row.OBSERVACIONES_TIPO_OBJETOS ?? "").trim();
-  const basename = source.split(/[\\/]/).at(-1) ?? "";
-  const candidate = /^((?:19|20)\d{2})[_-]/.exec(basename)?.[1];
-  const historicalYear = candidate &&
-    (candidate !== parcel || basename.slice(5).split(/[_.-]+/).includes(parcel)) ? candidate : "Sin año informado";
-  const year = name === "NOMBRE_IMAGEN_ACTUAL" ? "2026" : historicalYear;
-  return `${year} · ${imageLocation(row.ZONA)} · ${parcel || "Sin padrón informado"}`;
-}
-
-function excelDate(value: unknown) {
-  const timestamp = value instanceof Date ? value.getTime() : Date.parse(`${String(value)}T00:00:00Z`);
-  if (!Number.isFinite(timestamp)) return null;
-  const serial = Math.floor((timestamp - excelEpoch) / msPerDay);
-  return serial < 61 ? serial - 1 : serial;
-}
-
-function valueText(value: unknown) {
-  if (value == null) return "";
-  if (Buffer.isBuffer(value)) return value.length ? value.toString("base64") : "";
-  if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString().slice(0, 10);
-  return String(value);
-}
-
 const styles = `<styleSheet xmlns="${spreadsheet}">
   <numFmts count="1"><numFmt numFmtId="164" formatCode="yyyy-mm-dd"/></numFmts>
   <fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts>
@@ -130,27 +88,17 @@ const styles = `<styleSheet xmlns="${spreadsheet}">
 </styleSheet>`;
 
 export function notificationLotWorkbook(lot: NotificationLot, { columns, rows }: NotificationLotExport) {
-  const indexed = columns.map((column, index) => ({ ...column, letter: columnName(index), heading: headings[column.name] ?? column.name }));
+  const indexed = columns.map((column, index) => ({ ...column, letter: columnName(index), heading: notificationLotHeading(column.name) }));
   const widths = indexed.map(column => column.heading.length);
   const head = `<row r="1">${indexed.map(column => textCell(`${column.letter}1`, column.heading, 1)).join("")}</row>`;
   const sheetRows = rows.map((row, index) => {
     const rowNumber = index + 2;
     const cells = indexed.map((column, columnIndex) => {
       const ref = `${column.letter}${rowNumber}`;
-      const value = row[column.name];
-      const text = column.name === "NOMBRE_IMAGEN_ACTUAL" || column.name === "NOMBRE_IMAGEN_HISTORICA"
-        ? imageLabel(column.name, value, row)
-        : valueText(value);
+      const { text, numeric } = presentNotificationLotCell(column, row);
       widths[columnIndex] = Math.max(widths[columnIndex], text.length);
       if (!text) return "";
-      if (column.dataType === "date") {
-        const serial = excelDate(value);
-        if (serial !== null) return numericCell(ref, String(serial), 2);
-      }
-      if (decimalTypes.has(column.dataType) && /^-?\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(text) && Number.isFinite(Number(text))) {
-        return numericCell(ref, text, 3);
-      }
-      return textCell(ref, text);
+      return numeric ? numericCell(ref, numeric.value, numeric.style) : textCell(ref, text);
     }).join("");
     return `<row r="${rowNumber}">${cells}</row>`;
   });

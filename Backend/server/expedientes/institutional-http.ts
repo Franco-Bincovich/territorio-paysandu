@@ -8,6 +8,7 @@ import { docError, InstitutionalFilesystemStorage, InstitutionalSftpStorage, MAX
 import type { ExpedientesHandler } from './http';
 import { validateDocx } from './docx';
 import { convertDocxToPdf } from './conversion';
+import { auditObject } from '../audit/platform';
 
 const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer', 'Cross-Origin-Resource-Policy': 'same-origin' };
@@ -18,13 +19,14 @@ export function createInstitutionalExpedientesHttp(storage: InstitutionalStorage
   const catalog = new InstitutionalCatalog(storage, options.ttlMs), concurrency = options.concurrency ?? 2, timeoutMs = options.timeoutMs ?? 45000;
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 4 || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000) throw docError('EXPEDIENTES_CONFIG');
   let active = 0;
-  return async (request, segments, actor) => {
+  return async (request, segments, actor, moduleAccess) => {
     if (segments[0] !== 'expedientes' && !(segments[0] === 'parcels' && segments[2] === 'expedientes')) return null;
     let release = () => {}, timer: ReturnType<typeof setTimeout> | undefined;
     const controller = new AbortController(), abort = () => controller.abort();
     try {
       authorize(actor, Date.now());
-      requireCapability(actor, segments[2] === 'descarga' ? 'expedientes.download' : segments[2] === 'exportar' || segments[2] === 'contenido' ? 'expedientes.export' : 'expedientes.read');
+      const operationCapability = segments[2] === 'descarga' ? 'expedientes.download' : segments[2] === 'exportar' || segments[2] === 'contenido' ? 'expedientes.export' : 'expedientes.read';
+      if (!moduleAccess || operationCapability !== 'expedientes.read') requireCapability(actor,operationCapability);
       const search = segments.length === 1 && segments[0] === 'expedientes';
       if (!search && !(segments.length === 3 && segments[0] === 'expedientes' && ['descarga', 'contenido', 'exportar'].includes(segments[2]))) throw docError('EXPEDIENTE_NOT_FOUND', 404);
       if (request.method !== 'GET') return Response.json({ error: { code: 'METHOD_NOT_ALLOWED', message: 'Método no permitido.' } }, { status: 405, headers: { ...headers, Allow: 'GET' } });
@@ -43,6 +45,7 @@ export function createInstitutionalExpedientesHttp(storage: InstitutionalStorage
         return Response.json({ items, total: items.length }, { headers });
       }
       const document = await catalog.find(segments[1], criteria, controller.signal);
+      auditObject({type:'expediente',id:`${document.localidad}:${document.padron}:${document.caseNumber}`});
       let bytes = await storage.read(document.name, controller.signal);
       if (bytes.length !== document.size || bytes.length > MAX_DOCX_BYTES) throw docError('EXPEDIENTES_SIZE', 413);
       validateDocx(bytes);
@@ -78,10 +81,11 @@ export function createInstitutionalExpedientesHttp(storage: InstitutionalStorage
 }
 export function configuredInstitutionalExpedientesHttp(env: NodeJS.ProcessEnv = process.env): ExpedientesHandler {
   let handler: ExpedientesHandler | undefined;
-  return async (request, segments, actor) => {
+  return async (request, segments, actor, moduleAccess) => {
     if (segments[0] !== 'expedientes' && !(segments[0] === 'parcels' && segments[2] === 'expedientes')) return null;
     // Authenticate before reading configuration or constructing any remote adapter.
-    authorize(actor, Date.now()); requireCapability(actor, 'expedientes.read');
+    authorize(actor, Date.now());
+    if (!moduleAccess) requireCapability(actor, 'expedientes.read');
     if (!handler) {
       const provider = env.EXPEDIENTES_PROVIDER ?? env.IMAGE_PROVIDER;
       let storage: InstitutionalStorage;
@@ -90,6 +94,6 @@ export function configuredInstitutionalExpedientesHttp(env: NodeJS.ProcessEnv = 
       else throw docError('EXPEDIENTES_CONFIGURATION_PENDING');
       handler = createInstitutionalExpedientesHttp(storage);
     }
-    return handler(request, segments, actor);
+    return handler(request, segments, actor, moduleAccess);
   };
 }

@@ -1,6 +1,7 @@
 import type { Principal } from '../authorization';
 import type { AdminUser,ListQuery } from './contracts';
-export type AuditEvent={actorId:string;actorUsername?:string|null;targetUsername?:string|null;targetId:string|null;action:'create'|'update'|'reset-password'|'list'|'delete'|'audit-list';result:'success'|'denied';at:string;reason:string;requestId:string;code?:string;before?:AdminUser;after?:AdminUser};
+import type { AccessChange, AccessMatrix, AccessSettings } from '../../../shared/module-access';
+export type AuditEvent={actorId:string;actorUsername?:string|null;targetUsername?:string|null;targetId:string|null;action:'create'|'update'|'reset-password'|'list'|'delete'|'audit-list'|'permissions-update';result:'success'|'denied';at:string;reason:string;requestId:string;code?:string;before?:AdminUser;after?:AdminUser;permissionChanges?:AccessChange[];permissionRevision?:number};
 export type Credential={passwordHash:string};
 /** Adapter contract, NOT a declaration of MariaDB columns.
  * transaction acquires one persistent administration mutex, then locks actor and
@@ -20,6 +21,8 @@ export interface AdminTransaction {
   findEmail?(email:string):Promise<AdminUser|null>;
   list(query:ListQuery):Promise<{items:AdminUser[];total:number}>;
   listAudit?(query:{page:number;pageSize:number}):Promise<{items:AuditEvent[];total:number}>;
+  moduleAccess(lock?:boolean):Promise<AccessSettings>;
+  saveModuleAccess(matrix:AccessMatrix,revision:number):Promise<void>;
   put(user:AdminUser):Promise<void>;
   activeAdministrators():Promise<number>;
   revokeSessions(userId:string):Promise<void>;
@@ -28,6 +31,6 @@ export interface AdminTransaction {
 }
 export interface AdminRepository {
   transaction<T>(actor:Principal,targetId:string|null,run:(tx:AdminTransaction)=>Promise<T>):Promise<T>;
-  /** Separate durable, sanitized denial audit after transaction rollback. */
+  /** Registers a sanitized denial after rollback, using the audit scope when active. */
   denied(event:AuditEvent):Promise<void>;
 }

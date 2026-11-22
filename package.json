@@ -9,7 +9,9 @@
     "images:check": "node scripts/check-sftp-images.cjs",
     "build": "next build Frontend",
     "start": "next start Frontend --hostname 127.0.0.1",
-    "typecheck": "tsc --noEmit -p Frontend/tsconfig.json"
+    "typecheck": "tsc --noEmit -p Frontend/tsconfig.json",
+    "test": "node --test tests/data-tuning.cjs tests/mariadb-identity.cjs tests/module-access.cjs tests/parcel-type-notice.cjs tests/platform-audit.cjs",
+    "test:audit:integration": "node tests/platform-audit.integration.cjs"
   },
   "keywords": [],
   "author": "",

@@ -1,9 +1,10 @@
 "use client";
 import "./consultation-history.css";
 import "./platform-modules.css";
-import { AdministrationView } from "./administration-view";
+import { AdministrationCards } from "./administration-cards";
 import { ExpedientesView } from "./expedientes-view";
 import { hasCapability } from "../../../shared/permissions";
+import { defaultModuleAccess, isModule, MODULES, type Module, type ModuleAccess } from "../../../shared/module-access";
 import { CollaboratorMenu } from "./collaborator-menu";
 import { AuditSnapshot } from "./audit-snapshot";
 import {
@@ -47,6 +48,11 @@ export type HistoryReturnState = {
 const message = (e: unknown) =>
   e instanceof Error ? e.message : "No se pudo completar la operación.";
 
+function moduleFromLocation(): Module {
+  const module = new URLSearchParams(window.location.search).get("solapa");
+  return isModule(module) ? module : "search";
+}
+
 const moduleIcons = {
   search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></>,
   history: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
@@ -68,10 +74,15 @@ export function TerritoryApp() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   const role = session?.user?.role;
-  const canAccessConsultations = hasCapability(role ?? "collaborator", "consultations.read");
+  const dynamicAccess = !!session?.access;
+  const access = session?.access ?? { ...defaultModuleAccess(role ?? "collaborator"), notificationLots: !!session?.notificationLots?.consult };
+  const canDownloadLots = hasCapability(role, "notification-lots.access");
+  const canAccessConsultations = access.history;
   const [screen, setScreen] = useState<
-    "search" | "parcel" | "history" | "create" | "detail" | "settings" | "notificationLots" | "administration" | "expedientes"
+    Module | "parcel" | "create" | "detail" | "settings"
   >("search");
+  const screenModule = isModule(screen) ? screen : screen === "parcel" ? "search" : screen === "settings" ? null : "history";
+  const screenAllowed = screenModule === null || access[screenModule];
   const [parcel, setParcel] = useState<Parcel | null>(null),
     [detail, setDetail] = useState<Consultation | null>(null),
     [busy, setBusy] = useState(false);
@@ -117,12 +128,14 @@ export function TerritoryApp() {
   const lastActivity = useRef(Date.now());
   const navigationRequests = useRequestScope();
   const authRequests = useRequestScope();
+  const accessRequests = useRequestScope();
   const [loggingOut, setLoggingOut] = useState(false);
   const clearSession = useCallback(
     (text: string) => {
       selectedImages.current?.dispose();selectedImages.current=null;
       navigationRequests.cancel();
       authRequests.cancel();
+      accessRequests.cancel();
       globalHistoryReturn.current = null;
       parcelHistoryReturn.current = null;
       setRestoreHistory(null);
@@ -139,7 +152,7 @@ export function TerritoryApp() {
       url.searchParams.delete("historyPage");
       window.history.replaceState(null, "", url);
     },
-    [navigationRequests, authRequests],
+    [navigationRequests, authRequests, accessRequests],
   );
   function navigate(
     next: typeof screen,
@@ -152,6 +165,12 @@ export function TerritoryApp() {
     setBusy(false);
     setError("");
     setScreen(next);
+    if (isModule(next)) {
+      const url = new URL(window.location.href);
+      if (next === "search") url.searchParams.delete("solapa");
+      else url.searchParams.set("solapa", next);
+      if (url.href !== window.location.href) window.history.pushState(null, "", url);
+    }
   }
   const loadSession = useCallback(async () => {
     const operation = authRequests.begin();
@@ -165,7 +184,7 @@ export function TerritoryApp() {
       selectedImages.current?.dispose();selectedImages.current=null;
       setParcel(null);
       setDetail(null);
-      setScreen("search");
+      setScreen(moduleFromLocation());
       setBusy(false);
       setSession(s);
       setNotice("");
@@ -182,6 +201,37 @@ export function TerritoryApp() {
   useEffect(() => {
     void loadSession();
   }, [loadSession]);
+  const refreshAccess = useCallback(() => {
+    const operation = accessRequests.begin();
+    void request<{ access: ModuleAccess }>("/api/module-access", { signal: operation.signal }).then(({ access }) => {
+      if (operation.isCurrent()) setSession(value => value && { ...value, access });
+    }).catch(() => {
+      // Keep the last displayed menu on transient failures. Every API request rechecks access.
+    });
+  }, [accessRequests]);
+  useEffect(() => {
+    if (!dynamicAccess || !session?.user || session.mustChangePassword) return;
+    const update = () => { if (!document.hidden) refreshAccess(); };
+    const timer = setInterval(update, 30000);
+    const navigateBack = () => {
+      navigationRequests.cancel();
+      setNavigationOpen(false);
+      setBusy(false);
+      setError("");
+      setScreen(moduleFromLocation());
+      update();
+    };
+    window.addEventListener("focus", update);
+    window.addEventListener("popstate", navigateBack);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      clearInterval(timer);
+      accessRequests.cancel();
+      window.removeEventListener("focus", update);
+      window.removeEventListener("popstate", navigateBack);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, [dynamicAccess, session?.user?.id, session?.mustChangePassword, refreshAccess, accessRequests, navigationRequests]);
   useEffect(() => {
     const expired = () => clearSession("La sesión expiró. Ingresá nuevamente.");
     window.addEventListener("territory-session-expired", expired);
@@ -352,7 +402,7 @@ export function TerritoryApp() {
             Para habilitar las funciones, reemplazá la contraseña inicial por
             una contraseña personal.
           </p>
-          <AuthForm changePassword onSuccess={loadSession} />
+          <AuthForm changePassword maria={session.user.provider === "mariadb"} onSuccess={loadSession} />
           <button className="btn" onClick={logout} disabled={loggingOut}>
             Cerrar sesión
           </button>
@@ -404,14 +454,14 @@ export function TerritoryApp() {
         </div>
         <p className="navlabel">ESPACIO DE TRABAJO</p>
         <nav aria-label="Principal" className="nav">
-          <button
+          {access.search && <button
             className={screen === "search" ? "active" : ""}
             onClick={() => {
               navigate("search");
             }}
           >
             <ModuleNavIcon name="search" /><span>Buscar padrón</span>
-          </button>
+          </button>}
           {canAccessConsultations && (
             <button
               className={screen === "history" ? "active" : ""}
@@ -420,7 +470,7 @@ export function TerritoryApp() {
               <ModuleNavIcon name="history" /><span>Historial de consultas</span>
             </button>
           )}
-          {session.notificationLots?.consult && (
+          {access.notificationLots && (
             <button
               className={screen === "notificationLots" ? "active" : ""}
               onClick={() => navigate("notificationLots")}
@@ -428,12 +478,12 @@ export function TerritoryApp() {
               <ModuleNavIcon name="lots" /><span>Lotes</span>
             </button>
           )}
-          {hasCapability(role, "expedientes.read") && (
+          {access.expedientes && (
             <button className={screen === "expedientes" ? "active" : ""} onClick={() => navigate("expedientes")}>
               <ModuleNavIcon name="expedientes" /><span>Expedientes</span>
             </button>
           )}
-          {hasCapability(role, "users.manage") && (
+          {access.administration && (
             <button className={screen === "administration" ? "active" : ""} onClick={() => navigate("administration")}>
               <ModuleNavIcon name="administration" /><span>Administración</span>
             </button>
@@ -487,10 +537,17 @@ export function TerritoryApp() {
           )}
           {error && <ErrorBox text={error} />}{" "}
           {busy && <p role="status">Cargando…</p>}
-          {screen === "administration" && hasCapability(role, "users.manage") && (
-            <AdministrationView onRequiresLogin={() => clearSession("Los cambios requieren iniciar sesión nuevamente.")} />
+          {!screenAllowed && screenModule && (
+            <section className="panel">
+              <h1>{MODULES[screenModule]}</h1>
+              <p role="alert">No tenés permiso para acceder a esta solapa.</p>
+            </section>
           )}
-          {screen === "expedientes" && hasCapability(role, "expedientes.read") && (
+          {screen === "administration" && screenAllowed && (
+            <AdministrationCards onRequiresLogin={() => clearSession("Los cambios requieren iniciar sesión nuevamente.")}
+              onPermissionsSaved={refreshAccess} />
+          )}
+          {screen === "expedientes" && screenAllowed && (
             <section className="panel"><h1>Expedientes</h1><ExpedientesView role={role} /></section>
           )}
           {screen === "settings" && (
@@ -499,20 +556,22 @@ export function TerritoryApp() {
               <h2>Cambiar contraseña</h2>
               <AuthForm
                 changePassword
+                maria={session.user.provider === "mariadb"}
                 onSuccess={loadSession}
                 disabled={loggingOut}
               />
             </section>
           )}
-          {screen === "search" && <SearchView onOpen={openParcel} institutional={session.institutional} topbarRef={topbarRef} />}{" "}
-          {screen === "notificationLots" && session.notificationLots?.consult && (
-            <NotificationLotsView canDownload={session.notificationLots.download} />
+          {screen === "search" && screenAllowed && <SearchView onOpen={openParcel} institutional={session.institutional} topbarRef={topbarRef} />}{" "}
+          {screen === "notificationLots" && screenAllowed && (
+            <NotificationLotsView canDownload={canDownloadLots} />
           )}
-          {screen === "parcel" && parcel && (
+          {screen === "parcel" && screenAllowed && parcel && (
             <ParcelView
               key={parcel.padCod ?? `${parcel.locality}/${parcel.parcel}`}
               parcel={parcel}
               consultationsLoading={checkingParcelConsultations}
+              consultationAccess={canAccessConsultations}
               selectedImageCache={selectedImages.current??undefined}
               initialTab={parcelTab}
               historyReturnState={
@@ -693,10 +752,12 @@ function PasswordField({
 }
 function AuthForm({
   changePassword = false,
+  maria = false,
   onSuccess,
   disabled = false,
 }: {
   changePassword?: boolean;
+  maria?: boolean;
   onSuccess: () => Promise<void>;
   disabled?: boolean;
 }) {
@@ -727,7 +788,9 @@ function AuthForm({
         signal: operation.signal,
         body: JSON.stringify(
           changePassword
-            ? { password: f.get("password") }
+            ? (maria
+              ? { currentPassword: f.get("currentPassword"), password: f.get("password"), confirmPassword: f.get("confirm") }
+              : { password: f.get("password") })
             : { username: f.get("username"), password: f.get("password") },
         ),
       });
@@ -753,6 +816,10 @@ function AuthForm({
             spellCheck={false}
           />
         </label>
+      )}
+      {changePassword && maria && (
+        <PasswordField label="Contraseña actual" name="currentPassword"
+          autoComplete="current-password" disabled={busy || disabled} />
       )}
       <PasswordField
         label={changePassword ? "Nueva contraseña" : "Contraseña"}
