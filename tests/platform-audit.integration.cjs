@@ -386,16 +386,17 @@ async function exercise(pool, { users, passwordHash }) {
 
   const nextPassword = "QA_NEW_PASSWORD_PRIVATE_9";
   const passwordChange = { password: nextPassword, confirmPassword: nextPassword };
-  await check("auth/password", { method: "POST", cookie: adminCookie, body: { password: nextPassword } },
+  // The commit-uncertainty scenarios already consumed the administrator's account quota.
+  await check("auth/password", { method: "POST", cookie: restrictedCookie, body: { password: nextPassword } },
     { status: 400, fields: { ACTION: "change_password", RESULT: "invalid" } });
-  await check("auth/password", { method: "POST", cookie: adminCookie, body: { ...passwordChange, currentPassword: "QA_WRONG_CURRENT_PASSWORD" } },
+  await check("auth/password", { method: "POST", cookie: restrictedCookie, body: { ...passwordChange, currentPassword: "QA_WRONG_CURRENT_PASSWORD" } },
     { status: 400, fields: { ACTION: "change_password", RESULT: "invalid", ERROR_CODE: "CURRENT_PASSWORD_INVALID" } });
-  await check("auth/password", { method: "POST", cookie: adminCookie, body: { ...passwordChange, currentPassword: sharedCredential } },
-    { status: 200, fields: { MODULE: "auth", ACTION: "change_password", RESULT: "success", ACTOR_ID: administrator.id } });
-  await check("session", { cookie: adminCookie }, { status: 401, fields: { RESULT: "denied", ACTOR_ID: "unverified" } });
-  await check("auth/logout", { method: "POST", cookie: restrictedCookie },
-    { status: 200, fields: { MODULE: "auth", ACTION: "logout", RESULT: "success", ACTOR_ID: restricted.id } });
+  await check("auth/password", { method: "POST", cookie: restrictedCookie, body: { ...passwordChange, currentPassword: sharedCredential } },
+    { status: 200, fields: { MODULE: "auth", ACTION: "change_password", RESULT: "success", ACTOR_ID: restricted.id } });
   await check("session", { cookie: restrictedCookie }, { status: 401, fields: { RESULT: "denied", ACTOR_ID: "unverified" } });
+  await check("auth/logout", { method: "POST", cookie: adminCookie },
+    { status: 200, fields: { MODULE: "auth", ACTION: "logout", RESULT: "success", ACTOR_ID: administrator.id } });
+  await check("session", { cookie: adminCookie }, { status: 401, fields: { RESULT: "denied", ACTOR_ID: "unverified" } });
   await check("auth/logout", { method: "POST" },
     { status: 200, fields: { MODULE: "auth", ACTION: "logout", RESULT: "no_change", ACTOR_ID: "unverified" } });
 
