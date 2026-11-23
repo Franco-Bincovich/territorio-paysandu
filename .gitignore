@@ -22,6 +22,9 @@ Thumbs.db
 *.tar.sha256
 *.tar.gz
 /tests/*
+!/tests/consultation-relationship.cjs
+!/tests/consultation-relationship-ui.cjs
+!/tests/consultation-relationships.integration.cjs
 !/tests/data-tuning.cjs
 !/tests/mariadb-identity.cjs
 !/tests/module-access.cjs

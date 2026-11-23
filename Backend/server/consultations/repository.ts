@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { retiredAddressFields } from '../../domain/personal-address';
 import { addressLimits, authorize, checkEvidence, fingerprint, id, invalid, parseInput, type Actor, type Evidence, type Input, type Verify } from "./model";
 import { confirmAuditCommit, discardStagedAudit, writeTransactionalAudit } from "../audit/platform";
+import { consultationRevision } from './schema';
 
 // Explicit injection only. No production pool import, route, feature flag or login changes.
 export interface Connection {
@@ -46,7 +47,7 @@ export class ConsultationRepository {
     try {
       c=await this.pool.getConnection(); await c.query("SET time_zone = '+00:00'"); await c.beginTransaction();
       const installed=await c.query("SELECT REVISION FROM FB_MODELO_REVISION WHERE MODELO = ?",["consultas"]);
-      if(installed[0]?.REVISION!=="7.1")throw unavailable();
+      if(installed[0]?.REVISION!==consultationRevision)throw unavailable();
       const result=await operation(c); committing=true; await c.commit(); confirmAuditCommit(); return result;
     } catch(error) {
       discardStagedAudit(committing);
@@ -89,9 +90,10 @@ export class ConsultationRepository {
       [input.person.name,input.person.documentType,input.person.document,e.personId??null,e.personId?JSON.stringify(e):null]);
     return String(result.insertId);
   }
-  private values(input:Input,e:Evidence,personId:string,actor:Actor,expected:number,updateContact:boolean) {
+  private values(input:Input,e:Evidence,personId:string,actor:Actor,expected:number,updateContact:boolean,relationCode:string|null) {
     const row:Record<string,unknown>={ID_PERSONA:personId,PADCOD:input.parcel.padCod,PADRON:input.parcel.parcel,LOCALIDAD_PADRON:input.parcel.locality,
-      NOMBRE_COMPLETO:input.person.name,TIPO_DOCUMENTO:input.person.documentType,DOCUMENTO:input.person.document,REL_COD:input.relationship.code,RELACION_DECLARADA:input.relationship.text,
+      NOMBRE_COMPLETO:input.person.name,TIPO_DOCUMENTO:input.person.documentType,DOCUMENTO:input.person.document,REL_COD:relationCode,RELACION_DECLARADA:input.relationship.text,
+      RELACION_OTRO_DETALLE:input.relationship.otherDetail,
       ID_PERSONA_CP:e.personId??null,CONCOD:e.conCod??null,REFERENCIAS_CP_JSON:JSON.stringify(e),DOMICILIO_DECLARADO_JSON:input.address?JSON.stringify(input.address):null,
       TIPO_CONSULTA:input.type,DESCRIPCION:input.description,USUARIO_MODIFICADOR_ID:actor.userId,
       ACTUALIZA_CONTACTO:updateContact?1:0,CONTACTO_VERSION_ESPERADA:expected};
@@ -135,11 +137,12 @@ export class ConsultationRepository {
       }
       const personId=await this.person(c,input,evidence);
       const contact=(await c.query("SELECT * FROM FB_CONTACTOS WHERE ID_PERSONA = ? FOR UPDATE",[personId]))[0];
-      const row={...this.values(input,evidence,personId,actor,Number(contact?.VERSION??0),true),USUARIO_CREADOR_ID:actor.userId};
+      const relationCode = evidence.relCod ?? null;
+      const row={...this.values(input,evidence,personId,actor,Number(contact?.VERSION??0),true,relationCode),USUARIO_CREADOR_ID:actor.userId};
       const created=await c.query(`INSERT INTO FB_CIU_CONSULTAS_WEB (${Object.keys(row).join(",")}) VALUES (${Object.keys(row).map(()=>"?").join(",")})`,Object.values(row));
       const queryId=String(created.insertId);
       await c.query("INSERT INTO FB_VINCULOS_DECLARADOS (ID_PERSONA,ID_PERSONA_CP,PADCOD,CONCOD,ID_CONSULTA,REL_COD,RELACION_DECLARADA,USUARIO_CREADOR_ID,VERIFICACION_CP_JSON) VALUES (?,?,?,?,?,?,?,?,?)",
-        [personId,evidence.personId??null,input.parcel.padCod,evidence.conCod??null,queryId,input.relationship.code,input.relationship.text,actor.userId,JSON.stringify(evidence)]);
+        [personId,evidence.personId??null,input.parcel.padCod,evidence.conCod??null,queryId,relationCode,input.relationship.text,actor.userId,JSON.stringify(evidence)]);
       await this.address(c,input,evidence,personId,queryId,actor);
       const response={id:queryId,personId,padCod:input.parcel.padCod,version:1};
       await c.query("UPDATE FB_CONSULTAS_IDEMPOTENCIA SET ID_CONSULTA = ?, RESPUESTA_JSON = ? WHERE USUARIO_ID = ? AND CLAVE = ?",[queryId,JSON.stringify(response),actor.userId,input.idempotencyKey]);
@@ -150,13 +153,22 @@ export class ConsultationRepository {
   async edit(queryId:string,expectedVersion:number,value:unknown,actor:Actor):Promise<Receipt> {
     authorize(actor,this.now()); id(queryId);
     if(!Number.isSafeInteger(expectedVersion)||expectedVersion<1)throw invalid();
-    const input=parseInput(value), evidence=await this.verification(input);
+    // Use the version being edited for omitted fields. Recheck it under lock
+    // below, after external institutional verification, before writing.
+    const reader = await this.pool.getConnection();
+    let reference;
+    try {
+      [reference] = await reader.query("SELECT ID_PERSONA, USUARIO_CREADOR_ID, VERSION, RELACION_DECLARADA, RELACION_OTRO_DETALLE FROM FB_CIU_CONSULTAS_WEB WHERE ID_CONSULTA = ?", [queryId]);
+    } finally { await reader.release(); }
+    if(!reference)throw invalid("NOT_FOUND",404);
+    requireEditConsultation(actor,reference.USUARIO_CREADOR_ID,this.now());
+    if(Number(reference.VERSION)!==expectedVersion)throw invalid("VERSION_CONFLICT",409);
+    const input=parseInput(value, {relationship: reference.RELACION_DECLARADA, relationshipOtherDetail: reference.RELACION_OTRO_DETALLE});
+    const evidence=await this.verification(input);
     return this.transaction(async c=>{
       actor=await this.revalidate(c,actor);
       checkEvidence(input,evidence,this.now());
       // Establish immutable owner first; lock order matches create: person -> query -> current records.
-      const reference=(await c.query("SELECT ID_PERSONA, USUARIO_CREADOR_ID FROM FB_CIU_CONSULTAS_WEB WHERE ID_CONSULTA = ?",[queryId]))[0];
-      if(!reference)throw invalid("NOT_FOUND",404);
       requireEditConsultation(actor,reference.USUARIO_CREADOR_ID,this.now());
       const lockedPerson=(await c.query("SELECT ID_PERSONA FROM FB_PERSONAS WHERE ID_PERSONA = ? FOR UPDATE",[String(reference.ID_PERSONA)]))[0];
       if(!lockedPerson)throw invalid("IDENTITY_CONFLICT",409);
@@ -166,6 +178,7 @@ export class ConsultationRepository {
       const personId=await this.person(c,editInput,evidence,current);
       if(personId!==String(reference.ID_PERSONA))throw invalid("IDENTITY_CONFLICT",409);
       const old=(await c.query("SELECT * FROM FB_CIU_CONSULTAS_WEB WHERE ID_CONSULTA = ? FOR UPDATE",[queryId]))[0];
+      if(!old)throw invalid("NOT_FOUND",404);
       requireEditConsultation(actor,old.USUARIO_CREADOR_ID,this.now());
       if(Number(old.VERSION)!==expectedVersion)throw invalid("VERSION_CONFLICT",409);
       if(String(old.PADCOD)!==input.parcel.padCod || old.PADRON!==input.parcel.parcel || old.LOCALIDAD_PADRON!==input.parcel.locality)throw invalid("IMMUTABLE_PARCEL",409);
@@ -174,11 +187,14 @@ export class ConsultationRepository {
       const previous=typeof old.DOMICILIO_DECLARADO_JSON==='string'?JSON.parse(old.DOMICILIO_DECLARADO_JSON):old.DOMICILIO_DECLARADO_JSON;
       if(input.address && previous)for(const key of retiredAddressFields)if(typeof previous[key]==='string')input.address[key]=previous[key];
       const contact=(await c.query("SELECT * FROM FB_CONTACTOS WHERE ID_PERSONA = ? FOR UPDATE",[personId]))[0];
-      const row=this.values(input,evidence,personId,actor,Number(contact?.VERSION??0),current);
+      const sameLabel = old.RELACION_DECLARADA === input.relationship.text;
+      const relationCode = sameLabel && (input.relationship.text !== 'Otro' || input.relationship.otherDetail == null)
+        ? old.REL_COD : evidence.relCod ?? null;
+      const row=this.values(input,evidence,personId,actor,Number(contact?.VERSION??0),current,relationCode);
       const updated=await c.query(`UPDATE FB_CIU_CONSULTAS_WEB SET ${Object.keys(row).map(k=>`${k} = ?`).join(",")} WHERE ID_CONSULTA = ? AND VERSION = ? AND USUARIO_CREADOR_ID = ?`,[...Object.values(row),queryId,expectedVersion,old.USUARIO_CREADOR_ID]);
       if(!updated.affectedRows)throw invalid("VERSION_CONFLICT",409);
       await c.query("UPDATE FB_VINCULOS_DECLARADOS SET ID_PERSONA_CP = ?, CONCOD = ?, REL_COD = ?, RELACION_DECLARADA = ?, VERIFICACION_CP_JSON = ? WHERE ID_CONSULTA = ? AND ID_PERSONA = ? AND PADCOD = ?",
-        [evidence.personId??null,evidence.conCod??null,input.relationship.code,input.relationship.text,JSON.stringify(evidence),queryId,personId,input.parcel.padCod]);
+        [evidence.personId??null,evidence.conCod??null,relationCode,input.relationship.text,JSON.stringify(evidence),queryId,personId,input.parcel.padCod]);
       await this.address(c,input,evidence,personId,queryId,actor,current);
       const fresh=(await c.query("SELECT VERSION FROM FB_CIU_CONSULTAS_WEB WHERE ID_CONSULTA = ?",[queryId]))[0];
       const version=Number(fresh.VERSION);

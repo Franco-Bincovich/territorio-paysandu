@@ -3,7 +3,7 @@ import { normalizeAddressPlace } from '@backend/domain';
 
 const labels: Record<string, string> = {
   nombre_completo: 'Nombre', tipo_documento: 'Tipo de documento', documento: 'Documento',
-  relacion_declarada: 'Vínculo declarado', descripcion: 'Descripción', tipo_consulta: 'Tipo de consulta',
+  relacion_declarada: 'Vínculo declarado', relacion_otro_detalle: 'Detalle del vínculo', descripcion: 'Descripción', tipo_consulta: 'Tipo de consulta',
   padron: 'Padrón', localidad_padron: 'Localidad del padrón',
   domicilio_calle: 'Calle original', domicilio_puerta: 'Puerta original', domicilio_block: 'Block original',
   domicilio_apto: 'Apartamento original', domicilio_localidad: 'Localidad original', domicilio_departamento: 'Departamento original',

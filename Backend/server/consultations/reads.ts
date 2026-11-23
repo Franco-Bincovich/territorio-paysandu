@@ -11,12 +11,16 @@ export function historyQuery(query:URLSearchParams){
   const cursor=query.has('historyBefore')?id(query.get('historyBefore')):null;
   return {pageSize,cursor};
 }
-export function historySnapshot(value:any){
+export function historySnapshot(value:any, storedDetail?:unknown){
   const row=typeof value==='string'?JSON.parse(value):value;if(row==null)return null;
-  const fields=['nombre_completo','tipo_documento','documento','relacion_declarada','descripcion','tipo_consulta','padron','padcod','localidad_padron',
+  const fields=['nombre_completo','tipo_documento','documento','relacion_declarada','relacion_otro_detalle','descripcion','tipo_consulta','padron','padcod','localidad_padron',
     'domicilio_calle','domicilio_puerta','domicilio_block','domicilio_apto','domicilio_localidad','domicilio_departamento',
     ...Array.from({length:5},(_,i)=>[`telefono_${i+1}`,`tipo_telefono_${i+1}`,`mail_${i+1}`]).flat()];
   const result:Record<string,unknown>={};for(const k of fields)if(Object.hasOwn(row,k)&&(row[k]==null||['string','number'].includes(typeof row[k])))result[k]=row[k];
+  // Some installations already saved the detail on the history row before
+  // the JSON trigger was updated. Recover only the corresponding version.
+  if (result.relacion_declarada === 'Otro' && !Object.hasOwn(row, 'relacion_otro_detalle') && typeof storedDetail === 'string')
+    result.relacion_otro_detalle = storedDetail;
   let address=row.domicilio_declarado_json;if(typeof address==='string')address=JSON.parse(address);
   if(address&&typeof address==='object'&&!Array.isArray(address))result.domicilio_declarado_json=Object.fromEntries(Object.keys(addressLimits).filter(k=>typeof address[k]==='string').map(k=>[k,address[k]]));
   return result;
@@ -31,9 +35,13 @@ export class ConsultationReads {
       await c.query('START TRANSACTION READ ONLY');
       const rows=await c.query('SELECT q.*,u.USERNAME AS CREATOR_USERNAME,EXISTS(SELECT 1 FROM FB_CIU_CONSULTAS_WEB newer WHERE newer.ID_PERSONA=q.ID_PERSONA AND newer.ID_CONSULTA>q.ID_CONSULTA) AS IS_HISTORICAL FROM FB_CIU_CONSULTAS_WEB q LEFT JOIN FB_USUARIOS u ON u.USER_ID=q.USUARIO_CREADOR_ID WHERE q.ID_CONSULTA = ?',[queryId]);
       if(!rows.length)throw invalid('NOT_FOUND',404);
-      const history=await c.query('SELECT h.VERSION,h.TIPO_OPERACION,h.USUARIO_MODIFICADOR_ID,h.FECHA_MODIFICACION,h.DATOS_ANTERIORES,h.DATOS_NUEVOS,u.USERNAME FROM FB_CONSULTAS_HISTORIAL h LEFT JOIN FB_USUARIOS u ON u.USER_ID=h.USUARIO_MODIFICADOR_ID WHERE h.ID_CONSULTA = ?'+(cursor?' AND h.VERSION < ?':'')+' ORDER BY h.VERSION DESC LIMIT ?',[queryId,...(cursor?[cursor]:[]),pageSize+1]);
+      const history=await c.query(`SELECT h.VERSION,h.TIPO_OPERACION,h.USUARIO_MODIFICADOR_ID,h.FECHA_MODIFICACION,h.DATOS_ANTERIORES,h.DATOS_NUEVOS,
+        h.RELACION_OTRO_DETALLE,prev.RELACION_OTRO_DETALLE AS DETALLE_ANTERIOR,u.USERNAME
+        FROM FB_CONSULTAS_HISTORIAL h LEFT JOIN FB_USUARIOS u ON u.USER_ID=h.USUARIO_MODIFICADOR_ID
+        LEFT JOIN FB_CONSULTAS_HISTORIAL prev ON prev.ID_CONSULTA=h.ID_CONSULTA AND prev.VERSION=h.VERSION-1
+        WHERE h.ID_CONSULTA = ?`+(cursor?' AND h.VERSION < ?':'')+' ORDER BY h.VERSION DESC LIMIT ?',[queryId,...(cursor?[cursor]:[]),pageSize+1]);
       const page=history.slice(0,pageSize);
-      return {...view(rows[0]),canEdit:canEditConsultation(actor,rows[0].USUARIO_CREADOR_ID),isHistorical:!!Number(rows[0].IS_HISTORICAL),historyPagination:{pageSize,nextBeforeVersion:history.length>pageSize?String(page[page.length-1].VERSION):null},history:page.map((h:any)=>({version:Number(h.VERSION),operation:h.TIPO_OPERACION,by:h.USUARIO_MODIFICADOR_ID,byUsername:h.USERNAME??h.USUARIO_MODIFICADOR_ID,at:h.FECHA_MODIFICACION instanceof Date?h.FECHA_MODIFICACION.toISOString():String(h.FECHA_MODIFICACION),before:historySnapshot(h.DATOS_ANTERIORES),after:historySnapshot(h.DATOS_NUEVOS)}))};
+      return {...view(rows[0]),canEdit:canEditConsultation(actor,rows[0].USUARIO_CREADOR_ID),isHistorical:!!Number(rows[0].IS_HISTORICAL),historyPagination:{pageSize,nextBeforeVersion:history.length>pageSize?String(page[page.length-1].VERSION):null},history:page.map((h:any)=>({version:Number(h.VERSION),operation:h.TIPO_OPERACION,by:h.USUARIO_MODIFICADOR_ID,byUsername:h.USERNAME??h.USUARIO_MODIFICADOR_ID,at:h.FECHA_MODIFICACION instanceof Date?h.FECHA_MODIFICACION.toISOString():String(h.FECHA_MODIFICACION),before:historySnapshot(h.DATOS_ANTERIORES,h.DETALLE_ANTERIOR),after:historySnapshot(h.DATOS_NUEVOS,h.RELACION_OTRO_DETALLE)}))};
     } finally {try{await c.rollback();}finally{await c.release();}}
   }
   async list(query:URLSearchParams,actor:Actor) {

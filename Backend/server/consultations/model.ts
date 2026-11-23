@@ -2,6 +2,7 @@ import { requireAuthenticated, type Principal } from '../authorization';
 import { createHash } from "node:crypto";
 import { HttpError } from "../security";
 import { personalAddressErrors, normalizeAddressPlace } from '../../domain/personal-address';
+import { parseDeclaredRelationship, DomainError, type DeclaredRelationship } from '../../domain';
 
 export type Actor = Principal;
 export type Address = Partial<Record<"CALLE" | "NUMERO" | "BARRIO" | "LOCALIDAD" | "DEPARTAMENTO" | "CODIGO_POSTAL" | "PH" | "BLOCK" | "DEPTO" | "PUERTA" | "DOMICILIO_COMPLETO" | "REFERENCIA" | "SECTOR" | "MANZANA" | "LOTE", string>>;
@@ -10,7 +11,7 @@ export type Input = {
   idempotencyKey: string;
   parcel: { padCod: string; locality: string; parcel: string };
   person: { name: string; documentType: "CEDULA_IDENTIDAD" | "RUT" | "OTROS"; document: string; normalizedDocument: string; confirmedPersonId?: string };
-  relationship: { text: string; code: string | null };
+  relationship: { text: string; otherDetail: string | null };
   phones: { value: string; type: "FIJO" | "CELULAR" }[]; emails: string[];
   type: "GENERAL" | "RECLAMO" | "FALTA_DOCUMENTACION" | "DECLARACION_METROS";
   description: string; address: Address | null;
@@ -19,7 +20,7 @@ export type Input = {
  * personId/conCod/addressId must be verified against this same person/parcel.
  */
 export type Evidence = { source: "institutional"; verifiedAt: string; padCod: string; locality: string; parcel: string;
-  personId?: string; conCod?: string; addressId?: string;
+  personId?: string; conCod?: string; relCod?: string; addressId?: string;
   media?: {id:string;type:string;value:string}[] };
 export type Verify = (input: Input) => Promise<Evidence>;
 export const invalid = (code = "VALIDATION", status = 400) => new HttpError(status, code, "Revisá los datos o la versión de la consulta.");
@@ -33,10 +34,10 @@ export function authorize(actor: Actor, now: number) {
   requireAuthenticated(actor,now);
   uuid(actor.userId);
 }
-export function parseInput(value: unknown): Input {
+export function parseInput(value: unknown, saved?: DeclaredRelationship): Input {
   const v=object(value); keys(v,["idempotencyKey","parcel","person","relationship","phones","emails","type","description","address"]);
-  const parcel=object(v.parcel), person=object(v.person), relationship=object(v.relationship);
-  keys(parcel,["padCod","locality","parcel"]); keys(person,["name","documentType","document","confirmedPersonId"]); keys(relationship,["text","code"]);
+  const parcel=object(v.parcel), person=object(v.person), relationship=v.relationship===undefined ? {} : object(v.relationship);
+  keys(parcel,["padCod","locality","parcel"]); keys(person,["name","documentType","document","confirmedPersonId"]); keys(relationship,["text","otherDetail"]);
   const document=string(person.document,30), normalizedDocument=normalizeDocument(document);
   const documentType=person.documentType;
   if (!["CEDULA_IDENTIDAD","RUT","OTROS"].includes(String(documentType)) ||
@@ -63,11 +64,16 @@ export function parseInput(value: unknown): Input {
   const description=string(v.description,10000); if(Array.from(description).length<20)throw invalid();
   if(!["GENERAL","RECLAMO","FALTA_DOCUMENTACION","DECLARACION_METROS"].includes(String(v.type)))throw invalid();
   const parcelNumber=string(parcel.parcel,30); if(!/^\d+$/.test(parcelNumber))throw invalid();
-  const code=relationship.code==null ? null:string(relationship.code,3);
+  let declared: DeclaredRelationship;
+  try { declared = parseDeclaredRelationship(relationship.text, relationship.otherDetail, saved); }
+  catch (error) {
+    if (error instanceof DomainError) throw new HttpError(400, error.code, error.message);
+    throw error;
+  }
   return { idempotencyKey:uuid(v.idempotencyKey), parcel:{padCod:id(parcel.padCod),locality:string(parcel.locality,100),parcel:parcelNumber},
     person:{name:string(person.name,200),documentType:documentType as Input["person"]["documentType"],document,normalizedDocument,
       ...(person.confirmedPersonId!==undefined ? {confirmedPersonId:id(person.confirmedPersonId)}:{})},
-    relationship:{text:string(relationship.text,100),code},phones,emails,type:v.type as Input["type"],description,address };
+    relationship:{text:declared.relationship,otherDetail:declared.relationshipOtherDetail??null},phones,emails,type:v.type as Input["type"],description,address };
 }
 export function checkEvidence(input: Input, evidence: Evidence, now: number) {
   const locality=(s:string)=>s.normalize("NFD").replace(/\p{M}/gu,"").trim().toUpperCase();
@@ -77,6 +83,8 @@ export function checkEvidence(input: Input, evidence: Evidence, now: number) {
   for(const ref of [evidence.personId,evidence.conCod,evidence.addressId]) if(ref!==undefined)id(ref);
   if((evidence.conCod || evidence.addressId) && !evidence.personId)throw invalid("INSTITUTIONAL_REFERENCE",409);
   if(evidence.conCod && BigInt(evidence.conCod)>4294967295n)throw invalid();
+  if(evidence.relCod !== undefined && (input.relationship.text === 'Otro' || !evidence.relCod.trim() || Array.from(evidence.relCod).length>3))
+    throw invalid('INSTITUTIONAL_REFERENCE',409);
   if(evidence.media) {
     if(!evidence.personId || evidence.media.length>10)throw invalid('INSTITUTIONAL_REFERENCE',409);
     for(const medium of evidence.media) {
@@ -85,4 +93,9 @@ export function checkEvidence(input: Input, evidence: Evidence, now: number) {
     }
   }
 }
-export const fingerprint = (input: Input) => createHash("sha256").update(JSON.stringify(input)).digest("hex");
+export function fingerprint(input: Input) {
+  // Preserve receipts for institutional labels accepted before the detail field existed.
+  const relationship = { text: input.relationship.text, code: null,
+    ...(input.relationship.otherDetail === null ? {} : { otherDetail: input.relationship.otherDetail }) };
+  return createHash("sha256").update(JSON.stringify({ ...input, relationship })).digest("hex");
+}

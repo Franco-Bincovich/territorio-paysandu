@@ -1,5 +1,7 @@
 # Paquete 7.1 — versión final revisada
 
+Para una instalación nueva de la aplicación que usa vínculos con detalle, completar este paquete y continuar con la [migración del vínculo a revisión 7.2](../../../deploy/INFRAESTRUCTURA.md#migración-del-vínculo-de-consultas).
+
 > Mantenimiento v1.3.0 (16/11/2026): este paquete conserva sus identificadores y
 > precondiciones históricas. La instalación y operación vigentes se describen en
 > [la guía V1.3](../../../deploy/RELEASE-V1.3.md). Las menciones a funcionalidades

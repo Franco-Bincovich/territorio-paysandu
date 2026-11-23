@@ -8,11 +8,11 @@ export function webInput(body:Record<string,any>) {
   if(Object.keys(body).some(k=>!allowed.includes(k)))throw invalid();
   if(body.address && typeof body.address==='object' && retiredAddressFields.some(k=>Object.hasOwn(body.address,k)))throw invalid();
   const p=body.person;
-  if(!p || typeof p!=='object' || Array.isArray(p) || Object.keys(p).some(k=>!['name','documentType','document','relationship','phones','phoneTypes','emails','localPersonId'].includes(k)))throw invalid();
+  if(!p || typeof p!=='object' || Array.isArray(p) || Object.keys(p).some(k=>!['name','documentType','document','relationship','relationshipOtherDetail','phones','phoneTypes','emails','localPersonId'].includes(k)))throw invalid();
   if(!Array.isArray(p.phones)||!Array.isArray(p.phoneTypes)||p.phones.length!==p.phoneTypes.length)throw invalid();
   return {idempotencyKey:body.idempotencyKey,parcel:{padCod:body.padCod,locality:body.locality,parcel:body.parcel},
     person:{name:p.name,documentType:({'CI':'CEDULA_IDENTIDAD','RUT':'RUT','Otros':'OTROS'} as Record<string,string>)[p.documentType],document:p.document,
-      ...(p.localPersonId?{confirmedPersonId:p.localPersonId}:{})},relationship:{text:p.relationship,code:null},
+      ...(p.localPersonId?{confirmedPersonId:p.localPersonId}:{})},relationship:{text:p.relationship,otherDetail:p.relationshipOtherDetail},
     phones:p.phones.map((value:string,i:number)=>({value,type:({'Fijo':'FIJO','Celular':'CELULAR'} as Record<string,string>)[p.phoneTypes[i]]})),
     emails:p.emails,type:typeCodes[body.type],description:body.description,address:body.address??null};
 }
@@ -23,7 +23,7 @@ export function view(row:Record<string,any>) {
   return {id:id(String(row.ID_CONSULTA)),padCod:id(String(row.PADCOD)),locality:row.LOCALIDAD_PADRON,parcel:row.PADRON,
     type:typeLabels[row.TIPO_CONSULTA],description:row.DESCRIPCION,
     person:{name:row.NOMBRE_COMPLETO,documentType:row.TIPO_DOCUMENTO==='CEDULA_IDENTIDAD'?'CI':row.TIPO_DOCUMENTO==='RUT'?'RUT':'Otros',document:row.DOCUMENTO,
-      localPersonId:String(row.ID_PERSONA),relationship:row.RELACION_DECLARADA,phones:phones.map(i=>row[`TELEFONO_${i}`]),
+      localPersonId:String(row.ID_PERSONA),relationship:row.RELACION_DECLARADA,relationshipOtherDetail:row.RELACION_OTRO_DETALLE??null,phones:phones.map(i=>row[`TELEFONO_${i}`]),
       phoneTypes:phones.map(i=>row[`TIPO_TELEFONO_${i}`]==='FIJO'?'Fijo':'Celular'),emails:slots.map(i=>row[`MAIL_${i}`]).filter(Boolean)},
     creatorUserId:row.USUARIO_CREADOR_ID,creatorUsername:row.CREATOR_USERNAME??row.USUARIO_CREADOR_ID,createdAt:date(row.FECHA_ALTA),
     version:Number(row.VERSION),address:json(row.DOMICILIO_DECLARADO_JSON)??null};

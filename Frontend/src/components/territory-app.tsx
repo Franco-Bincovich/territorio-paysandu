@@ -1307,7 +1307,10 @@ export function HistoryView({
                         {c.locality} / {c.parcel}
                       </td>
                       <td data-label="Tipo">{c.type}</td>
-                      <td data-label="Persona">{c.person.name}</td>
+                      <td data-label="Persona"><span>{c.person.name}
+                        <small className="history-relationship">Vínculo: {c.person.relationship === "Otro" && c.person.relationshipOtherDetail
+                          ? c.person.relationshipOtherDetail : c.person.relationship}</small>
+                      </span></td>
                       <td data-label="Creador">{c.creatorUsername??c.creatorUserId}</td>
                       <td data-label="Detalle">
                         <button

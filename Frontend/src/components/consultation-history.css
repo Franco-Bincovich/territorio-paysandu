@@ -20,6 +20,7 @@
 .consultation-history table { table-layout: fixed; font-size: 14px; }
 .consultation-history th, .consultation-history td { padding: 16px 12px; vertical-align: top; overflow-wrap: anywhere; }
 .consultation-history td { font-size: 14px; line-height: 1.5; }
+.consultation-history .history-relationship { display: block; margin-top: 4px; }
 .consultation-history th { font-size: 14px; }
 .consultation-history th:nth-child(1) { width: 12%; }
 .consultation-history th:nth-child(2) { width: 17%; }

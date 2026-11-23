@@ -112,6 +112,14 @@ No hay fallback automático. Cambiar variables o montajes requiere recrear el co
    Una imagen que pagina toda la tabla queda fuera de la reversión después
    de que existan eventos transversales.
 
+## Migración del vínculo de consultas
+
+La revisión 7.2 se instala sobre el modelo 7.1. En una instalación nueva, terminar primero el paquete de consultas 7.1. En instalaciones existentes, la migración admite tablas con datos y las dos columnas de detalle ya creadas.
+
+1. Detener los escritores de consultas y esperar a que terminen las operaciones en curso. Guardar las definiciones vigentes de los tres triggers y usar la cuenta DBA prevista para su `DEFINER`.
+2. Ejecutar el archivo completo con un cliente que respete `DELIMITER` y se detenga ante el primer error. El script comprueba los triggers anteriores, agrega las columnas que falten, reemplaza los tres triggers y marca la revisión 7.2. Puede repetirse después de una interrupción. [Migración 003](../Backend/server/mariadb/migrations/003-consultas-vinculo.sql)
+3. Con el backend de esta revisión y las credenciales de lectura del ambiente, ejecutar `npm run consultations:check` y comprobar el resultado antes de reabrir las escrituras. Los datos y las versiones anteriores a la migración conservan su contenido.
+
 ## HTTPS y acceso
 
 El proxy HTTPS existente es el único punto de entrada. La aplicación publica

@@ -20,6 +20,7 @@ const { ConsultationRepository } = require("../Backend/server/consultations/repo
 const { ConsultationReads } = require("../Backend/server/consultations/reads.ts");
 const { requireCompatibility } = require("../Backend/server/consultations/schema.ts");
 const { defaultAccessMatrix } = require("../shared/module-access.ts");
+const { migrateRelationships, verifyRelationships } = require("./consultation-relationships.integration.cjs");
 
 const worktree = path.join(__dirname, "..");
 const package71 = path.join(worktree, "Backend/sql/package-7.1");
@@ -98,7 +99,8 @@ async function bootstrap(connection) {
       (EVENT_ID,ACTOR_ID,ACTION,RESULT,OCCURRED_AT,REASON,REQUEST_ID,AFTER_JSON) VALUES(?,?,?,'success',UTC_TIMESTAMP(6),'QA histórico','qa-duplicate',?)`,
     [randomUUID(), actor.id, action, detail && JSON.stringify(detail)]);
   }
-  return { users, passwordHash };
+  const legacyId = await migrateRelationships(connection, apply, migrationDir, package71, users.get("collaborator").id);
+  return { users, passwordHash, legacyId };
 }
 
 function projectedConnection(connection, options) {
@@ -262,7 +264,7 @@ async function verifyAuditGrants(pool, config) {
   }
 }
 
-async function exercise(pool, { users, passwordHash }) {
+async function exercise(pool, { users, passwordHash, legacyId }) {
   const administrator = users.get("administrator");
   const restricted = users.get("atencion_publico");
 
@@ -315,7 +317,7 @@ async function exercise(pool, { users, passwordHash }) {
   await check("expedientes/doc/descarga", { cookie: restrictedCookie }, { status: 403, fields: { MODULE: "expedientes", RESULT: "denied" } });
 
   const consultation = { idempotencyKey: randomUUID(), padCod: "910001", locality: "PAYSANDU", parcel: "1001",
-    person: { name: "QA_PERSON_PRIVATE", documentType: "Otros", document: "QA_DOC_PRIVATE", relationship: "Presentante",
+    person: { name: "QA_PERSON_PRIVATE", documentType: "Otros", document: "QA_DOC_PRIVATE", relationship: "Otro", relationshipOtherDetail: "Presentante",
       phones: ["000123456"], phoneTypes: ["Celular"], emails: ["qa-contact@example.invalid"] },
     type: "General", description: "QA_DESCRIPTION_PRIVATE para verificar la auditoría.",
     address: { CALLE: "QA_ADDRESS_PRIVATE", PUERTA: "1", LOCALIDAD: "PAYSANDU" } };
@@ -338,6 +340,8 @@ async function exercise(pool, { users, passwordHash }) {
     assert.deepEqual(versions.map(row => Number(row.VERSION)), [1, 2]);
   }
   log("three real roles, requests mapped to one real row, permissions and all three business histories");
+  await verifyRelationships(pool, check, collaboratorCookie, consultation, legacyId);
+  log("relationship validation, 100-character boundary, versions, history JSON and unmodified legacy declarations");
 
   const collaborator = users.get("collaborator");
   await check(`admin/users/${collaborator.id}`, { method: "PATCH", cookie: adminCookie, body: {

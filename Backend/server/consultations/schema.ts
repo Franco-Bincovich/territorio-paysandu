@@ -1,11 +1,13 @@
-import expected from "./schema-7.1.json";
+import expected from "./schema-7.2.json";
 import type { Connection, Pool } from "./repository";
 import { HttpError } from "../security";
 
+export const consultationRevision = '7.2';
 export const businessTables = ['FB_PERSONAS','FB_CIU_CONSULTAS_WEB','FB_CONTACTOS','FB_CONTACTOS_HISTORIAL','FB_DOMICILIOS','FB_DOMICILIOS_HISTORIAL','FB_VINCULOS_DECLARADOS','FB_CONSULTAS_HISTORIAL','FB_CONSULTAS_IDEMPOTENCIA','FB_MODELO_REVISION'];
 export async function readSchema(c: Pick<Connection,'query'>, env:NodeJS.ProcessEnv=process.env) {
   const queries: Record<string,string> = {
-    columns: 'SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,COLLATION_NAME,GENERATION_EXPRESSION FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME,ORDINAL_POSITION',
+    // Existing installations may already have the optional detail in another column position.
+    columns: "SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,COLLATION_NAME,GENERATION_EXPRESSION FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME,COLUMN_NAME='RELACION_OTRO_DETALLE',ORDINAL_POSITION",
     indexes: 'SELECT TABLE_NAME,INDEX_NAME,NON_UNIQUE,SEQ_IN_INDEX,COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME,INDEX_NAME,SEQ_IN_INDEX',
     constraints: 'SELECT TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_TYPE FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() ORDER BY TABLE_NAME,CONSTRAINT_NAME',
     references: 'SELECT TABLE_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME,UPDATE_RULE,DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() ORDER BY TABLE_NAME,CONSTRAINT_NAME',
@@ -35,7 +37,7 @@ export async function inspectCompatibility(pool:Pool) {
     const revision=await c.query('SELECT REVISION FROM FB_MODELO_REVISION WHERE MODELO = ?',['consultas']);
     const actual=await readSchema(c);
     const differences=Object.keys(actual).filter(k=>JSON.stringify(actual[k])!==JSON.stringify((expected as Record<string,unknown>)[k]));
-    if(revision[0]?.REVISION!=='7.1')differences.push('revision');
+    if(revision[0]?.REVISION!==consultationRevision)differences.push('revision');
     return {compatible:differences.length===0,differences};
   } finally {await c.release();}
 }

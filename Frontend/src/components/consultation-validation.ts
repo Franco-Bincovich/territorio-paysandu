@@ -6,9 +6,12 @@ import {
   DESCRIPTION_MAX_LENGTH,
   MAX_CONTACT_ENTRIES,
 } from "@backend/domain";
+import { isRelationshipOption, relationshipDetailError } from "../../../shared/consultation-relationship";
+import type { Person } from "./contracts";
 export type ConsultationDraft = {
   name: string;
   relationship: string;
+  relationshipOtherDetail: string;
   documentType: string;
   document: string;
   phones: string[];
@@ -25,7 +28,7 @@ const probe = {
   description: "Validación sintética de formulario.",
   person: {
     name: "PERSONA SINTÉTICA",
-    relationship: "Titular",
+    relationship: "TITULAR",
     documentType: "CI",
     document: "00000001",
     phones: ["00000000"],
@@ -43,15 +46,19 @@ function accepts(value: unknown): boolean {
 export function validateConsultationFields(
   draft: ConsultationDraft,
   maxEntries = MAX_CONTACT_ENTRIES,
+  keepingHistoricalRelationship = false,
 ): FieldErrors {
   const errors: FieldErrors = {};
   const personField = (field: string, value: unknown) =>
     accepts({ ...probe, person: { ...probe.person, [field]: value } });
   if (!personField("name", draft.name))
     errors.name = "Ingresá un nombre de hasta 200 caracteres.";
-  if (!personField("relationship", draft.relationship))
-    errors.relationship =
-      "Ingresá el vínculo con el padrón, hasta 100 caracteres.";
+  if (!keepingHistoricalRelationship && !isRelationshipOption(draft.relationship))
+    errors.relationship = "Seleccioná el vínculo con el padrón.";
+  if (draft.relationship === "Otro") {
+    const message = relationshipDetailError(draft.relationshipOtherDetail);
+    if (message) errors.relationshipOtherDetail = message;
+  }
   if (
     !accepts({
       ...probe,
@@ -114,6 +121,7 @@ export function fieldLabel(key: string): string {
   const labels: Record<string, string> = {
     name: "Nombre completo",
     relationship: "Vínculo con el padrón",
+    relationshipOtherDetail: "Especificá el vínculo",
     documentType: "Tipo de documento",
     document: "Documento",
     type: "Tipo",
@@ -124,6 +132,37 @@ export function fieldLabel(key: string): string {
   if (key.startsWith("email-"))
     return `Correo electrónico ${Number(key.slice(6)) + 1}`;
   return labels[key] ?? "Formulario";
+}
+
+type StoredRelationship = Pick<Person, "relationship" | "relationshipOtherDetail">;
+
+export function hasHistoricalRelationship(person: StoredRelationship) {
+  return !isRelationshipOption(person.relationship)
+    || (person.relationship === "Otro" && !person.relationshipOtherDetail?.trim());
+}
+
+export function relationshipPayload(draft: ConsultationDraft, initial?: StoredRelationship) {
+  if (initial && !draft.relationship && hasHistoricalRelationship(initial)) return {};
+  const detail = draft.relationship === "Otro" ? draft.relationshipOtherDetail.trim() : null;
+  if (initial && initial.relationship === draft.relationship && (initial.relationshipOtherDetail ?? null) === detail)
+    return {};
+  return { relationship: draft.relationship, relationshipOtherDetail: detail };
+}
+
+export function consultationDraft(form: FormData): ConsultationDraft {
+  const field = (name: string) => String(form.get(name) ?? "");
+  return {
+    name: field("name"),
+    relationship: field("relationship"),
+    relationshipOtherDetail: field("relationshipOtherDetail"),
+    documentType: field("documentType"),
+    document: field("document"),
+    type: field("type"),
+    description: field("description"),
+    phones: form.getAll("phone").map(String),
+    phoneTypes: form.getAll("phoneType").map(String),
+    emails: form.getAll("email").map(String),
+  };
 }
 
 export function formPersonalAddress(form: FormData): Record<string,string>|null {

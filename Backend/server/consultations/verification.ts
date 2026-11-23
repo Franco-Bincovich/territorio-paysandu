@@ -2,6 +2,7 @@ import { eligibleParcelSql } from '../institutional/eligibility';
 import type { InstitutionalRead } from "../institutional/pool";
 import { normalizeLocality } from "../institutional/repository";
 import { addressLimits, invalid, type Evidence, type Verify } from "./model";
+import { isRelationshipOption } from '../../../shared/consultation-relationship';
 
 /** Isolated verification port, reusing the institutional SELECT-only reader.
  * No route wiring, credential loading, third pool, or institutional writes.
@@ -13,17 +14,29 @@ export function institutionalVerifier(read:InstitutionalRead, now=Date.now):Veri
     if(pads.length!==1)throw invalid("INSTITUTIONAL_REFERENCE",409);
     const evidence:Evidence={source:"institutional",verifiedAt:new Date(now()).toISOString(),...input.parcel};
     // Unknown/non-institutional document types remain local. Never infer from a name.
-    if(input.person.documentType==="OTROS")return evidence;
-    const people=await r.query("SELECT DISTINCT ID_PERSONA_CP FROM AGM_CIU_VINCULOS WHERE TIPO_DOCUMENTO = ? AND DOCUMENTO_NORMALIZADO = ? AND DOCUMENTO_VALIDO = 'SI' AND ID_PERSONA_CP IS NOT NULL LIMIT 2",
+    const people=input.person.documentType==="OTROS" ? [] : await r.query("SELECT DISTINCT ID_PERSONA_CP FROM AGM_CIU_VINCULOS WHERE TIPO_DOCUMENTO = ? AND DOCUMENTO_NORMALIZADO = ? AND DOCUMENTO_VALIDO = 'SI' AND ID_PERSONA_CP IS NOT NULL LIMIT 2",
       [input.person.documentType==="CEDULA_IDENTIDAD"?"CI":"RUT",input.person.normalizedDocument]);
     if(people.length>1)throw invalid("AMBIGUOUS_INSTITUTIONAL_IDENTITY",409);
-    if(!people.length)return evidence;
-    evidence.personId=String(people[0].ID_PERSONA_CP);
-    {
-      const links=await r.query(`SELECT DISTINCT ConCod FROM AGM_CIU_VINCULOS WHERE PadCod = ? AND ID_PERSONA_CP = ? AND ${input.relationship.code?'RelCod':'RelNom'} = ? LIMIT 2`,
-        [input.parcel.padCod,evidence.personId,input.relationship.code??input.relationship.text]);
-      if(links.length===1)evidence.conCod=String(links[0].ConCod);
+    if(people.length)evidence.personId=String(people[0].ID_PERSONA_CP);
+    const label = input.relationship.text;
+    if (label !== 'Otro') {
+      if (evidence.personId) {
+        const links = await r.query("SELECT DISTINCT ConCod,RelCod FROM AGM_CIU_VINCULOS WHERE PadCod = ? AND ID_PERSONA_CP = ? AND RelNom = ? LIMIT 2",
+          [input.parcel.padCod, evidence.personId, label]);
+        if (links.length === 1) {
+          if (links[0].ConCod != null) evidence.conCod = String(links[0].ConCod);
+          if (links[0].RelCod != null) evidence.relCod = String(links[0].RelCod);
+        }
+      }
+      if (!evidence.relCod && isRelationshipOption(label)) {
+        // Codes depend on the institutional context (CIU/CIR). Only use a code
+        // observed for this label on this parcel; never borrow another parcel's code.
+        const codes = await r.query("SELECT DISTINCT RelCod FROM AGM_CIU_VINCULOS WHERE PadCod = ? AND RelNom = ? AND RelCod IS NOT NULL LIMIT 2",
+          [input.parcel.padCod, label]);
+        if (codes.length === 1) evidence.relCod = String(codes[0].RelCod);
+      }
     }
+    if(!evidence.personId)return evidence;
     // Preserve verified institutional medium IDs in the audited evidence JSON.
     // Current local contact has no institutional medium columns in model 7.1.
     const values=[...input.phones.map(p=>p.value),...input.emails];

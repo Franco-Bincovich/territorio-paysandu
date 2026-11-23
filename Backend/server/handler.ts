@@ -1,4 +1,4 @@
-import { DomainError, parseData, parseParcel } from "../domain";
+import { DomainError, parseData, parseParcel, type DeclaredRelationship } from "../domain";
 import { applicationCatalogue } from "./prototype-catalogue";
 import { imageResponse } from "./images";
 import { imageProvider } from "./storage-images";
@@ -70,7 +70,7 @@ function dto(row: Record<string, unknown>) {
     version: row.version,
   };
 }
-function payload(body: Record<string, unknown>, editing = false) {
+function payload(body: Record<string, unknown>, editing = false, saved?: DeclaredRelationship) {
   const allowed = [
     "locality",
     "parcel",
@@ -87,7 +87,7 @@ function payload(body: Record<string, unknown>, editing = false) {
       person: body.person,
       type: body.type,
       description: body.description,
-    }),
+    }, saved),
   };
   if (!data.person.phoneTypes)
     throw new HttpError(400, "VALIDATION", "Elegí Fijo o Celular para cada teléfono.");
@@ -389,7 +389,8 @@ async function handleRequest(
           .map((c) => ({
             id: c.id,
             name: c.person.name,
-            relationship: c.person.relationship,
+            relationship: c.person.relationship === 'Otro' && c.person.relationshipOtherDetail
+              ? c.person.relationshipOtherDetail : c.person.relationship,
             phones: c.person.phones,
             phoneTypes: c.person.phoneTypes,
             emails: c.person.emails,
@@ -470,9 +471,12 @@ async function handleRequest(
       }
       if (request.method === "PATCH") {
         const body = await jsonBody(request);
-        const data = payload(body, true);
         if (!Number.isSafeInteger(body.version) || Number(body.version) < 1)
           throw new HttpError(400, "VALIDATION", "Versión inválida.");
+        const previous = await client.from("consultations").select("person").eq("id", segments[1]).maybeSingle();
+        dbError(previous.error);
+        if (!previous.data) throw new HttpError(404, "NOT_FOUND", "Consulta no encontrada.");
+        const data = payload(body, true, previous.data.person);
         const { data: updated, error } = await client.rpc("edit_consultation", {
           p_id: segments[1],
           p_expected_version: body.version,
@@ -498,7 +502,8 @@ async function handleRequest(
     if (error instanceof DomainError)
       return response(
         {
-          error: { code: error.code, message: "Revisá los datos ingresados." },
+          error: { code: error.code, message: ['RELATIONSHIP', 'RELATIONSHIP_OTHER_DETAIL'].includes(error.code)
+            ? error.message : "Revisá los datos ingresados." },
         },
         400,
       );

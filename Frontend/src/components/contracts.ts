@@ -19,6 +19,7 @@ export type Person = {
   documentType: "CI" | "RUT" | "Otros";
   document: string;
   relationship: string;
+  relationshipOtherDetail?: string | null;
   phones: string[];
   phoneTypes?: ("Fijo" | "Celular")[];
   emails: string[];

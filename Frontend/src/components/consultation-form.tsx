@@ -9,12 +9,16 @@ import {
   type ReactNode,
 } from "react";
 import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, MAX_CONTACT_ENTRIES, personalAddressFields, personalLocalities, retiredAddressFields, normalizeAddressPlace, personalAddressErrors } from "@backend/domain";
+import { relationshipOptions } from "../../../shared/consultation-relationship";
 import { useRequestScope } from "./use-request-scope";
 import { OptionalDomicileSection } from "./optional-domicile-section";
 import { isAbort } from "./request-scope";
-import { request, type Consultation, type ParcelRef } from "./contracts";
+import { request, RequestError, type Consultation, type ParcelRef } from "./contracts";
 import {
+  consultationDraft,
   fieldLabel,
+  hasHistoricalRelationship,
+  relationshipPayload,
   formPersonalAddress,
   addressFieldErrors,
   validateConsultationFields,
@@ -59,6 +63,9 @@ export function ConsultationForm({
   },[parcel.padCod]);
   const blocked=readOnly || !writeAvailable;
   const idPrefix = useId();
+  const historicalRelationship = Boolean(initial && hasHistoricalRelationship(initial.person));
+  const [relationship, setRelationship] = useState(historicalRelationship ? "" : initial?.person.relationship ?? "");
+  const [relationshipOtherDetail, setRelationshipOtherDetail] = useState(initial?.person.relationshipOtherDetail ?? "");
   const [documentType, setDocumentType] = useState(initial?.person.documentType ?? "CI");
   const [phoneTypes, setPhoneTypes] = useState<string[]>(
     initial?.person.phones.length
@@ -89,19 +96,9 @@ export function ConsultationForm({
     const form = new FormData(e.currentTarget);
     setError("");
     setNotice("");
-    const draft = {
-      name: String(form.get("name") ?? ""),
-      relationship: String(form.get("relationship") ?? ""),
-      documentType: String(form.get("documentType") ?? ""),
-      document: String(form.get("document") ?? ""),
-      type: String(form.get("type") ?? ""),
-      description: String(form.get("description") ?? ""),
-      phones,
-      phoneTypes,
-      emails,
-    };
+    const draft = consultationDraft(form);
     const address=parcel.padCod?formPersonalAddress(form):null;
-    const errors = {...validateConsultationFields(draft,maxContacts),...addressFieldErrors(address)};
+    const errors = {...validateConsultationFields(draft,maxContacts,historicalRelationship && !draft.relationship),...addressFieldErrors(address)};
     if(parcel.padCod) phones.forEach((p,i)=>{if(p.trim().length>30)errors[`phone-${i}`]='Ingresá hasta 30 caracteres.';});
     setFieldErrors(errors);
     if (Object.keys(errors).length) {
@@ -123,7 +120,7 @@ export function ConsultationForm({
         name: draft.name,
         documentType: draft.documentType,
         document: draft.document,
-        relationship: draft.relationship,
+        ...relationshipPayload(draft, initial?.person),
         phones: phones.map((s) => s.trim()).filter(Boolean),
         phoneTypes: phoneTypes.filter((_, index) => phones[index]?.trim()),
         emails: emails.filter((s) => s.length > 0),
@@ -152,7 +149,11 @@ export function ConsultationForm({
       await onSaved(saved);
     } catch (e) {
       if (operation.isCurrent() && !isAbort(e)) {
-        setError(e instanceof Error ? e.message : "No se pudo guardar.");
+        if (e instanceof RequestError && e.code === "RELATIONSHIP_OTHER_DETAIL")
+          setFieldErrors({relationshipOtherDetail: e.message});
+        else if (e instanceof RequestError && e.code === "RELATIONSHIP")
+          setFieldErrors({relationship: e.message});
+        else setError(e instanceof Error ? e.message : "No se pudo guardar.");
         setValidationAttempt((n) => n + 1);
       }
     } finally {
@@ -163,10 +164,22 @@ export function ConsultationForm({
   return (
     <form className="form-stack consultation-form" onSubmit={submit} noValidate onChange={event=>{
       const form=new FormData(event.currentTarget);
-      const draft={name:String(form.get('name')??''),relationship:String(form.get('relationship')??''),documentType:String(form.get('documentType')??''),document:String(form.get('document')??''),type:String(form.get('type')??''),description:String(form.get('description')??''),phones:form.getAll('phone').map(String),phoneTypes:form.getAll('phoneType').map(String),emails:form.getAll('email').map(String)};
-      setFormValid(!Object.keys({...validateConsultationFields(draft,maxContacts),...(parcel.padCod?addressFieldErrors(formPersonalAddress(form)): {})}).length && (!parcel.padCod || draft.phones.every(p=>p.trim().length<=30)));
+      const draft = consultationDraft(form);
+      const errors = validateConsultationFields(draft, maxContacts, historicalRelationship && !draft.relationship);
+      setFormValid(!Object.keys({...errors,...(parcel.padCod?addressFieldErrors(formPersonalAddress(form)): {})}).length && (!parcel.padCod || draft.phones.every(p=>p.trim().length<=30)));
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+        if (["relationship", "relationshipOtherDetail"].includes(event.target.name)) {
+          setFieldErrors(previous => {
+            const next = { ...previous };
+            delete next.relationship;
+            if (errors.relationshipOtherDetail) next.relationshipOtherDetail = errors.relationshipOtherDetail;
+            else delete next.relationshipOtherDetail;
+            return next;
+          });
+        }
+      }
     }}>
-      {(Object.keys(fieldErrors).length > 0 || error) && (
+      {validationAttempt > 0 && (Object.keys(fieldErrors).length > 0 || error) && (
         <section
           className="error"
           ref={summary}
@@ -214,16 +227,36 @@ export function ConsultationForm({
             idPrefix={idPrefix}
             errors={fieldErrors}
           >
-            <input
+            <select
               {...attrs("relationship")}
               name="relationship"
-              defaultValue={initial?.person.relationship}
-              required
-              maxLength={100}
-              placeholder="Titular, familiar, representante…"
-            />
+              value={relationship}
+              required={!historicalRelationship}
+              onChange={event => {
+                setRelationship(event.target.value);
+                setRelationshipOtherDetail("");
+              }}
+            >
+              <option value="" disabled hidden>
+                {historicalRelationship ? `${initial?.person.relationship} (vínculo histórico)` : "Seleccioná el vínculo"}
+              </option>
+              {relationshipOptions.map(option => <option key={option}>{option}</option>)}
+            </select>
           </Field>
         </div>
+        {relationship === "Otro" && (
+          <Field fieldKey="relationshipOtherDetail" idPrefix={idPrefix} errors={fieldErrors}>
+            <input
+              {...attrs("relationshipOtherDetail")}
+              name="relationshipOtherDetail"
+              value={relationshipOtherDetail}
+              onChange={event => setRelationshipOtherDetail(event.target.value)}
+              aria-describedby={[`${idPrefix}-relationship-hint`, attrs("relationshipOtherDetail")["aria-describedby"]].filter(Boolean).join(" ")}
+              required
+            />
+            <small id={`${idPrefix}-relationship-hint`} className="muted">Hasta 100 caracteres, sin contar espacios al principio y al final.</small>
+          </Field>
+        )}
         <div className="pair">
           <Field
             fieldKey="documentType"

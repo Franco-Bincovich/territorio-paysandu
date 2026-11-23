@@ -1,3 +1,5 @@
+import { isRelationshipOption, relationshipDetailError } from '../../shared/consultation-relationship';
+
 /** Portable business contracts. SessionContext MUST be produced by a trusted auth adapter. */
 export type ConsultationType =
   | "General"
@@ -11,6 +13,7 @@ export type PersonSnapshot = Readonly<{
   documentType: "CI" | "RUT" | "Otros";
   document: string;
   relationship: string;
+  relationshipOtherDetail?: string | null;
   phones: readonly string[];
   phoneTypes?: readonly PhoneType[];
   emails: readonly string[];
@@ -130,6 +133,8 @@ export class DomainError extends Error {
       | "PASSWORD_CHANGE_REQUIRED"
       | "SESSION_EXPIRED"
       | "VALIDATION"
+      | "RELATIONSHIP"
+      | "RELATIONSHIP_OTHER_DETAIL"
       | "NOT_FOUND"
       | "CONFLICT",
     message: string,
@@ -191,7 +196,25 @@ export function parseDescription(value: unknown): string {
     fail("Invalid description");
   return normalized;
 }
-export function parseData(value: unknown): ConsultationData {
+export type DeclaredRelationship = Pick<PersonSnapshot, 'relationship' | 'relationshipOtherDetail'>;
+
+export function parseDeclaredRelationship(text: unknown, detail: unknown, saved?: DeclaredRelationship): DeclaredRelationship {
+  // An edit can omit both fields to keep the exact historical declaration.
+  if (saved && detail == null && ((text === undefined && detail === undefined)
+    || (!isRelationshipOption(text) && text === saved.relationship))) {
+    return { relationship: saved.relationship, relationshipOtherDetail: saved.relationshipOtherDetail ?? null };
+  }
+  if (!isRelationshipOption(text)) {
+    throw new DomainError('RELATIONSHIP', 'Elegí un vínculo de la lista.');
+  }
+  if (text !== 'Otro') return { relationship: text, relationshipOtherDetail: null };
+  const error = relationshipDetailError(detail);
+  if (error || typeof detail !== 'string')
+    throw new DomainError('RELATIONSHIP_OTHER_DETAIL', error ?? 'Especificá el vínculo.');
+  return { relationship: text, relationshipOtherDetail: detail.trim() };
+}
+
+export function parseData(value: unknown, saved?: DeclaredRelationship): ConsultationData {
   const data = obj(value);
   exactKeys(data, ["person", "type", "description"]);
   if (!types.includes(data.type as string)) fail("Invalid consultation type");
@@ -201,6 +224,7 @@ export function parseData(value: unknown): ConsultationData {
     "documentType",
     "document",
     "relationship",
+    "relationshipOtherDetail",
     "phones",
     "phoneTypes",
     "emails",
@@ -264,7 +288,7 @@ export function parseData(value: unknown): ConsultationData {
       name: string(p.name, "name", 200),
       documentType: p.documentType as "CI" | "RUT" | "Otros",
       document,
-      relationship: string(p.relationship, "relationship", 100),
+      ...parseDeclaredRelationship(p.relationship, p.relationshipOtherDetail, saved),
       phones: Object.freeze(phones),
       ...(phoneTypes ? { phoneTypes: Object.freeze([...phoneTypes]) } : {}),
       emails: Object.freeze(emails),
@@ -356,7 +380,6 @@ export class ConsultationService {
     const dto = obj(input);
     exactKeys(dto, ["id", "expectedVersion", "data"]);
     const id = string(dto.id, "id", 128);
-    const data = parseData(dto.data);
     if (
       !Number.isSafeInteger(dto.expectedVersion) ||
       (dto.expectedVersion as number) < 1
@@ -369,6 +392,7 @@ export class ConsultationService {
         throw new DomainError("FORBIDDEN", "Only creator may edit");
       if (old.version !== dto.expectedVersion)
         throw new DomainError("CONFLICT", "Consultation changed");
+      const data = parseData(dto.data, old.data.person);
       const version = old.version + 1;
       const at = now.toISOString();
       const next: Consultation = Object.freeze({

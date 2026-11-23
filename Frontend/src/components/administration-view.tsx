@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useRef,useState,type FormEvent} from 'react';
+import {useEffect,useId,useRef,useState,type FormEvent} from 'react';
 import {PasswordField,PasswordRequirements} from './password-fields';
 import {PASSWORD_MIN_LENGTH,passwordIssues,passwordPolicyMessage} from '../../../shared/password-policy';
 import {ROLE_LABELS} from '../../../shared/permissions';
@@ -50,6 +50,8 @@ export function UserEditor({user,reset=false,deleting=false,onSaved,onCancel,onS
   const [username,setUsername]=useState(user?.username??''),[role,setRole]=useState<InternalRole>(user?.role??'atencion_publico'),[enabled,setEnabled]=useState(user?.enabled??true);
   const [firstName,setFirstName]=useState(user?.firstName??''),[lastName,setLastName]=useState(user?.lastName??''),[email,setEmail]=useState(user?.email??''),[ci,setCi]=useState(user?.ci??'');
   const dialog=useRef<HTMLDialogElement>(null);
+  const confirmEdit=useRef<HTMLDialogElement>(null);
+  const confirmTitle=useId(),confirmWarning=useId();
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[conflict,setConflict]=useState(false);
   const active=useRef<AbortController|null>(null);
   const [temporalPassword,setTemporalPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState('');
@@ -60,12 +62,19 @@ export function UserEditor({user,reset=false,deleting=false,onSaved,onCancel,onS
     element?.querySelector<HTMLElement>('input:not([disabled]),button:not([disabled])')?.focus();
     return ()=>{active.current?.abort();element?.close();previous?.focus();};
   },[]);
-  async function submit(event:FormEvent<HTMLFormElement>) {
+  function submit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();if(active.current||conflict)return;
     if(!reset&&!deleting&&(!validUsername(username)||(!user&&(!firstName.trim()||!lastName.trim()||!email.trim())))){setError('Completá nombre, apellido, usuario y correo electrónico válidos.');return;}
     if(credentialOperation){const issues=passwordIssues(temporalPassword,confirmPassword);if(issues.length){setError(passwordPolicyMessage(issues[0]));return;}}
-    const confirmation=deleting?`Dar de baja a ${user!.username} y cerrar todas sus sesiones? Su identidad e historial se conservarán.`:reset?`Restablecer la contraseña de ${user!.username} y cerrar todas sus sesiones?`:user?`Guardar los cambios de ${user.username}? Los cambios de usuario, rol o estado cierran sus sesiones.`:`Crear el usuario ${username.trim()} con rol ${ROLE_LABELS[role]}?`;
-    if(!window.confirm(confirmation))return;
+    if(user&&!reset&&!deleting){
+      confirmEdit.current?.showModal();
+      return;
+    }
+    const confirmation=deleting?`Dar de baja a ${user!.username} y cerrar todas sus sesiones? Su identidad e historial se conservarán.`:reset?`Restablecer la contraseña de ${user!.username} y cerrar todas sus sesiones?`:`Crear el usuario ${username.trim()} con rol ${ROLE_LABELS[role]}?`;
+    if(window.confirm(confirmation))void save();
+  }
+  async function save() {
+    if(active.current||conflict)return;
     const profileChanges=user?Object.fromEntries(Object.entries({firstName:firstName.trim(),lastName:lastName.trim(),email:email.trim(),ci:ci.trim()||null}).filter(([key,value])=>value!==(user[key as 'firstName'|'lastName'|'email'|'ci']??(key==='ci'?null:'')))):{};
     const body=reset?{expectedRevision:user!.revision,temporalPassword,confirmPassword}:deleting?{expectedRevision:user!.revision}:user?{expectedRevision:user.revision,username:username.trim(),...profileChanges,role,enabled}:{username:username.trim(),firstName:firstName.trim(),lastName:lastName.trim(),email:email.trim(),ci:ci.trim()||null,role,temporalPassword,confirmPassword};
     const controller=new AbortController();active.current=controller;setBusy(true);setError('');
@@ -75,7 +84,7 @@ export function UserEditor({user,reset=false,deleting=false,onSaved,onCancel,onS
     }catch(e){if(!controller.signal.aborted&&!isAbort(e)){setError(e instanceof Error?e.message:'No se pudo guardar.');if(e instanceof RequestError&&['VERSION_CONFLICT','ADMIN_COMMIT_UNCERTAIN'].includes(e.code??'')){setConflict(true);onStale?.();}}}
     finally {active.current=null;setTemporalPassword('');setConfirmPassword('');if(!controller.signal.aborted)setBusy(false);}
   }
-  return <dialog ref={dialog} className="admin-user-dialog" aria-label={deleting?'Dar de baja':reset?'Restablecer contraseña':user?'Editar usuario':'Crear usuario'} onCancel={event=>{event.preventDefault();if(!busy)onCancel();}}><button className="btn small admin-modal-close" type="button" aria-label="Cerrar formulario" disabled={busy} onClick={onCancel}>×</button><form className="form-stack" onSubmit={submit} aria-label={deleting?'Dar de baja':reset?'Restablecer contraseña':user?'Editar usuario':'Crear usuario'}>
+  return <><dialog ref={dialog} className="admin-user-dialog" aria-label={deleting?'Dar de baja':reset?'Restablecer contraseña':user?'Editar usuario':'Crear usuario'} onCancel={event=>{event.preventDefault();if(!busy)onCancel();}}><button className="btn small admin-modal-close" type="button" aria-label="Cerrar formulario" disabled={busy} onClick={onCancel}>×</button><form className="form-stack" onSubmit={submit} aria-label={deleting?'Dar de baja':reset?'Restablecer contraseña':user?'Editar usuario':'Crear usuario'}>
     <h2>{deleting?`Dar de baja a ${user!.username}`:reset?`Restablecer contraseña de ${user!.username}`:user?`Editar ${user.username}`:'Crear usuario'}</h2>
     <fieldset disabled={busy||conflict} className="form-stack">
       {!reset&&!deleting&&<><fieldset className="admin-form-section profile-fields"><legend>Datos personales</legend><label className="field">Nombre<input required={!user} maxLength={100} autoComplete="given-name" value={firstName} onChange={event=>setFirstName(event.target.value)}/></label><label className="field">Apellido<input required={!user} maxLength={100} autoComplete="family-name" value={lastName} onChange={event=>setLastName(event.target.value)}/></label><label className="field">Correo electrónico<input required={!user} type="email" maxLength={254} autoComplete="email" value={email} onChange={event=>setEmail(event.target.value)}/></label><label className="field">Cédula de identidad (opcional)<input maxLength={20} value={ci} onChange={event=>setCi(event.target.value)} inputMode="numeric"/><small>Ingresá el formato acordado para CI uruguaya; se valida al guardar.</small></label></fieldset>{user&&(!user.firstName||!user.lastName||!user.email)&&<p className="notice">Esta cuenta es anterior al perfil personal. Podés completar sus datos sin alterar su identidad ni contraseña.</p>}<fieldset className="admin-form-section profile-fields"><legend>Cuenta y acceso</legend><label className="field">Nombre de usuario<input required maxLength={100} autoComplete="off" value={username} onChange={event=>setUsername(event.target.value)}/></label><label className="field">Rol<select value={role} onChange={event=>setRole(event.target.value as InternalRole)}><option value="atencion_publico">Atención al público</option><option value="collaborator">Colaborador</option><option value="administrator">Administrador</option></select></label>{user&&<label><input type="checkbox" checked={enabled} onChange={event=>setEnabled(event.target.checked)}/> Cuenta habilitada</label>}</fieldset></>}
@@ -85,5 +94,18 @@ export function UserEditor({user,reset=false,deleting=false,onSaved,onCancel,onS
     </fieldset>
     {error&&<p className="error" role="alert">{error}</p>}{conflict&&<p>Cancelá y volvé a abrir el usuario desde el listado actualizado antes de editar.</p>}
     <div className="admin-modal-actions"><button type="button" className="btn" disabled={busy} onClick={onCancel}>Cancelar</button><button className="btn primary" disabled={busy||conflict}>{busy?'Guardando…':deleting?'Confirmar baja lógica':reset?'Confirmar restablecimiento':user?'Guardar cambios':'Crear usuario'}</button></div>
-  </form></dialog>;
+  </form></dialog>
+    {user&&!deleting&&!reset&&<dialog ref={confirmEdit} className="admin-user-dialog admin-edit-confirmation" aria-labelledby={confirmTitle} aria-describedby={confirmWarning}>
+      <h2 id={confirmTitle}>¿Guardar los cambios de {user.username}?</h2>
+      <p id={confirmWarning}>Modificar el nombre de usuario, el rol o el estado cierra las sesiones de esa persona.</p>
+      <div className="admin-modal-actions">
+        <button type="button" className="btn" autoFocus onClick={()=>confirmEdit.current?.close()}>Cancelar</button>
+        <button type="button" className="btn primary" disabled={busy} onClick={()=>{
+          if(!confirmEdit.current?.open)return;
+          confirmEdit.current.close();
+          void save();
+        }}>Guardar cambios</button>
+      </div>
+    </dialog>}
+  </>;
 }
